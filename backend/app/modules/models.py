@@ -30,7 +30,25 @@ from app.modules.payroll_findings.models import PayrollFinding
 from app.modules.payroll_periods.models import PayrollPeriod, PayrollVersion
 from app.modules.persons.models import Person
 from app.modules.positions.models import Position
+from app.modules.procurement_processes.models import (
+    ContractAmendment,
+    ContractDelivery,
+    ContractGuarantee,
+    ContractPayment,
+    ProcurementAward,
+    ProcurementBid,
+    ProcurementChallenge,
+    ProcurementContract,
+    ProcurementEvaluation,
+    ProcurementFinding,
+    ProcurementItem,
+    ProcurementLot,
+    ProcurementProcess,
+    ProcurementVersion,
+    PurchaseOrder,
+)
 from app.modules.sources.models import Source
+from app.modules.suppliers.models import Supplier, SupplierHistory
 from app.modules.territories.models import Territory
 
 __all__ = [
@@ -62,7 +80,24 @@ __all__ = [
     "PayrollVersion",
     "Position",
     "PositionUnitAssignment",
+    "ProcurementAward",
+    "ProcurementBid",
+    "ProcurementChallenge",
+    "ProcurementContract",
+    "ProcurementEvaluation",
+    "ProcurementFinding",
+    "ProcurementItem",
+    "ProcurementLot",
+    "ProcurementProcess",
+    "ProcurementVersion",
+    "PurchaseOrder",
+    "ContractAmendment",
+    "ContractDelivery",
+    "ContractGuarantee",
+    "ContractPayment",
     "Source",
+    "Supplier",
+    "SupplierHistory",
     "FinancingOrganization",
     "FundingSource",
     "Territory",

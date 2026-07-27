@@ -31,6 +31,13 @@ modificaciones, ejecución, ingresos, transferencias, versiones y hallazgos obse
 Un presupuesto confirmado no se sobrescribe; solo el servicio presupuestario autorizado
 escribe datos canónicos y los actores IA solo proponen clasificaciones o hallazgos.
 
+El módulo `procurement_processes` conserva procesos, lotes, ítems, ofertas, evaluaciones,
+adjudicaciones, contratos, modificaciones, entregas, pagos, garantías, impugnaciones,
+versiones y señales observables. `suppliers` conserva proveedores canónicos e historial.
+Solo sus servicios autorizados escriben datos canónicos; la IA no puede hacerlo. Las
+referencias registrales sensibles se almacenan únicamente como hash irreversible y
+`raw_payload` no se expone en la API.
+
 Antes de entregar cambios ejecutar `make lint`, `make typecheck` y `make test`.
 Agregar una migración, pruebas unitarias, de arquitectura e integración cuando corresponda.
 

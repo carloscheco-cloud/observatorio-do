@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import UTC, date, datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -42,7 +42,26 @@ from app.modules.payroll_entries.models import PayrollEntry, PayrollEntryStatus
 from app.modules.payroll_periods.models import PayrollPeriod, PayrollPeriodStatus
 from app.modules.persons.models import Person, PersonStatus
 from app.modules.positions.models import AccessMethod, Position, PositionStatus
+from app.modules.procurement_processes.models import (
+    ContractAmendment,
+    ContractDelivery,
+    ContractGuarantee,
+    ContractPayment,
+    ProcedureType,
+    ProcessStatus,
+    ProcurementAward,
+    ProcurementBid,
+    ProcurementChallenge,
+    ProcurementContract,
+    ProcurementFinding,
+    ProcurementItem,
+    ProcurementLot,
+    ProcurementProcess,
+    ProcurementType,
+    PurchaseOrder,
+)
 from app.modules.sources.models import Source
+from app.modules.suppliers.models import Supplier, SupplierType
 from app.modules.territories.models import Territory, TerritoryType
 
 
@@ -419,6 +438,7 @@ def seed(db: Session) -> None:
         db, institution, person, head_position, directorate, block4_source, block4_evidence
     )
     _seed_block6(db, institution, directorate, bonao, block4_source, block4_evidence, block4_legal)
+    _seed_block7(db, institution, directorate, bonao, block4_source, block4_evidence, block4_legal)
     db.commit()
 
 
@@ -747,6 +767,350 @@ def _seed_block6(
                 metadata_=marker,
             )
         )
+
+
+def _seed_block7(
+    db: Session,
+    institution: Institution,
+    unit: OrganizationalUnit,
+    territory: Territory,
+    source: Source,
+    evidence: Evidence,
+    legal_basis: LegalBasis,
+) -> None:
+    """Idempotent, fictitious procurement sample for automated tests only."""
+    marker = {"controlled": True, "fictitious": True, "seed": "block-7"}
+    suppliers: list[Supplier] = []
+    for number, name in enumerate(
+        (
+            "Suministros Quisqueya de Prueba SRL",
+            "Servicios Cibao Controlados SRL",
+            "Consorcio Ficticio La Vega",
+        ),
+        1,
+    ):
+        normalized = name.casefold()
+        supplier = db.scalar(select(Supplier).where(Supplier.normalized_name == normalized))
+        if supplier is None:
+            supplier = Supplier(
+                legal_name=name,
+                normalized_name=normalized,
+                supplier_type=SupplierType.CONSORTIUM if number == 3 else SupplierType.COMPANY,
+                country="DO",
+                registration_status="confirmed",
+                is_public_entity=False,
+                is_nonprofit=False,
+                source_id=source.id,
+                evidence_id=evidence.id,
+                metadata_=marker,
+            )
+            db.add(supplier)
+            db.flush()
+        suppliers.append(supplier)
+    processes: list[ProcurementProcess] = []
+    for number, procedure, amount in (
+        (1, ProcedureType.PRICE_COMPARISON, 100000),
+        (2, ProcedureType.MINOR_PURCHASE, 50000),
+    ):
+        code = f"TEST-B7-2099-{number:03d}"
+        process = db.scalar(
+            select(ProcurementProcess).where(
+                ProcurementProcess.institution_id == institution.id,
+                ProcurementProcess.source_id == source.id,
+                ProcurementProcess.process_code == code,
+            )
+        )
+        if process is None:
+            process = ProcurementProcess(
+                institution_id=institution.id,
+                organizational_unit_id=unit.id,
+                procurement_unit_name="Unidad de Compras Ficticia",
+                process_code=code,
+                title=f"Proceso controlado de prueba {number}",
+                procurement_type=ProcurementType.GOODS,
+                procedure_type=procedure,
+                process_status=ProcessStatus.AWARDED,
+                publication_date=datetime(2099, number, 1, tzinfo=UTC),
+                submission_deadline=datetime(2099, number, 10, tzinfo=UTC),
+                opening_date=datetime(2099, number, 11, tzinfo=UTC),
+                award_date=date(2099, number, 15),
+                estimated_amount=amount,
+                currency="DOP",
+                fiscal_year=2099,
+                territory_id=territory.id,
+                legal_basis_id=legal_basis.id,
+                source_id=source.id,
+                evidence_id=evidence.id,
+                raw_payload=marker,
+                metadata_=marker,
+                checksum=f"{number:064x}",
+            )
+            db.add(process)
+            db.flush()
+        processes.append(process)
+    lot = db.scalar(
+        select(ProcurementLot).where(ProcurementLot.procurement_process_id == processes[0].id)
+    )
+    if lot is None:
+        lot = ProcurementLot(
+            procurement_process_id=processes[0].id,
+            lot_number="1",
+            title="Lote ficticio",
+            description="Bienes controlados para pruebas",
+            estimated_amount=100000,
+            awarded_amount=90000,
+            currency="DOP",
+            status="awarded",
+            source_id=source.id,
+            evidence_id=evidence.id,
+            metadata_=marker,
+        )
+        db.add(lot)
+        db.flush()
+        for number in (1, 2):
+            db.add(
+                ProcurementItem(
+                    procurement_process_id=processes[0].id,
+                    lot_id=lot.id,
+                    item_code=f"ITEM-TEST-{number}",
+                    description=f"Ítem ficticio {number}",
+                    quantity=10,
+                    unit_of_measure="unidad",
+                    estimated_unit_price=5000,
+                    awarded_unit_price=4500,
+                    estimated_total=50000,
+                    awarded_total=45000,
+                    currency="DOP",
+                    source_id=source.id,
+                    evidence_id=evidence.id,
+                    metadata_=marker,
+                )
+            )
+    bids: list[ProcurementBid] = []
+    for supplier, amount in zip(suppliers[:2], (90000, 95000), strict=True):
+        bid = db.scalar(
+            select(ProcurementBid).where(
+                ProcurementBid.procurement_process_id == processes[0].id,
+                ProcurementBid.supplier_id == supplier.id,
+            )
+        )
+        if bid is None:
+            bid = ProcurementBid(
+                procurement_process_id=processes[0].id,
+                lot_id=lot.id,
+                supplier_id=supplier.id,
+                submission_date=datetime(2099, 1, 9, tzinfo=UTC),
+                offered_amount=amount,
+                currency="DOP",
+                bid_status="selected" if amount == 90000 else "not_selected",
+                technical_score=90,
+                financial_score=90,
+                total_score=90,
+                is_compliant=True,
+                source_id=source.id,
+                evidence_id=evidence.id,
+                metadata_=marker,
+            )
+            db.add(bid)
+            db.flush()
+        bids.append(bid)
+    single_bid = db.scalar(
+        select(ProcurementBid).where(ProcurementBid.procurement_process_id == processes[1].id)
+    )
+    if single_bid is None:
+        single_bid = ProcurementBid(
+            procurement_process_id=processes[1].id,
+            supplier_id=suppliers[2].id,
+            submission_date=datetime(2099, 2, 9, tzinfo=UTC),
+            offered_amount=48000,
+            currency="DOP",
+            bid_status="evaluated",
+            source_id=source.id,
+            evidence_id=evidence.id,
+            metadata_=marker,
+        )
+        db.add(single_bid)
+    award = db.scalar(
+        select(ProcurementAward).where(ProcurementAward.award_reference == "AWARD-TEST-B7-001")
+    )
+    if award is None:
+        award = ProcurementAward(
+            procurement_process_id=processes[0].id,
+            lot_id=lot.id,
+            supplier_id=suppliers[0].id,
+            bid_id=bids[0].id,
+            award_reference="AWARD-TEST-B7-001",
+            award_date=date(2099, 1, 15),
+            awarded_amount=90000,
+            currency="DOP",
+            award_status="confirmed",
+            legal_basis_id=legal_basis.id,
+            source_id=source.id,
+            evidence_id=evidence.id,
+            metadata_=marker,
+        )
+        db.add(award)
+        db.flush()
+    contract = db.scalar(
+        select(ProcurementContract).where(
+            ProcurementContract.contract_code == "CONTRACT-TEST-B7-001"
+        )
+    )
+    if contract is None:
+        contract = ProcurementContract(
+            procurement_process_id=processes[0].id,
+            award_id=award.id,
+            institution_id=institution.id,
+            supplier_id=suppliers[0].id,
+            contract_code="CONTRACT-TEST-B7-001",
+            title="Contrato ficticio controlado",
+            signature_date=date(2099, 1, 20),
+            start_date=date(2099, 1, 21),
+            end_date=date(2099, 6, 30),
+            original_amount=90000,
+            current_amount=110000,
+            paid_amount=40000,
+            currency="DOP",
+            contract_status="active",
+            procurement_type=ProcurementType.GOODS,
+            territory_id=territory.id,
+            organizational_unit_id=unit.id,
+            legal_basis_id=legal_basis.id,
+            source_id=source.id,
+            evidence_id=evidence.id,
+            raw_payload=marker,
+            metadata_=marker,
+            checksum="7" * 64,
+        )
+        db.add(contract)
+        db.flush()
+    if (
+        db.scalar(select(ContractAmendment).where(ContractAmendment.contract_id == contract.id))
+        is None
+    ):
+        db.add(
+            ContractAmendment(
+                contract_id=contract.id,
+                amendment_number="1",
+                amendment_type="amount_increase",
+                effective_date=date(2099, 3, 1),
+                previous_amount=90000,
+                new_amount=110000,
+                description="Incremento ficticio controlado",
+                legal_basis_id=legal_basis.id,
+                source_id=source.id,
+                evidence_id=evidence.id,
+                status="confirmed",
+                metadata_=marker,
+            )
+        )
+    order = db.scalar(select(PurchaseOrder).where(PurchaseOrder.contract_id == contract.id))
+    if order is None:
+        order = PurchaseOrder(
+            contract_id=contract.id,
+            order_code="PO-TEST-B7-001",
+            issue_date=date(2099, 1, 22),
+            amount=90000,
+            currency="DOP",
+            status="issued",
+            source_id=source.id,
+            evidence_id=evidence.id,
+            metadata_=marker,
+        )
+        db.add(order)
+        db.flush()
+    additions = (
+        (
+            ContractDelivery,
+            dict(
+                contract_id=contract.id,
+                purchase_order_id=order.id,
+                delivery_date=date(2099, 2, 15),
+                acceptance_date=date(2099, 2, 16),
+                delivered_amount=40000,
+                accepted_amount=40000,
+                status="accepted",
+                description="Entrega ficticia controlada",
+            ),
+        ),
+        (
+            ContractPayment,
+            dict(
+                contract_id=contract.id,
+                institution_id=institution.id,
+                supplier_id=suppliers[0].id,
+                payment_reference="PAY-TEST-B7-001",
+                payment_date=date(2099, 2, 20),
+                gross_amount=40000,
+                deductions=0,
+                net_amount=40000,
+                currency="DOP",
+                status="confirmed",
+            ),
+        ),
+        (
+            ContractGuarantee,
+            dict(
+                contract_id=contract.id,
+                supplier_id=suppliers[0].id,
+                guarantee_type="performance_bond",
+                issuer_name="Emisor Ficticio de Prueba",
+                amount=9000,
+                currency="DOP",
+                issue_date=date(2099, 1, 20),
+                expiration_date=date(2099, 7, 30),
+                status="active",
+            ),
+        ),
+        (
+            ProcurementChallenge,
+            dict(
+                procurement_process_id=processes[0].id,
+                supplier_id=suppliers[1].id,
+                challenge_type="review_request",
+                filing_date=date(2099, 1, 16),
+                decision_date=date(2099, 1, 19),
+                status="decided",
+                summary="Impugnación ficticia sin valoración jurídica",
+                decision_summary="Decisión ficticia controlada",
+            ),
+        ),
+    )
+    for model, values in additions:
+        if (
+            db.scalar(select(model).where(model.source_id == source.id, model.metadata_ == marker))
+            is None
+        ):
+            db.add(model(**values, source_id=source.id, evidence_id=evidence.id, metadata_=marker))
+    for finding_type, process_id, observed in (
+        ("single_bidder", processes[1].id, {"bidder_count": 1}),
+        ("contract_growth", processes[0].id, {"growth_percentage": "22.22"}),
+    ):
+        if (
+            db.scalar(
+                select(ProcurementFinding).where(
+                    ProcurementFinding.procurement_process_id == process_id,
+                    ProcurementFinding.finding_type == finding_type,
+                )
+            )
+            is None
+        ):
+            db.add(
+                ProcurementFinding(
+                    finding_type=finding_type,
+                    severity="review_required",
+                    institution_id=institution.id,
+                    procurement_process_id=process_id,
+                    contract_id=contract.id if finding_type == "contract_growth" else None,
+                    supplier_id=suppliers[0].id if finding_type == "contract_growth" else None,
+                    observed_value=observed,
+                    explanation=(
+                        "Señal ficticia para pruebas; no implica fraude, corrupción ni ilegalidad."
+                    ),
+                    evidence_id=evidence.id,
+                    metadata_=marker,
+                )
+            )
 
 
 def main() -> None:
