@@ -1,0 +1,2 @@
+import { Breadcrumbs, EmptyState } from "@/components/ui";
+export default async function Person({params}:{params:Promise<{id:string}>}) { const {id}=await params; return <div className="shell section"><Breadcrumbs items={[{href:"/",label:"Inicio"},{href:"/personas",label:"Personas"}]}/><h1>Trayectoria pública</h1><p>Identificador público: {id}</p><EmptyState title="Sin trayectoria pública disponible"/></div> }

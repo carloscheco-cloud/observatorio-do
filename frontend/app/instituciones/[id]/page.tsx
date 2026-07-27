@@ -1,0 +1,4 @@
+import Link from "next/link";
+import { Breadcrumbs, EmptyState, FreshnessIndicator, MethodologyNotice, StatusBadge } from "@/components/ui";
+const tabs=["Resumen","Estructura","Autoridades","Empleo","Nómina","Presupuesto","Compras","Deuda","Patrimonio","Alertas","Fuentes","Historial"];
+export default async function Profile({params}:{params:Promise<{id:string}>}) { const {id}=await params; return <div className="shell section"><Breadcrumbs items={[{href:"/",label:"Inicio"},{href:"/instituciones",label:"Instituciones"}]}/><p className="eyebrow">Perfil institucional</p><h1>Institución</h1><p><StatusBadge>Cobertura bajo revisión</StatusBadge> · <FreshnessIndicator/></p><nav className="tabs" aria-label="Secciones del perfil">{tabs.map(tab=><Link key={tab} href={`#${tab.toLowerCase()}`}>{tab}</Link>)}</nav><section id="resumen"><h2>Resumen</h2><p>Identificador público: {id}</p><EmptyState/></section><MethodologyNotice/></div> }

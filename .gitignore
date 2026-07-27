@@ -8,3 +8,8 @@ __pycache__/
 .coverage
 htmlcov/
 *.egg-info/
+frontend/node_modules/
+frontend/.next/
+frontend/test-results/
+frontend/playwright-report/
+frontend/*.tsbuildinfo

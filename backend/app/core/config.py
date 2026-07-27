@@ -12,6 +12,11 @@ class Settings(BaseSettings):
     ingestion_http_timeout_seconds: int = 20
     ingestion_scheduler_enabled: bool = False
     ingestion_timezone: str = "America/Santo_Domingo"
+    public_api_page_size_max: int = 100
+    public_api_cache_seconds: int = 60
+    public_api_rate_limit_per_minute: int = 120
+    cors_origins: str = "http://localhost:3000"
+    trusted_hosts: str = "localhost,127.0.0.1,testserver"
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 

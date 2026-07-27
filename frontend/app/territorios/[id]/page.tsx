@@ -1,0 +1,2 @@
+import { Breadcrumbs, EmptyState } from "@/components/ui";
+export default async function Territory({params}:{params:Promise<{id:string}>}) { const {id}=await params; return <div className="shell section"><Breadcrumbs items={[{href:"/",label:"Inicio"},{href:"/territorios",label:"Territorios"}]}/><h1>Perfil territorial</h1><p>Identificador público: {id}</p><EmptyState title="Sin métricas territoriales disponibles"/></div> }

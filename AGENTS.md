@@ -1,5 +1,10 @@
 # Guía para agentes
 
+El producto público vive en `backend/app/modules/public_api` y `frontend/`. Toda respuesta
+pública usa listas explícitas de campos permitidos y excluye payloads crudos, hashes,
+notas, propuestas no confirmadas y hallazgos no publicados. No reutilizar esquemas
+internos en `/api/v1/public`; representar ausencia como no disponible, no como cero.
+
 ## Arquitectura
 
 - Mantener un monolito modular bajo `backend/app/modules`.

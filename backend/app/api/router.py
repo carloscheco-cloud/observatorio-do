@@ -16,6 +16,7 @@ from app.modules.payroll_periods.router import router as payroll_periods_router
 from app.modules.persons.router import router as persons_router
 from app.modules.positions.router import router as positions_router
 from app.modules.procurement_processes.router import router as procurement_router
+from app.modules.public_api.router import router as public_api_router
 from app.modules.public_assets.router import router as public_assets_router
 from app.modules.public_debt.router import router as public_debt_router
 from app.modules.risk_engine.router import router as risk_engine_router
@@ -46,3 +47,4 @@ api_router.include_router(public_debt_router)
 api_router.include_router(asset_categories_router)
 api_router.include_router(public_assets_router)
 api_router.include_router(risk_engine_router)
+api_router.include_router(public_api_router)
