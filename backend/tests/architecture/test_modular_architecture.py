@@ -11,6 +11,10 @@ MODULES = (
     "positions",
     "appointments",
     "organizational_units",
+    "employment_relationships",
+    "payroll_periods",
+    "payroll_entries",
+    "payroll_findings",
 )
 
 
@@ -35,7 +39,16 @@ def test_canonical_models_are_separate_from_evidence_and_sources() -> None:
 
 
 def test_ai_guards_exist_at_service_and_database_layers() -> None:
-    canonical = ("persons", "legal_basis", "positions", "appointments", "organizational_units")
+    canonical = (
+        "persons",
+        "legal_basis",
+        "positions",
+        "appointments",
+        "organizational_units",
+        "employment_relationships",
+        "payroll_periods",
+        "payroll_entries",
+    )
     for module in canonical:
         assert "actor_type.lower()" in (ROOT / "modules" / module / "service.py").read_text()
     migrations = list((ROOT.parent / "alembic" / "versions").glob("*.py"))
