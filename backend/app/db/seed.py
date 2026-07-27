@@ -1,4 +1,5 @@
 from datetime import UTC, date, datetime
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -17,6 +18,7 @@ from app.modules.budget.models import (
     BudgetStatus,
     CycleType,
 )
+from app.modules.creditors.models import Creditor
 from app.modules.employment_relationships.models import (
     EmploymentRelationship,
     EmploymentType,
@@ -59,6 +61,19 @@ from app.modules.procurement_processes.models import (
     ProcurementProcess,
     ProcurementType,
     PurchaseOrder,
+)
+from app.modules.public_debt.models import (
+    DebtBalanceSnapshot,
+    DebtDisbursement,
+    DebtInstrument,
+    DebtPayment,
+    DebtServiceSchedule,
+    DebtTerm,
+    FiscalRiskFinding,
+    MultiYearCommitment,
+    PublicGuarantee,
+    PublicObligation,
+    PublicSubsidy,
 )
 from app.modules.sources.models import Source
 from app.modules.suppliers.models import Supplier, SupplierType
@@ -439,6 +454,7 @@ def seed(db: Session) -> None:
     )
     _seed_block6(db, institution, directorate, bonao, block4_source, block4_evidence, block4_legal)
     _seed_block7(db, institution, directorate, bonao, block4_source, block4_evidence, block4_legal)
+    _seed_block8(db, institution, source, evidence, legal_basis)
     db.commit()
 
 
@@ -1111,6 +1127,235 @@ def _seed_block7(
                     metadata_=marker,
                 )
             )
+
+
+def _seed_block8(
+    db: Session,
+    institution: Institution,
+    source: Source,
+    evidence: Evidence,
+    legal_basis: LegalBasis,
+) -> None:
+    """Idempotent, controlled and entirely fictional Block 8 dataset."""
+    marker = {"fictional": True, "seed": "block-8-controlled"}
+    creditors: list[Creditor] = []
+    for code, name, kind in (
+        ("B8-CRED-A", "Fondo Multilateral Ficticio Alfa", "multilateral"),
+        ("B8-CRED-B", "Banco Comercial Ficticio Beta", "commercial_bank"),
+    ):
+        item = db.scalar(select(Creditor).where(Creditor.normalized_name == code))
+        if item is None:
+            item = Creditor(
+                legal_name=name,
+                normalized_name=code,
+                creditor_type=kind,
+                is_domestic=False,
+                is_public_entity=False,
+                status="active",
+                source_id=source.id,
+                evidence_id=evidence.id,
+                metadata_=marker,
+            )
+            db.add(item)
+            db.flush()
+        creditors.append(item)
+
+    instruments: list[DebtInstrument] = []
+    for code, title, kind, creditor, principal in (
+        ("B8-LOAN-TEST-001", "Préstamo ficticio controlado", "loan", creditors[0], 1000000),
+        ("B8-BOND-TEST-001", "Título ficticio controlado", "domestic_bond", creditors[1], 500000),
+    ):
+        debt_item = db.scalar(select(DebtInstrument).where(DebtInstrument.instrument_code == code))
+        if debt_item is None:
+            debt_item = DebtInstrument(
+                debtor_institution_id=institution.id,
+                creditor_id=creditor.id,
+                instrument_code=code,
+                title=title,
+                instrument_type=kind,
+                debt_scope="municipal",
+                origin="external" if kind == "loan" else "domestic",
+                currency="DOP",
+                original_principal=principal,
+                current_principal=principal,
+                approved_amount=principal,
+                effective_date=date(2099, 1, 1),
+                maturity_date=date(2102, 12, 31),
+                interest_type="fixed",
+                nominal_interest_rate="5.25",
+                payment_frequency="quarterly",
+                status="active",
+                legal_basis_id=legal_basis.id,
+                source_id=source.id,
+                evidence_id=evidence.id,
+                raw_payload={"controlled": True},
+                metadata_=marker,
+            )
+            db.add(debt_item)
+            db.flush()
+        instruments.append(debt_item)
+
+    instrument = instruments[0]
+    additions: tuple[tuple[Any, dict[str, object]], ...] = (
+        (
+            DebtTerm,
+            {
+                "debt_instrument_id": instrument.id,
+                "valid_from": date(2099, 1, 1),
+                "interest_type": "fixed",
+                "nominal_rate": "5.25",
+                "payment_frequency": "quarterly",
+                "currency": "DOP",
+            },
+        ),
+        (
+            DebtDisbursement,
+            {
+                "debt_instrument_id": instrument.id,
+                "debtor_institution_id": institution.id,
+                "disbursement_reference": "B8-DISB-001",
+                "disbursement_date": date(2099, 1, 10),
+                "amount": 400000,
+                "currency": "DOP",
+                "status": "confirmed",
+            },
+        ),
+        (
+            DebtServiceSchedule,
+            {
+                "debt_instrument_id": instrument.id,
+                "installment_number": 1,
+                "due_date": date(2099, 4, 1),
+                "principal_due": 100000,
+                "interest_due": 12500,
+                "fees_due": 0,
+                "penalties_due": 0,
+                "total_due": 112500,
+                "currency": "DOP",
+                "schedule_status": "partially_paid",
+            },
+        ),
+        (
+            DebtPayment,
+            {
+                "debt_instrument_id": instrument.id,
+                "debtor_institution_id": institution.id,
+                "creditor_id": creditors[0].id,
+                "payment_reference": "B8-PAY-001",
+                "payment_date": date(2099, 4, 1),
+                "principal_paid": 50000,
+                "interest_paid": 12500,
+                "fees_paid": 0,
+                "penalties_paid": 0,
+                "total_paid": 62500,
+                "currency": "DOP",
+                "status": "confirmed",
+            },
+        ),
+        (
+            DebtBalanceSnapshot,
+            {
+                "debt_instrument_id": instrument.id,
+                "snapshot_date": date(2099, 3, 31),
+                "principal_outstanding": 950000,
+                "interest_accrued": 12500,
+                "arrears_principal": 0,
+                "arrears_interest": 0,
+                "fees_outstanding": 0,
+                "total_outstanding": 962500,
+                "currency": "DOP",
+                "valuation_method": "nominal",
+                "status": "confirmed",
+            },
+        ),
+        (
+            PublicGuarantee,
+            {
+                "guarantor_institution_id": institution.id,
+                "guaranteed_entity_id": institution.id,
+                "beneficiary_creditor_id": creditors[1].id,
+                "guarantee_code": "B8-GUAR-001",
+                "guarantee_type": "payment_guarantee",
+                "issue_date": date(2099, 1, 1),
+                "guaranteed_amount": 100000,
+                "outstanding_exposure": 80000,
+                "currency": "DOP",
+                "status": "active",
+                "legal_basis_id": legal_basis.id,
+                "exception_documented": True,
+            },
+        ),
+        (
+            PublicObligation,
+            {
+                "institution_id": institution.id,
+                "creditor_id": creditors[1].id,
+                "obligation_code": "B8-OBL-001",
+                "obligation_type": "accounts_payable",
+                "description": "Obligación ficticia pendiente",
+                "recognition_date": date(2099, 1, 1),
+                "due_date": date(2099, 2, 1),
+                "original_amount": 10000,
+                "outstanding_amount": 7500,
+                "paid_amount": 2500,
+                "currency": "DOP",
+                "status": "overdue",
+                "legal_basis_id": legal_basis.id,
+            },
+        ),
+        (
+            PublicSubsidy,
+            {
+                "granting_institution_id": institution.id,
+                "beneficiary_institution_id": institution.id,
+                "subsidy_code": "B8-SUB-001",
+                "subsidy_type": "institutional",
+                "period_start": date(2099, 1, 1),
+                "period_end": date(2099, 12, 31),
+                "approved_amount": 20000,
+                "paid_amount": 10000,
+                "currency": "DOP",
+                "purpose": "Subsidio ficticio controlado",
+                "status": "active",
+                "legal_basis_id": legal_basis.id,
+            },
+        ),
+        (
+            MultiYearCommitment,
+            {
+                "institution_id": institution.id,
+                "commitment_code": "B8-MYC-001",
+                "start_year": 2099,
+                "end_year": 2100,
+                "total_committed_amount": 30000,
+                "currency": "DOP",
+                "annual_breakdown": {"2099": 10000, "2100": 20000},
+                "status": "active",
+                "legal_basis_id": legal_basis.id,
+            },
+        ),
+    )
+    for model, values in additions:
+        if db.scalar(select(model).where(model.metadata_ == marker)) is None:
+            db.add(model(**values, source_id=source.id, evidence_id=evidence.id, metadata_=marker))
+    if (
+        db.scalar(
+            select(FiscalRiskFinding).where(FiscalRiskFinding.debt_instrument_id == instrument.id)
+        )
+        is None
+    ):
+        db.add(
+            FiscalRiskFinding(
+                finding_type="upcoming_maturity",
+                severity="informational",
+                institution_id=institution.id,
+                debt_instrument_id=instrument.id,
+                observed_value={"controlled_test": True},
+                explanation="Señal ficticia para revisión; no afirma ilegalidad ni corrupción.",
+                evidence_id=evidence.id,
+                metadata_=marker,
+            )
+        )
 
 
 def main() -> None:
