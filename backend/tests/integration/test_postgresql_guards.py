@@ -1,4 +1,5 @@
 import uuid
+from pathlib import Path
 
 import pytest
 from alembic.config import Config
@@ -9,9 +10,12 @@ from alembic import command
 
 pytestmark = pytest.mark.integration
 
+BACKEND_DIR = Path(__file__).resolve().parents[2]
+
 
 def migrate(postgres_url: str) -> None:
-    config = Config("backend/alembic.ini")
+    config = Config(BACKEND_DIR / "alembic.ini")
+    config.set_main_option("script_location", str(BACKEND_DIR / "alembic"))
     config.set_main_option("sqlalchemy.url", postgres_url)
     command.upgrade(config, "head")
 
