@@ -242,13 +242,15 @@ def upgrade() -> None:
           END IF;
         END IF;
       END IF;
-      IF TG_TABLE_NAME = 'procurement_awards' AND NEW.bid_id IS NOT NULL THEN
-        SELECT procurement_process_id, supplier_id, lot_id
-          INTO ref_process, ref_supplier, ref_lot FROM procurement_bids WHERE id = NEW.bid_id;
-        IF ref_process IS DISTINCT FROM NEW.procurement_process_id
-           OR ref_supplier IS DISTINCT FROM NEW.supplier_id
-           OR ref_lot IS DISTINCT FROM NEW.lot_id THEN
-          RAISE EXCEPTION 'Award is incompatible with bid';
+      IF TG_TABLE_NAME = 'procurement_awards' THEN
+        IF NEW.bid_id IS NOT NULL THEN
+          SELECT procurement_process_id, supplier_id, lot_id
+            INTO ref_process, ref_supplier, ref_lot FROM procurement_bids WHERE id = NEW.bid_id;
+          IF ref_process IS DISTINCT FROM NEW.procurement_process_id
+             OR ref_supplier IS DISTINCT FROM NEW.supplier_id
+             OR ref_lot IS DISTINCT FROM NEW.lot_id THEN
+            RAISE EXCEPTION 'Award is incompatible with bid';
+          END IF;
         END IF;
       END IF;
       IF TG_TABLE_NAME = 'procurement_contracts' THEN
