@@ -31,6 +31,9 @@ class Position(Base):
     institution_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("institutions.id", ondelete="RESTRICT"), nullable=False
     )
+    organizational_unit_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("organizational_units.id", ondelete="RESTRICT")
+    )
     official_name: Mapped[str] = mapped_column(String(300), nullable=False)
     code: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     description: Mapped[str | None] = mapped_column(Text)

@@ -4,6 +4,12 @@ from app.modules.appointments.models import Appointment
 from app.modules.evidence.models import Evidence
 from app.modules.institutions.models import Institution, InstitutionEvidence
 from app.modules.legal_basis.models import LegalBasis
+from app.modules.organizational_units.models import (
+    OrganizationalEvent,
+    OrganizationalUnit,
+    OrganizationalUnitEvidence,
+    PositionUnitAssignment,
+)
 from app.modules.persons.models import Person
 from app.modules.positions.models import Position
 from app.modules.sources.models import Source
@@ -15,8 +21,12 @@ __all__ = [
     "Institution",
     "InstitutionEvidence",
     "LegalBasis",
+    "OrganizationalEvent",
+    "OrganizationalUnit",
+    "OrganizationalUnitEvidence",
     "Person",
     "Position",
+    "PositionUnitAssignment",
     "Source",
     "Territory",
 ]

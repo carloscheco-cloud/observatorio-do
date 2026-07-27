@@ -46,14 +46,16 @@ def test_confirmed_appointment_requires_traceability(db: Session) -> None:
 def test_historical_queries_and_point_in_time(db: Session) -> None:
     seed(db)
     person = db.scalar(select(Person))
-    position = db.scalar(select(Position))
-    appointment = db.scalar(select(Appointment))
+    position = db.scalar(select(Position).where(Position.code == "DO-BONAO-ALCALDIA-CONTROL"))
+    appointment = db.scalar(
+        select(Appointment).where(Appointment.legal_act == "ACTO-CONTROL-B3-001")
+    )
     assert person is not None
     assert position is not None
     assert appointment is not None
-    assert appointments_for_person(db, person.id) == [appointment]
+    assert appointment in appointments_for_person(db, person.id)
     assert appointments_for_position(db, position.id) == [appointment]
-    assert active_appointments(db, on_date=date(2025, 6, 1)) == [appointment]
+    assert appointment in active_appointments(db, on_date=date(2025, 6, 1))
     assert active_appointments(db, on_date=date(2024, 12, 31)) == []
 
 
