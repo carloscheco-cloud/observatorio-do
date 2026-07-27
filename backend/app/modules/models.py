@@ -19,6 +19,24 @@ from app.modules.budget.models import (
 from app.modules.creditors.models import Creditor, CreditorHistory
 from app.modules.employment_relationships.models import EmploymentRelationship
 from app.modules.evidence.models import Evidence
+from app.modules.ingestion.models import (
+    ColumnMapping,
+    DataLineageLink,
+    DataQualityIssue,
+    EntityMatchCandidate,
+    ImportSchema,
+    IngestionJob,
+    IngestionRun,
+    IngestionSchedule,
+    IngestionVersion,
+    QuarantineRecord,
+    RawArtifact,
+    SourceCatalog,
+    SourceDiscovery,
+    SourceQualityMetric,
+    StagingBatch,
+    StagingRecord,
+)
 from app.modules.institutions.models import Institution, InstitutionEvidence
 from app.modules.legal_basis.models import LegalBasis
 from app.modules.organizational_units.models import (
@@ -139,6 +157,22 @@ __all__ = [
     "EquipmentAsset",
     "EmploymentRelationship",
     "Institution",
+    "SourceCatalog",
+    "IngestionRun",
+    "RawArtifact",
+    "SourceDiscovery",
+    "ImportSchema",
+    "ColumnMapping",
+    "StagingBatch",
+    "StagingRecord",
+    "DataQualityIssue",
+    "EntityMatchCandidate",
+    "DataLineageLink",
+    "IngestionVersion",
+    "SourceQualityMetric",
+    "IngestionSchedule",
+    "IngestionJob",
+    "QuarantineRecord",
     "InfrastructureAsset",
     "IntangibleAsset",
     "InstitutionEvidence",

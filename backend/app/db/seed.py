@@ -27,6 +27,7 @@ from app.modules.employment_relationships.models import (
     RelationshipStatus,
 )
 from app.modules.evidence.models import Evidence
+from app.modules.ingestion.seed import seed_ingestion
 from app.modules.institutions.models import (
     Institution,
     InstitutionEvidence,
@@ -134,8 +135,11 @@ def seed(db: Session) -> None:
             publisher="Ayuntamiento Municipal de Bonao",
             is_official=True,
         )
+
         db.add(source)
         db.flush()
+
+    seed_ingestion(db, source.id)
 
     evidence = db.scalar(
         select(Evidence).where(

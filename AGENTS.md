@@ -65,3 +65,11 @@ hasta revisión humana; toda publicación exige evidencia y revisor humano. La a
 datos se registra separadamente del riesgo sustantivo y ninguna explicación pública
 expone `raw_payload`, notas internas o referencias sensibles.
 
+El módulo `ingestion` separa adquisición, almacenamiento crudo, parsing, normalización,
+validación, staging, resolución, canonicalización y eventos. Los parsers nunca importan
+servicios canónicos ni escriben sus tablas. Todo artefacto y ejecución cerrada es
+inmutable; el linaje enlaza fuente, ejecución, artefacto, ubicación, staging, evidencia y
+dato canónico. Los destinos de red deben pasar la validación SSRF y los secretos solo se
+referencian mediante entorno. La programación es pasiva por defecto y los workers reclaman
+jobs PostgreSQL con `FOR UPDATE SKIP LOCKED`.
+
