@@ -56,3 +56,12 @@ los actores IA únicamente proponen clasificaciones o señales observables. Las 
 registrales, vehiculares, seriales y de pólizas se conservan como hashes irreversibles o
 versiones enmascaradas, y `raw_payload` nunca se expone públicamente.
 
+El módulo `risk_engine` es transversal y desacoplado. Versiona taxonomías, reglas y
+umbrales; registra ejecuciones, evidencia, entidades relacionadas, deduplicación,
+revisiones, supresiones, puntuaciones y auditoría inmutable. Sus señales son hechos
+observables para revisión y nunca acusaciones. Los dominios no dependen del motor y sus
+evaluadores no escriben tablas canónicas. Toda propuesta de IA permanece sin confirmar
+hasta revisión humana; toda publicación exige evidencia y revisor humano. La ausencia de
+datos se registra separadamente del riesgo sustantivo y ninguna explicación pública
+expone `raw_payload`, notas internas o referencias sensibles.
+

@@ -129,3 +129,42 @@ Los actores IA no escriben datos patrimoniales canónicos. Placas, VIN, chasis, 
 seriales y pólizas se conservan únicamente mediante hash o enmascaramiento; ubicaciones
 restringidas no exponen dirección pública y `raw_payload` queda fuera de los esquemas de
 respuesta. Las semillas del bloque son ficticias, controladas e idempotentes.
+
+## Motor transversal de señales y revisión
+
+El Bloque 10 incorpora `risk_engine`, que versiona taxonomías, reglas y umbrales;
+registra ejecuciones reproducibles; unifica señales; conserva evidencia contradictoria;
+deduplica recurrencias; y audita revisiones, supresiones, publicaciones y puntuaciones.
+**Una señal o puntuación no equivale a una acusación ni permite concluir fraude,
+corrupción, ilegalidad, culpabilidad o intención.**
+
+Los módulos canónicos no dependen del motor y ninguna regla escribe en sus tablas. Las
+reglas propuestas por IA quedan desactivadas hasta aprobación humana. Una alerta
+confirmada o pública exige evidencia y la publicación exige revisión humana. La falta de
+datos se expresa separadamente del riesgo sustantivo.
+
+La API ofrece `/api/v1/risk-taxonomy`, `/risk-rules`, `/risk-findings`, evidencia,
+historial y vistas por entidad. Las escrituras viven bajo `/api/v1/internal/risk-*`,
+usan los encabezados conceptuales `X-Actor-Type` y `X-Actor-Id`, y están preparadas para
+autorización futura. Las respuestas públicas excluyen notas internas, payloads originales
+y referencias sensibles, y tienen paginación limitada.
+
+La migración `0010` crea el esquema, índices y guardas PostgreSQL. Las semillas de
+taxonomía, reglas, umbrales, ejecución, alertas, revisión, supresión y puntuación son
+ficticias, controladas e idempotentes.
+
+```bash
+python -m app.modules.risk_engine run
+python -m app.modules.risk_engine run --domain procurement
+python -m app.modules.risk_engine run --institution-id UUID
+python -m app.modules.risk_engine run --rule-id UUID
+python -m app.modules.risk_engine dry-run --domain payroll
+python -m app.modules.risk_engine backfill --period-start 2025-01-01 --period-end 2025-12-31
+python -m app.modules.risk_engine summary
+```
+
+Para crear una regla, cree una nueva versión mediante el servicio interno, declare campos,
+entidades, ventana, umbrales y plantillas simples, e implemente `RuleEvaluator`. El
+evaluador solo devuelve `RuleResult` con `FindingCandidate`; persistencia, deduplicación,
+auditoría y puntuación pertenecen al núcleo transversal. La explicación identifica
+observación, regla, umbral, comparación, diferencia, período, evidencia y límites.

@@ -17,6 +17,7 @@ from app.modules.positions.router import router as positions_router
 from app.modules.procurement_processes.router import router as procurement_router
 from app.modules.public_assets.router import router as public_assets_router
 from app.modules.public_debt.router import router as public_debt_router
+from app.modules.risk_engine.router import router as risk_engine_router
 from app.modules.sources.router import router as sources_router
 from app.modules.suppliers.router import router as suppliers_router
 from app.modules.territories.router import router as territories_router
@@ -42,3 +43,4 @@ api_router.include_router(creditors_router)
 api_router.include_router(public_debt_router)
 api_router.include_router(asset_categories_router)
 api_router.include_router(public_assets_router)
+api_router.include_router(risk_engine_router)
