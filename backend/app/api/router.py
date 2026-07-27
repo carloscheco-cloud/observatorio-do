@@ -6,6 +6,7 @@ from app.modules.budget.router import router as budget_router
 from app.modules.creditors.router import router as creditors_router
 from app.modules.employment_relationships.router import router as employment_router
 from app.modules.evidence.router import router as evidence_router
+from app.modules.ingestion.router import router as ingestion_router
 from app.modules.institutions.router import router as institutions_router
 from app.modules.legal_basis.router import router as legal_basis_router
 from app.modules.organizational_units.router import router as organizational_units_router
@@ -27,6 +28,7 @@ api_router.include_router(territories_router)
 api_router.include_router(sources_router)
 api_router.include_router(evidence_router)
 api_router.include_router(institutions_router)
+api_router.include_router(ingestion_router)
 api_router.include_router(persons_router)
 api_router.include_router(positions_router)
 api_router.include_router(appointments_router)

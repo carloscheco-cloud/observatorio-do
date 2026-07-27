@@ -176,3 +176,76 @@ con evidencia estructurada, aísla errores por adaptador, aplica supresiones, ag
 regla, persiste o incrementa recurrencias mediante huella estable y recalcula puntuaciones.
 `dry-run` ejecuta las mismas consultas y devuelve el mismo resumen sin persistir
 hallazgos, enlaces, grupos ni puntuaciones.
+
+## Plataforma de ingesta, ETL y linaje
+
+El Bloque 11 incorpora `app.modules.ingestion`. El flujo productivo es:
+
+`source_catalog → connector → raw_artifact → parser → normalization/validation →
+staging → authorized canonical service → evidence/lineage → internal event`.
+
+Cada fase tiene un contrato independiente. Los archivos originales viven detrás de
+`ArtifactStorage` (filesystem local en desarrollo y adaptador S3 compatible preparado);
+PostgreSQL solo conserva metadatos y claves. CSV, JSON, XLSX OpenXML, PDF tabular
+controlado y ZIP seguro tienen límites explícitos. PDF sin extracción fiable queda en
+revisión; no se activa OCR implícito. ZIP impide traversal, exceso de archivos, tamaño y
+ratios de compresión anómalos. Las fórmulas CSV se neutralizan y XLSX nunca ejecuta
+fórmulas, macros ni contenido descargado.
+
+`import_schemas` y `column_mappings` versionan el contrato de entrada. Las propuestas IA
+no se aprueban solas. `staging_records` conserva valor crudo, ubicación original,
+normalización, advertencias, errores, deduplicación y acción propuesta. Solo un staging
+válido puede llegar a un canonicalizer, que invoca el servicio autorizado del dominio,
+crea evidencia y registra `data_lineage_links`; un actor IA es rechazado. Las filas
+ambiguas se mantienen como candidatos para revisión y las eliminaciones detectadas no se
+interpretan automáticamente como bajas reales.
+
+La migración `0011` crea catálogo, ejecuciones, descubrimientos, artefactos, esquemas,
+mapeos, staging, calidad, candidatos, linaje, versiones, métricas, schedules, jobs y
+cuarentena. Incluye guardas para históricos, artefactos, versiones usadas, intentos,
+schedules, actores IA y checksums. La cola inicial usa PostgreSQL con
+`FOR UPDATE SKIP LOCKED`, backoff acotado y recuperación de jobs abandonados. El scheduler
+no arranca durante tests ni al iniciar la API; debe ejecutarse explícitamente y usa
+`America/Santo_Domingo` por defecto.
+
+La red solo admite HTTP/HTTPS. Antes de conectar se resuelve DNS y se bloquean localhost,
+redes privadas, link-local, rangos reservados y endpoints de metadata; cada redirección
+debe volver a validarse en el transporte productivo. Se aplican timeout, reintentos
+limitados, máximo de bytes, MIME real y headers permitidos. Configuraciones persistidas y
+logs no aceptan tokens, cookies, contraseñas o claves. Los endpoints internos usan
+`X-Actor-Type` y están preparados para sustituirse por autorización institucional.
+
+Endpoints principales:
+
+- `/api/v1/internal/source-catalog` y acciones `test`, `discover`, `ingest`;
+- `/api/v1/internal/ingestion-runs`, artifacts e issues;
+- `/api/v1/internal/staging-batches`, records y canonicalize;
+- `/api/v1/internal/import-schemas`, `ingestion-schedules`, `quarantine`;
+- `/api/v1/internal/ingestion-metrics`.
+
+CLI segura (desde `backend`):
+
+```bash
+python -m app.modules.ingestion sources list
+python -m app.modules.ingestion discover --source mock-http --dry-run
+python -m app.modules.ingestion ingest --source mock-api --domain budget --period 2026-01
+python -m app.modules.ingestion jobs work
+python -m app.modules.ingestion schedules list
+python -m app.modules.ingestion quarantine list
+python -m app.modules.ingestion lineage --id UUID
+python -m app.modules.ingestion quality summary
+```
+
+Para añadir un conector, herede de `BaseConnector`, valide configuración sin secretos,
+valide cada URL con la política SSRF y devuelva `ConnectorResult`; nunca importe modelos
+canónicos. Para un esquema, cree una nueva versión inmutable, declare columnas, aliases,
+tipos, transformaciones, validaciones, deduplicación y nombre del servicio autorizado;
+una persona debe aprobarlo antes de activarlo. Para una fuente nueva, registre primero
+`sources` y `source_catalog`, pruebe disponibilidad, ejecute discovery/dry-run, revise
+artifact, staging e issues, y recién entonces canonicalice.
+
+La canonicalización emite `ingestion_completed`, `canonical_data_changed` o
+`period_closed` mediante `EventDispatcher`. Un adaptador del motor de riesgos puede
+suscribirse por dominio, institución o período sin crear una dependencia directa desde
+ETL hacia `risk_engine`. Las semillas y pruebas usan únicamente fuentes ficticias y
+payloads controlados.
