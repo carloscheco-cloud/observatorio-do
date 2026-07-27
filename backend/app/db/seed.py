@@ -5,6 +5,18 @@ from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
 from app.modules.appointments.models import Appointment, AppointmentStatus
+from app.modules.budget.models import (
+    BudgetAppropriation,
+    BudgetClassifier,
+    BudgetCycle,
+    BudgetExecutionRecord,
+    BudgetFinding,
+    BudgetModification,
+    BudgetProgram,
+    BudgetRevenue,
+    BudgetStatus,
+    CycleType,
+)
 from app.modules.employment_relationships.models import (
     EmploymentRelationship,
     EmploymentType,
@@ -406,6 +418,7 @@ def seed(db: Session) -> None:
     _seed_block5(
         db, institution, person, head_position, directorate, block4_source, block4_evidence
     )
+    _seed_block6(db, institution, directorate, bonao, block4_source, block4_evidence, block4_legal)
     db.commit()
 
 
@@ -500,6 +513,240 @@ def _seed_block5(
                     metadata_={"controlled": True, "fictitious": True, "seed": "block-5"},
                 )
             )
+
+
+def _seed_block6(
+    db: Session,
+    institution: Institution,
+    unit: OrganizationalUnit,
+    territory: Territory,
+    source: Source,
+    evidence: Evidence,
+    legal_basis: LegalBasis,
+) -> None:
+    """Idempotent fictitious budget sample; amounts do not represent public finances."""
+    marker = {"controlled": True, "fictitious": True, "test_data": True, "seed": "block-6"}
+    cycle = db.scalar(
+        select(BudgetCycle).where(
+            BudgetCycle.fiscal_year == 2099,
+            BudgetCycle.jurisdiction == "Jurisdicción ficticia de control",
+        )
+    )
+    if cycle is None:
+        cycle = BudgetCycle(
+            fiscal_year=2099,
+            jurisdiction="Jurisdicción ficticia de control",
+            government_level="municipal_controlled",
+            cycle_type=CycleType.APPROVED,
+            start_date=date(2099, 1, 1),
+            end_date=date(2099, 12, 31),
+            status=BudgetStatus.CONFIRMED,
+            currency="DOP",
+            legal_basis_id=legal_basis.id,
+            source_id=source.id,
+            evidence_id=evidence.id,
+            version=1,
+            checksum="6" * 64,
+            metadata_=marker,
+        )
+        db.add(cycle)
+        db.flush()
+    classifier = db.scalar(
+        select(BudgetClassifier).where(
+            BudgetClassifier.classifier_type == "expenditure",
+            BudgetClassifier.code == "CONTROL-B6-GASTO",
+        )
+    )
+    if classifier is None:
+        classifier = BudgetClassifier(
+            classifier_type="expenditure",
+            code="CONTROL-B6-GASTO",
+            official_name="Clasificador ficticio de gasto",
+            hierarchy_level=0,
+            valid_from=date(2099, 1, 1),
+            status=BudgetStatus.CONFIRMED,
+            source_id=source.id,
+            evidence_id=evidence.id,
+            metadata_=marker,
+        )
+        db.add(classifier)
+        db.flush()
+    programs: list[BudgetProgram] = []
+    for code, name in (
+        ("CONTROL-P01", "Programa ficticio de servicios controlados"),
+        ("CONTROL-P02", "Programa ficticio de infraestructura controlada"),
+    ):
+        program = db.scalar(
+            select(BudgetProgram).where(
+                BudgetProgram.budget_cycle_id == cycle.id,
+                BudgetProgram.program_code == code,
+            )
+        )
+        if program is None:
+            program = BudgetProgram(
+                institution_id=institution.id,
+                budget_cycle_id=cycle.id,
+                program_code=code,
+                official_name=name,
+                normalized_name=name.lower(),
+                program_type="program",
+                territory_id=territory.id,
+                organizational_unit_id=unit.id,
+                start_date=date(2099, 1, 1),
+                status=BudgetStatus.CONFIRMED,
+                legal_basis_id=legal_basis.id,
+                source_id=source.id,
+                evidence_id=evidence.id,
+                metadata_=marker,
+            )
+            db.add(program)
+            db.flush()
+        programs.append(program)
+    appropriations: list[BudgetAppropriation] = []
+    for index, (program, approved, current) in enumerate(
+        ((programs[0], 100000, 120000), (programs[1], 200000, 180000)), 1
+    ):
+        item = db.scalar(
+            select(BudgetAppropriation).where(
+                BudgetAppropriation.budget_cycle_id == cycle.id,
+                BudgetAppropriation.program_id == program.id,
+                BudgetAppropriation.version == 1,
+            )
+        )
+        if item is None:
+            item = BudgetAppropriation(
+                budget_cycle_id=cycle.id,
+                institution_id=institution.id,
+                program_id=program.id,
+                organizational_unit_id=unit.id,
+                territory_id=territory.id,
+                classifier_id=classifier.id,
+                approved_amount=approved,
+                current_amount=current,
+                currency="DOP",
+                valid_from=date(2099, 1, 1),
+                status=BudgetStatus.CONFIRMED,
+                source_id=source.id,
+                evidence_id=evidence.id,
+                row_number=index,
+                version=1,
+                checksum=f"{60 + index:064x}",
+                raw_payload=marker,
+                metadata_=marker,
+            )
+            db.add(item)
+            db.flush()
+        appropriations.append(item)
+    if (
+        db.scalar(
+            select(BudgetModification).where(
+                BudgetModification.appropriation_id == appropriations[0].id
+            )
+        )
+        is None
+    ):
+        db.add(
+            BudgetModification(
+                budget_cycle_id=cycle.id,
+                institution_id=institution.id,
+                appropriation_id=appropriations[0].id,
+                modification_type="increase",
+                amount=20000,
+                previous_balance=100000,
+                resulting_balance=120000,
+                effective_date=date(2099, 2, 1),
+                legal_reference="CONTROL-B6-MOD-001",
+                legal_basis_id=legal_basis.id,
+                source_id=source.id,
+                evidence_id=evidence.id,
+                description="Aumento ficticio controlado.",
+                status=BudgetStatus.CONFIRMED,
+                metadata_=marker,
+            )
+        )
+    for month, committed, accrued, paid in (
+        (1, 10000, 8000, 7000),
+        (2, 15000, 12000, 11000),
+        (3, 20000, 16000, 15000),
+    ):
+        start = date(2099, month, 1)
+        if (
+            db.scalar(
+                select(BudgetExecutionRecord).where(
+                    BudgetExecutionRecord.appropriation_id == appropriations[0].id,
+                    BudgetExecutionRecord.period_start == start,
+                )
+            )
+            is None
+        ):
+            db.add(
+                BudgetExecutionRecord(
+                    budget_cycle_id=cycle.id,
+                    institution_id=institution.id,
+                    appropriation_id=appropriations[0].id,
+                    execution_period=f"2099-{month:02d}",
+                    period_start=start,
+                    period_end=date(2099, month, 28),
+                    initial_budget=100000,
+                    current_budget=120000,
+                    committed_amount=committed,
+                    accrued_amount=accrued,
+                    paid_amount=paid,
+                    available_balance=120000 - committed,
+                    currency="DOP",
+                    status=BudgetStatus.CONFIRMED,
+                    source_id=source.id,
+                    evidence_id=evidence.id,
+                    row_number=month,
+                    raw_payload=marker,
+                    metadata_=marker,
+                )
+            )
+    if db.scalar(select(BudgetRevenue).where(BudgetRevenue.budget_cycle_id == cycle.id)) is None:
+        db.add(
+            BudgetRevenue(
+                budget_cycle_id=cycle.id,
+                institution_id=institution.id,
+                revenue_classifier_id=classifier.id,
+                estimated_amount=300000,
+                modified_estimate=300000,
+                collected_amount=90000,
+                accrued_amount=95000,
+                period_start=date(2099, 1, 1),
+                period_end=date(2099, 3, 31),
+                currency="DOP",
+                status=BudgetStatus.CONFIRMED,
+                source_id=source.id,
+                evidence_id=evidence.id,
+                raw_payload=marker,
+                metadata_=marker,
+            )
+        )
+    if (
+        db.scalar(
+            select(BudgetFinding).where(
+                BudgetFinding.budget_cycle_id == cycle.id,
+                BudgetFinding.finding_type == "under_execution",
+            )
+        )
+        is None
+    ):
+        db.add(
+            BudgetFinding(
+                finding_type="under_execution",
+                severity="review_required",
+                institution_id=institution.id,
+                budget_cycle_id=cycle.id,
+                appropriation_id=appropriations[1].id,
+                observed_value={"paid_percentage": "0"},
+                expected_or_previous_value={"controlled_threshold": "25"},
+                explanation=(
+                    "Señal ficticia de subejecución para pruebas; no implica irregularidad."
+                ),
+                evidence_id=evidence.id,
+                metadata_=marker,
+            )
+        )
 
 
 def main() -> None:

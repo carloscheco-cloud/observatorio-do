@@ -26,6 +26,11 @@
 
 ## Calidad
 
+El módulo `budget` conserva ciclos, clasificadores, programas, apropiaciones,
+modificaciones, ejecución, ingresos, transferencias, versiones y hallazgos observables.
+Un presupuesto confirmado no se sobrescribe; solo el servicio presupuestario autorizado
+escribe datos canónicos y los actores IA solo proponen clasificaciones o hallazgos.
+
 Antes de entregar cambios ejecutar `make lint`, `make typecheck` y `make test`.
 Agregar una migración, pruebas unitarias, de arquitectura e integración cuando corresponda.
 

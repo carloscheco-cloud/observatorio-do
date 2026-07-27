@@ -66,5 +66,19 @@ respuestas públicas. La procedencia, evidencia, fila, payload original, procesa
 versión, actor y estado de validación se conservan en capas diferenciadas. Los actores IA
 solo pueden proponer fuentes, evidencias o señales analíticas.
 
-La cabeza Alembic actual es `0005`. Las semillas de los bloques 4 y 5 son idempotentes y
+La cabeza Alembic actual es `0006`. Las semillas de los bloques 4, 5 y 6 son idempotentes y
 todos sus datos organizativos y salariales están marcados como ficticios y controlados.
+
+## Presupuesto público y ejecución financiera
+
+El Bloque 6 incorpora ciclos y versiones, clasificadores, fuentes de financiamiento,
+programas, apropiaciones, modificaciones, ejecución, ingresos, transferencias y
+hallazgos observables. Cada cifra canónica conserva procedencia, evidencia, período,
+payload original no público, versión, actor y checksum; los actores IA no escriben estas
+tablas.
+
+La API expone `/api/v1/budget-cycles`, `/budget-classifiers`, `/budget-programs`,
+`/budget-appropriations`, `/budget-modifications`, `/budget-execution-records`,
+`/budget-revenues`, `/interinstitutional-transfers` y `/budget-findings`, además de
+métricas, historial, evolución y comparación. La ingesta ofrece vista previa y dry-run
+con checksum, mapeo, errores por fila, límite de tamaño y protección contra fórmulas CSV.
