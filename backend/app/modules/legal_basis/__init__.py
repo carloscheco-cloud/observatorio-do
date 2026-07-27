@@ -1,0 +1,1 @@
+"""Legal basis business module."""

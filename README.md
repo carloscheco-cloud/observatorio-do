@@ -1,8 +1,9 @@
 # Observatorio del Estado Dominicano
 
 API e infraestructura de datos independiente para registrar instituciones públicas con
-trazabilidad documental. Los bloques 1 y 2 implementan un monolito modular con FastAPI,
-SQLAlchemy, PostgreSQL y Alembic.
+trazabilidad documental. Los bloques 1, 2 y 3 implementan un monolito modular con FastAPI,
+SQLAlchemy, PostgreSQL y Alembic, incluyendo personas, cargos, fundamentos legales y
+designaciones históricas.
 
 ## Inicio rápido
 
@@ -40,3 +41,6 @@ make test-integration
 - `institution_evidence` hace trazable cada institución hasta su evidencia.
 - PostgreSQL impide confirmar una institución sin evidencia y retirar su último respaldo.
 - PostgreSQL y el servicio rechazan escrituras canónicas cuando `app.actor_type = 'ai'`.
+- Cada cargo referencia un fundamento legal respaldado por evidencia.
+- Las designaciones confirmadas requieren persona, cargo, institución, evidencia y fuente.
+- Los cargos de ocupante único no admiten designaciones confirmadas solapadas.
