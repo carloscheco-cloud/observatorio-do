@@ -85,3 +85,24 @@ def test_domain_services_do_not_depend_on_risk_engine() -> None:
     for service in (ROOT / "modules").glob("*/service.py"):
         if service.parent.name != "risk_engine":
             assert "risk_engine" not in service.read_text(encoding="utf-8")
+
+
+def test_risk_engine_registers_all_domain_adapters() -> None:
+    adapters = (ROOT / "modules/risk_engine/adapters.py").read_text(encoding="utf-8")
+    service = (ROOT / "modules/risk_engine/service.py").read_text(encoding="utf-8")
+    expected = (
+        "PayrollRiskAdapter",
+        "EmploymentRiskAdapter",
+        "BudgetRiskAdapter",
+        "ProcurementRiskAdapter",
+        "DebtRiskAdapter",
+        "AssetRiskAdapter",
+        "InstitutionRiskAdapter",
+        "OrganizationalRiskAdapter",
+        "AppointmentRiskAdapter",
+        "TraceabilityRiskAdapter",
+        "CrossDomainRiskAdapter",
+    )
+    for name in expected:
+        assert f"class {name}" in adapters
+        assert name in service

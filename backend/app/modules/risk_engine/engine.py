@@ -36,6 +36,7 @@ class FindingCandidate:
     comparison_value: dict[str, object] | None = None
     threshold_value: dict[str, object] | None = None
     evidence_ids: tuple[uuid.UUID, ...] = ()
+    evidence_links: tuple[tuple[uuid.UUID, uuid.UUID, str], ...] = ()
     metadata: dict[str, object] = field(default_factory=dict)
 
 

@@ -1,10 +1,14 @@
+from datetime import date
+
 import pytest
 from sqlalchemy import create_engine, select, text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 
 from app.db.seed import seed
+from app.modules.risk_engine import service
 from app.modules.risk_engine.models import RiskFinding, RiskRule
+from app.modules.risk_engine.schemas import EvaluationRequest
 from tests.integration.test_postgresql_guards import migrate
 
 pytestmark = pytest.mark.integration
@@ -110,3 +114,33 @@ def test_used_rule_requires_new_version(postgres_url: str) -> None:
                 )
         finally:
             transaction.rollback()
+
+
+def test_real_adapters_persist_evidenced_findings_on_postgresql(
+    postgres_url: str,
+) -> None:
+    migrate(postgres_url)
+    engine = create_engine(postgres_url)
+    with Session(engine) as db:
+        seed(db)
+        run = service.run_evaluation(
+            db,
+            EvaluationRequest(
+                trigger_type="manual",
+                period_start=date(2099, 1, 1),
+                period_end=date(2099, 12, 31),
+            ),
+            actor_type="service",
+            actor_id=None,
+        )
+        db.commit()
+        findings = list(
+            db.scalars(
+                select(RiskFinding).where(RiskFinding.metadata_["adapter"].as_string().is_not(None))
+            )
+        )
+        assert run.errors_count == 0
+        assert run.findings_created + run.findings_updated == 39
+        assert len(findings) == 39
+        assert all(row.evidence_count > 0 for row in findings)
+        assert all(row.metadata_.get("adapter") for row in findings)

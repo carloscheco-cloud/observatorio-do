@@ -3,9 +3,22 @@ from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import Select, func, select
+from sqlalchemy import Select, func, or_, select
 from sqlalchemy.orm import Session
 
+from app.modules.risk_engine.adapters import (
+    AppointmentRiskAdapter,
+    AssetRiskAdapter,
+    BudgetRiskAdapter,
+    CrossDomainRiskAdapter,
+    DebtRiskAdapter,
+    EmploymentRiskAdapter,
+    InstitutionRiskAdapter,
+    OrganizationalRiskAdapter,
+    PayrollRiskAdapter,
+    ProcurementRiskAdapter,
+    TraceabilityRiskAdapter,
+)
 from app.modules.risk_engine.engine import (
     DeduplicationService,
     EvaluationContext,
@@ -15,16 +28,31 @@ from app.modules.risk_engine.engine import (
 from app.modules.risk_engine.models import (
     AuditEvent,
     FindingEvidenceLink,
+    FindingGroup,
     FindingReview,
     RiskEvaluationRun,
     RiskFinding,
     RiskRule,
     RiskScore,
+    RiskSuppression,
     RiskType,
 )
 from app.modules.risk_engine.schemas import EvaluationRequest, ReviewCreate, RuleCreate
 
 ENGINE_VERSION = "10.0.0"
+ADAPTERS = (
+    PayrollRiskAdapter,
+    EmploymentRiskAdapter,
+    BudgetRiskAdapter,
+    ProcurementRiskAdapter,
+    DebtRiskAdapter,
+    AssetRiskAdapter,
+    InstitutionRiskAdapter,
+    OrganizationalRiskAdapter,
+    AppointmentRiskAdapter,
+    TraceabilityRiskAdapter,
+    CrossDomainRiskAdapter,
+)
 
 
 def list_taxonomy(db: Session) -> list[RiskType]:
@@ -145,6 +173,16 @@ def persist_candidate(
         existing.occurrence_count += 1
         if existing.status in {"resolved", "expired"}:
             existing.status = "reopened"
+        _audit(
+            db,
+            "service",
+            None,
+            "finding_recurred",
+            "risk_finding",
+            existing.id,
+            {"occurrence_count": existing.occurrence_count - 1},
+            {"occurrence_count": existing.occurrence_count},
+        )
         return existing
     finding = RiskFinding(
         finding_code=f"RF-{fingerprint[:20].upper()}",
@@ -175,6 +213,42 @@ def persist_candidate(
     )
     db.add(finding)
     db.flush()
+    group_code = f"{candidate.domain}:{candidate.rule_id}"
+    group = db.scalar(select(FindingGroup).where(FindingGroup.stable_code == group_code))
+    if group is None:
+        group = FindingGroup(
+            stable_code=group_code,
+            title=f"Grupo recurrente: {candidate.title}",
+            domain=candidate.domain,
+            first_detected_at=now,
+            last_detected_at=now,
+            metadata_={"rule_id": str(candidate.rule_id)},
+        )
+        db.add(group)
+        db.flush()
+    else:
+        group.last_detected_at = now
+    finding.metadata_ = {**finding.metadata_, "finding_group_id": str(group.id)}
+    for evidence_id, source_id, relationship_type in candidate.evidence_links:
+        db.add(
+            FindingEvidenceLink(
+                finding_id=finding.id,
+                evidence_id=evidence_id,
+                source_id=source_id,
+                relationship_type=relationship_type,
+                metadata_={"engine_version": ENGINE_VERSION},
+            )
+        )
+    _audit(
+        db,
+        "service",
+        None,
+        "finding_created",
+        "risk_finding",
+        finding.id,
+        None,
+        {"status": finding.status, "rule_id": str(finding.risk_rule_id)},
+    )
     return finding
 
 
@@ -201,14 +275,112 @@ def run_evaluation(
         query = query.where(RiskRule.id == request.rule_id)
     rules = list(db.scalars(query))
     run.rules_requested = len(rules)
-    # Domain adapters are deliberately registered outside this core. An empty adapter set is valid.
-    run.rules_executed = len(rules)
+    context = EvaluationContext(
+        run_id=run.id,
+        as_of=request.period_end or date.today(),
+        domain=request.domain,
+        institution_id=request.institution_id,
+        period_start=request.period_start,
+        period_end=request.period_end,
+        dry_run=request.dry_run,
+    )
+    selected = [
+        adapter
+        for adapter in ADAPTERS
+        if request.domain is None
+        or adapter.domain == request.domain
+        or (request.domain == "traceability" and adapter is TraceabilityRiskAdapter)
+    ]
+    summaries: dict[str, object] = {}
+    affected_institutions: set[uuid.UUID] = set()
+    for adapter_type in selected:
+        adapter_name = adapter_type.__name__
+        try:
+            result = adapter_type(db, rules).evaluate(context)
+            created = updated = suppressed = 0
+            for candidate in result.candidates:
+                if _is_suppressed(db, candidate, context.as_of):
+                    suppressed += 1
+                    continue
+                if request.dry_run:
+                    created += 1
+                    continue
+                before = db.scalar(
+                    select(RiskFinding).where(
+                        RiskFinding.deduplication_fingerprint
+                        == DeduplicationService.fingerprint(candidate)
+                    )
+                )
+                finding = persist_candidate(db, candidate, context)
+                if before is None:
+                    created += 1
+                else:
+                    updated += 1
+                if finding.institution_id:
+                    affected_institutions.add(finding.institution_id)
+            run.records_evaluated += result.records_evaluated
+            run.findings_created += created
+            run.findings_updated += updated
+            run.findings_suppressed += suppressed
+            run.rules_executed += len({candidate.rule_id for candidate in result.candidates})
+            summaries[adapter_name] = {
+                "domain": adapter_type.domain,
+                "records_evaluated": result.records_evaluated,
+                "candidates": len(result.candidates),
+                "created": created,
+                "updated": updated,
+                "suppressed": suppressed,
+            }
+        except Exception as exc:  # noqa: BLE001 - isolation per adapter is required
+            run.errors_count += 1
+            summaries[adapter_name] = {"domain": adapter_type.domain, "error": str(exc)}
+    run.error_summary = {
+        name: value
+        for name, value in summaries.items()
+        if isinstance(value, dict) and "error" in value
+    }
+    run.metadata_ = {**run.metadata_, "summary": summaries, "dry_run": request.dry_run}
+    if not request.dry_run:
+        db.flush()
+        for institution_id in affected_institutions:
+            calculate_score(
+                db,
+                entity_type="institution",
+                entity_id=institution_id,
+                run_id=run.id,
+                period_start=request.period_start or date(context.as_of.year, 1, 1),
+                period_end=request.period_end or context.as_of,
+            )
     run.completed_at = datetime.now(UTC)
-    run.status = "completed"
+    run.status = "completed_with_errors" if run.errors_count else "completed"
     _audit(
         db, actor_type, actor_id, "risk_evaluation", "risk_evaluation_run", run.id, None, run.scope
     )
     return run
+
+
+def _is_suppressed(db: Session, candidate: FindingCandidate, as_of: date) -> bool:
+    query = select(RiskSuppression).where(
+        or_(
+            RiskSuppression.risk_rule_id == candidate.rule_id,
+            RiskSuppression.risk_rule_id.is_(None),
+        ),
+        or_(
+            RiskSuppression.institution_id == candidate.institution_id,
+            RiskSuppression.institution_id.is_(None),
+        ),
+        RiskSuppression.valid_from <= as_of,
+        or_(RiskSuppression.valid_to.is_(None), RiskSuppression.valid_to >= as_of),
+    )
+    suppressions = list(db.scalars(query))
+    return any(
+        row.entity_type is None
+        or (
+            row.entity_type == candidate.entity_type
+            and (row.entity_id is None or row.entity_id == candidate.entity_id)
+        )
+        for row in suppressions
+    )
 
 
 def review_finding(db: Session, finding: RiskFinding, payload: ReviewCreate) -> RiskFinding:
@@ -296,26 +468,54 @@ def calculate_score(
     severities = [item.severity for item in findings]
     data_quality = severities.count("critical_data_quality")
     total, band = RiskScoreCalculator().calculate(severities, data_quality)
-    score = RiskScore(
-        entity_type=entity_type,
-        entity_id=entity_id,
-        calculation_date=date.today(),
-        period_start=period_start,
-        period_end=period_end,
-        total_score=total,
-        score_band=band,
-        component_scores={
+    formula_version = "observable-v1"
+    score = db.scalar(
+        select(RiskScore).where(
+            RiskScore.entity_type == entity_type,
+            RiskScore.entity_id == entity_id,
+            RiskScore.period_start == period_start,
+            RiskScore.period_end == period_end,
+            RiskScore.model_or_formula_version == formula_version,
+        )
+    )
+    values: dict[str, object] = {
+        "calculation_date": date.today(),
+        "total_score": total,
+        "score_band": band,
+        "component_scores": {
             "severity_counts": {value: severities.count(value) for value in set(severities)}
         },
-        finding_count=len(findings),
-        high_priority_count=severities.count("high_priority"),
-        data_quality_penalty=Decimal(data_quality),
-        model_or_formula_version="observable-v1",
-        evaluation_run_id=run_id,
-        status="current",
-        metadata_={"disclaimer": "This score does not represent culpability."},
+        "finding_count": len(findings),
+        "high_priority_count": severities.count("high_priority"),
+        "data_quality_penalty": Decimal(data_quality),
+        "evaluation_run_id": run_id,
+        "status": "current",
+        "metadata_": {"disclaimer": "This score does not represent culpability."},
+    }
+    if score is None:
+        score = RiskScore(
+            entity_type=entity_type,
+            entity_id=entity_id,
+            period_start=period_start,
+            period_end=period_end,
+            model_or_formula_version=formula_version,
+            **values,
+        )
+        db.add(score)
+    else:
+        for key, value in values.items():
+            setattr(score, key, value)
+    db.flush()
+    _audit(
+        db,
+        "service",
+        None,
+        "risk_score_calculated",
+        "risk_score",
+        score.id,
+        None,
+        {"total_score": str(total), "formula_version": formula_version},
     )
-    db.add(score)
     return score
 
 

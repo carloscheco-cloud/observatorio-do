@@ -168,3 +168,11 @@ entidades, ventana, umbrales y plantillas simples, e implemente `RuleEvaluator`.
 evaluador solo devuelve `RuleResult` con `FindingCandidate`; persistencia, deduplicación,
 auditoría y puntuación pertenecen al núcleo transversal. La explicación identifica
 observación, regla, umbral, comparación, diferencia, período, evidencia y límites.
+
+El motor funcional registra once adaptadores SQLAlchemy: nómina, empleo, presupuesto,
+compras, deuda, patrimonio, instituciones, organización, designaciones, trazabilidad y
+cruces de dominio. Cada ejecución consulta datos canónicos en lotes, genera candidatos
+con evidencia estructurada, aísla errores por adaptador, aplica supresiones, agrupa por
+regla, persiste o incrementa recurrencias mediante huella estable y recalcula puntuaciones.
+`dry-run` ejecuta las mismas consultas y devuelve el mismo resumen sin persistir
+hallazgos, enlaces, grupos ni puntuaciones.
