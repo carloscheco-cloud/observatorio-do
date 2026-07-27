@@ -1,6 +1,20 @@
 """Central model import used only for SQLAlchemy metadata discovery."""
 
 from app.modules.appointments.models import Appointment
+from app.modules.budget.models import (
+    BudgetAppropriation,
+    BudgetClassifier,
+    BudgetCycle,
+    BudgetExecutionRecord,
+    BudgetFinding,
+    BudgetModification,
+    BudgetProgram,
+    BudgetRevenue,
+    BudgetVersion,
+    FinancingOrganization,
+    FundingSource,
+    InterinstitutionalTransfer,
+)
 from app.modules.employment_relationships.models import EmploymentRelationship
 from app.modules.evidence.models import Evidence
 from app.modules.institutions.models import Institution, InstitutionEvidence
@@ -21,10 +35,20 @@ from app.modules.territories.models import Territory
 
 __all__ = [
     "Appointment",
+    "BudgetAppropriation",
+    "BudgetClassifier",
+    "BudgetCycle",
+    "BudgetExecutionRecord",
+    "BudgetFinding",
+    "BudgetModification",
+    "BudgetProgram",
+    "BudgetRevenue",
+    "BudgetVersion",
     "Evidence",
     "EmploymentRelationship",
     "Institution",
     "InstitutionEvidence",
+    "InterinstitutionalTransfer",
     "LegalBasis",
     "OrganizationalEvent",
     "OrganizationalUnit",
@@ -39,5 +63,7 @@ __all__ = [
     "Position",
     "PositionUnitAssignment",
     "Source",
+    "FinancingOrganization",
+    "FundingSource",
     "Territory",
 ]

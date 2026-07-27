@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.modules.appointments.router import router as appointments_router
+from app.modules.budget.router import router as budget_router
 from app.modules.employment_relationships.router import router as employment_router
 from app.modules.evidence.router import router as evidence_router
 from app.modules.institutions.router import router as institutions_router
@@ -28,3 +29,4 @@ api_router.include_router(employment_router)
 api_router.include_router(payroll_periods_router)
 api_router.include_router(payroll_entries_router)
 api_router.include_router(payroll_findings_router)
+api_router.include_router(budget_router)
