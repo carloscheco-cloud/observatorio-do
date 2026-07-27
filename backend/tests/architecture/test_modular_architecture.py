@@ -16,6 +16,8 @@ MODULES = (
     "payroll_entries",
     "payroll_findings",
     "budget",
+    "procurement_processes",
+    "suppliers",
 )
 
 
@@ -50,6 +52,8 @@ def test_ai_guards_exist_at_service_and_database_layers() -> None:
         "payroll_periods",
         "payroll_entries",
         "budget",
+        "procurement_processes",
+        "suppliers",
     )
     for module in canonical:
         assert "actor_type.lower()" in (ROOT / "modules" / module / "service.py").read_text()

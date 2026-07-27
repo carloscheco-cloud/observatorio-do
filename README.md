@@ -66,7 +66,7 @@ respuestas públicas. La procedencia, evidencia, fila, payload original, procesa
 versión, actor y estado de validación se conservan en capas diferenciadas. Los actores IA
 solo pueden proponer fuentes, evidencias o señales analíticas.
 
-La cabeza Alembic actual es `0006`. Las semillas de los bloques 4, 5 y 6 son idempotentes y
+La cabeza Alembic actual es `0007`. Las semillas de los bloques 4, 5, 6 y 7 son idempotentes y
 todos sus datos organizativos y salariales están marcados como ficticios y controlados.
 
 ## Presupuesto público y ejecución financiera
@@ -82,3 +82,19 @@ La API expone `/api/v1/budget-cycles`, `/budget-classifiers`, `/budget-programs`
 `/budget-revenues`, `/interinstitutional-transfers` y `/budget-findings`, además de
 métricas, historial, evolución y comparación. La ingesta ofrece vista previa y dry-run
 con checksum, mapeo, errores por fila, límite de tamaño y protección contra fórmulas CSV.
+
+## Compras públicas y ejecución contractual
+
+El Bloque 7 modela procesos, lotes, ítems, proveedores, ofertas, evaluaciones,
+adjudicaciones, contratos, modificaciones, órdenes, entregas, pagos, garantías,
+impugnaciones, versiones y señales exclusivamente observables. La API está bajo
+`/api/v1/procurement-processes`, `/suppliers`, `/procurement-bids`,
+`/procurement-awards`, `/procurement-contracts`, `/contract-amendments`,
+`/contract-payments` y `/procurement-findings`, con métricas institucionales,
+concentración por proveedor e historial.
+
+Todo registro canónico exige fuente y evidencia coherentes. Los identificadores sensibles
+se admiten solo como hashes SHA-256, el payload original queda excluido de respuestas
+públicas y PostgreSQL impide incompatibilidades, importes negativos, pagos excesivos,
+sobrescritura silenciosa y escrituras canónicas por actores IA. La ingesta futura dispone
+de adaptadores y vista previa CSV con dry-run, checksum, límites y protección contra fórmulas.
