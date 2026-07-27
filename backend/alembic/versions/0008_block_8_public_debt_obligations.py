@@ -138,9 +138,11 @@ def upgrade() -> None:
       IF NEW.debtor_institution_id <> instrument.debtor_institution_id THEN
         RAISE EXCEPTION 'Debt institution is incompatible with instrument';
       END IF;
-      IF TG_TABLE_NAME = 'debt_payments' AND NEW.creditor_id IS NOT NULL
-         AND NEW.creditor_id IS DISTINCT FROM instrument.creditor_id THEN
-        RAISE EXCEPTION 'Debt creditor is incompatible with instrument';
+      IF TG_TABLE_NAME = 'debt_payments' THEN
+        IF NEW.creditor_id IS NOT NULL
+           AND NEW.creditor_id IS DISTINCT FROM instrument.creditor_id THEN
+          RAISE EXCEPTION 'Debt creditor is incompatible with instrument';
+        END IF;
       END IF;
       IF TG_TABLE_NAME = 'debt_disbursements' THEN
         SELECT coalesce(sum(amount), 0) INTO cumulative FROM debt_disbursements
