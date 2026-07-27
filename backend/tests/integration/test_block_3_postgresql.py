@@ -29,9 +29,46 @@ def test_block_3_seed_is_idempotent_on_postgresql(postgres_url: str) -> None:
     with Session(engine) as db:
         seed(db)
         seed(db)
-        assert len(list(db.scalars(select(Person)))) == 1
-        assert len(list(db.scalars(select(Position)))) == 1
-        assert len(list(db.scalars(select(Appointment)))) == 1
+        assert (
+            len(
+                list(
+                    db.scalars(
+                        select(Person).where(
+                            Person.normalized_name == "persona ficticia de control"
+                        )
+                    )
+                )
+            )
+            == 1
+        )
+        assert (
+            len(
+                list(
+                    db.scalars(
+                        select(Position).where(
+                            Position.code.in_(
+                                ("DO-BONAO-ALCALDIA-CONTROL", "CONTROL-B4-DIRECTOR-ADM")
+                            )
+                        )
+                    )
+                )
+            )
+            == 2
+        )
+        assert (
+            len(
+                list(
+                    db.scalars(
+                        select(Appointment).where(
+                            Appointment.legal_act.in_(
+                                ("ACTO-CONTROL-B3-001", "ACTO-CONTROL-B4-001")
+                            )
+                        )
+                    )
+                )
+            )
+            == 2
+        )
 
 
 def test_postgres_rejects_incomplete_confirmed_appointment(postgres_url: str) -> None:

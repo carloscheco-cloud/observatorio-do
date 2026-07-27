@@ -12,6 +12,15 @@ from app.modules.institutions.models import (
     InstitutionStatus,
 )
 from app.modules.legal_basis.models import LegalBasis, LegalInstrumentType
+from app.modules.organizational_units.models import (
+    OrganizationalEvent,
+    OrganizationalEventType,
+    OrganizationalUnit,
+    OrganizationalUnitEvidence,
+    PositionUnitAssignment,
+    UnitStatus,
+    UnitType,
+)
 from app.modules.persons.models import Person, PersonStatus
 from app.modules.positions.models import AccessMethod, Position, PositionStatus
 from app.modules.sources.models import Source
@@ -185,6 +194,208 @@ def seed(db: Session) -> None:
             metadata_={"controlled": True, "fictitious": True, "seed": "block-3"},
         )
         db.add(appointment)
+    block4_source = db.scalar(
+        select(Source).where(Source.url == "controlled://block-4/organizational-structure")
+    )
+    if block4_source is None:
+        block4_source = Source(
+            name="Fuente ficticia controlada del bloque 4",
+            url="controlled://block-4/organizational-structure",
+            publisher="Observatorio del Estado Dominicano - datos de prueba",
+            is_official=False,
+        )
+        db.add(block4_source)
+        db.flush()
+    block4_evidence = db.scalar(
+        select(Evidence).where(
+            Evidence.content_hash
+            == "94e820af41a1d870f8ddf4e98ca20b230c8070e42b84d17b1951326402933c1a"
+        )
+    )
+    if block4_evidence is None:
+        block4_evidence = Evidence(
+            source_id=block4_source.id,
+            title="Organigrama completamente ficticio para pruebas del bloque 4",
+            excerpt="No representa la estructura real del Ayuntamiento Municipal de Bonao.",
+            locator="controlled://block-4/organizational-structure/evidence",
+            content_hash="94e820af41a1d870f8ddf4e98ca20b230c8070e42b84d17b1951326402933c1a",
+            metadata_={"controlled": True, "fictitious": True, "seed": "block-4"},
+        )
+        db.add(block4_evidence)
+        db.flush()
+    block4_legal = db.scalar(
+        select(LegalBasis).where(LegalBasis.reference == "CONTROL-B4-LEGAL-001")
+    )
+    if block4_legal is None:
+        block4_legal = LegalBasis(
+            instrument_type=LegalInstrumentType.OTHER,
+            title="Fundamento legal ficticio controlado del bloque 4",
+            reference="CONTROL-B4-LEGAL-001",
+            evidence_id=block4_evidence.id,
+            effective_from=date(2025, 1, 1),
+            issuing_body="Órgano ficticio de control",
+            description="Instrumento de prueba sin validez ni afirmaciones sobre la realidad.",
+            metadata_={"controlled": True, "fictitious": True, "seed": "block-4"},
+        )
+        db.add(block4_legal)
+        db.flush()
+
+    def controlled_unit(
+        code: str,
+        name: str,
+        kind: UnitType,
+        level: int,
+        parent: OrganizationalUnit | None = None,
+        *,
+        territory: Territory | None = None,
+    ) -> OrganizationalUnit:
+        unit = db.scalar(
+            select(OrganizationalUnit).where(
+                OrganizationalUnit.institution_id == institution.id,
+                OrganizationalUnit.stable_code == code,
+            )
+        )
+        if unit is None:
+            unit = OrganizationalUnit(
+                institution_id=institution.id,
+                parent_unit_id=parent.id if parent else None,
+                official_name=name,
+                normalized_name=name.casefold(),
+                stable_code=code,
+                unit_type=kind,
+                hierarchy_level=level,
+                order_index=level,
+                is_headquarters=parent is None,
+                status=UnitStatus.CANONICAL,
+                valid_from=date(2025, 1, 1),
+                territory_id=territory.id if territory else None,
+                legal_basis_id=block4_legal.id,
+                metadata_={"controlled": True, "fictitious": True, "seed": "block-4"},
+            )
+            db.add(unit)
+            db.flush()
+        link = db.scalar(
+            select(OrganizationalUnitEvidence).where(
+                OrganizationalUnitEvidence.unit_id == unit.id,
+                OrganizationalUnitEvidence.evidence_id == block4_evidence.id,
+            )
+        )
+        if link is None:
+            db.add(
+                OrganizationalUnitEvidence(
+                    unit_id=unit.id,
+                    evidence_id=block4_evidence.id,
+                    source_id=block4_source.id,
+                )
+            )
+            db.flush()
+        return unit
+
+    root = controlled_unit("CONTROL-B4-ROOT", "Unidad Raíz Controlada", UnitType.GOVERNING_BODY, 0)
+    directorate = controlled_unit(
+        "CONTROL-B4-DIR-ADM",
+        "Dirección Administrativa Ficticia",
+        UnitType.DIRECTORATE,
+        1,
+        root,
+    )
+    department = controlled_unit(
+        "CONTROL-B4-DEP-RRHH",
+        "Departamento de Recursos Humanos Ficticio",
+        UnitType.DEPARTMENT,
+        2,
+        directorate,
+    )
+    controlled_unit(
+        "CONTROL-B4-DIV-NOM",
+        "División de Nómina Ficticia",
+        UnitType.DIVISION,
+        3,
+        department,
+    )
+    controlled_unit(
+        "CONTROL-B4-OF-TERR",
+        "Oficina Territorial Ficticia",
+        UnitType.TERRITORIAL_OFFICE,
+        1,
+        root,
+        territory=bonao,
+    )
+    event = db.scalar(
+        select(OrganizationalEvent).where(
+            OrganizationalEvent.unit_id == directorate.id,
+            OrganizationalEvent.event_type == OrganizationalEventType.CREATION,
+            OrganizationalEvent.effective_date == date(2025, 1, 1),
+        )
+    )
+    if event is None:
+        db.add(
+            OrganizationalEvent(
+                institution_id=institution.id,
+                unit_id=directorate.id,
+                event_type=OrganizationalEventType.CREATION,
+                effective_date=date(2025, 1, 1),
+                new_parent_id=root.id,
+                new_name=directorate.official_name,
+                legal_basis_id=block4_legal.id,
+                evidence_id=block4_evidence.id,
+                source_id=block4_source.id,
+                description="Evento ficticio y controlado de creación organizativa.",
+                metadata_={"controlled": True, "fictitious": True, "seed": "block-4"},
+            )
+        )
+    head_position = db.scalar(select(Position).where(Position.code == "CONTROL-B4-DIRECTOR-ADM"))
+    if head_position is None:
+        head_position = Position(
+            institution_id=institution.id,
+            organizational_unit_id=directorate.id,
+            official_name="Director/a Administrativo/a Ficticio/a",
+            code="CONTROL-B4-DIRECTOR-ADM",
+            position_type="controlled_unit_head",
+            hierarchy_level="directorate_head",
+            access_method=AccessMethod.APPOINTMENT,
+            legal_basis_id=block4_legal.id,
+            status=PositionStatus.CANONICAL,
+            valid_from=date(2025, 1, 1),
+            metadata_={"controlled": True, "fictitious": True, "seed": "block-4"},
+        )
+        db.add(head_position)
+        db.flush()
+    assignment = db.scalar(
+        select(PositionUnitAssignment).where(
+            PositionUnitAssignment.position_id == head_position.id,
+            PositionUnitAssignment.organizational_unit_id == directorate.id,
+        )
+    )
+    if assignment is None:
+        db.add(
+            PositionUnitAssignment(
+                position_id=head_position.id,
+                organizational_unit_id=directorate.id,
+                valid_from=date(2025, 1, 1),
+            )
+        )
+    block4_appointment = db.scalar(
+        select(Appointment).where(
+            Appointment.position_id == head_position.id,
+            Appointment.legal_act == "ACTO-CONTROL-B4-001",
+        )
+    )
+    if block4_appointment is None:
+        db.add(
+            Appointment(
+                person_id=person.id,
+                position_id=head_position.id,
+                institution_id=institution.id,
+                start_date=date(2025, 1, 1),
+                appointment_type="controlled_test",
+                status=AppointmentStatus.CONFIRMED,
+                legal_act="ACTO-CONTROL-B4-001",
+                evidence_id=block4_evidence.id,
+                source_id=block4_source.id,
+                metadata_={"controlled": True, "fictitious": True, "seed": "block-4"},
+            )
+        )
     db.commit()
 
 

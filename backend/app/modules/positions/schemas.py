@@ -8,6 +8,7 @@ from app.modules.positions.models import AccessMethod, PositionStatus
 
 class PositionCreate(BaseModel):
     institution_id: uuid.UUID
+    organizational_unit_id: uuid.UUID | None = None
     official_name: str = Field(min_length=1, max_length=300)
     code: str = Field(min_length=1, max_length=100)
     description: str | None = None

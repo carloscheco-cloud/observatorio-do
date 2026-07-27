@@ -10,6 +10,7 @@ MODULES = (
     "legal_basis",
     "positions",
     "appointments",
+    "organizational_units",
 )
 
 
@@ -34,12 +35,10 @@ def test_canonical_models_are_separate_from_evidence_and_sources() -> None:
 
 
 def test_ai_guards_exist_at_service_and_database_layers() -> None:
-    canonical = ("persons", "legal_basis", "positions", "appointments")
+    canonical = ("persons", "legal_basis", "positions", "appointments", "organizational_units")
     for module in canonical:
         assert "actor_type.lower()" in (ROOT / "modules" / module / "service.py").read_text()
-    migration = (
-        ROOT.parent / "alembic" / "versions" / "0002_block_3_persons_positions.py"
-    ).read_text()
+    migrations = list((ROOT.parent / "alembic" / "versions").glob("*.py"))
     for table in canonical:
-        assert table in migration
-    assert "reject_ai_canonical_write" in migration
+        assert any(table in migration.read_text() for migration in migrations)
+    assert any("reject_ai_canonical_write" in migration.read_text() for migration in migrations)
