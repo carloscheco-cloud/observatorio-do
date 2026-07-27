@@ -66,7 +66,7 @@ respuestas públicas. La procedencia, evidencia, fila, payload original, procesa
 versión, actor y estado de validación se conservan en capas diferenciadas. Los actores IA
 solo pueden proponer fuentes, evidencias o señales analíticas.
 
-La cabeza Alembic actual es `0007`. Las semillas de los bloques 4, 5, 6 y 7 son idempotentes y
+La cabeza Alembic actual es `0008`. Las semillas de los bloques 4 a 8 son idempotentes y
 todos sus datos organizativos y salariales están marcados como ficticios y controlados.
 
 ## Presupuesto público y ejecución financiera
@@ -98,3 +98,16 @@ se admiten solo como hashes SHA-256, el payload original queda excluido de respu
 públicas y PostgreSQL impide incompatibilidades, importes negativos, pagos excesivos,
 sobrescritura silenciosa y escrituras canónicas por actores IA. La ingesta futura dispone
 de adaptadores y vista previa CSV con dry-run, checksum, límites y protección contra fórmulas.
+
+## Deuda pública, obligaciones y riesgos fiscales
+
+El Bloque 8 incorpora acreedores, instrumentos, condiciones, desembolsos, servicio,
+pagos, saldos versionados, emisiones, garantías, obligaciones, transferencias, subsidios
+institucionales, compromisos plurianuales, reestructuraciones y riesgos exclusivamente
+observables. Montos y tasas usan `Numeric`/`Decimal`; toda escritura canónica exige
+procedencia y evidencia y rechaza actores IA.
+
+La API expone `/api/v1/creditors`, `/debt-instruments`, `/debt-disbursements`,
+`/debt-payments`, `/public-guarantees`, `/public-obligations`, `/financial-transfers`,
+`/public-subsidies`, `/multi-year-commitments` y `/fiscal-risk-findings`, además de
+exposición, historial, métricas, servicio y comparaciones institucionales.

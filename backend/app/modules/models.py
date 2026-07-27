@@ -15,6 +15,7 @@ from app.modules.budget.models import (
     FundingSource,
     InterinstitutionalTransfer,
 )
+from app.modules.creditors.models import Creditor, CreditorHistory
 from app.modules.employment_relationships.models import EmploymentRelationship
 from app.modules.evidence.models import Evidence
 from app.modules.institutions.models import Institution, InstitutionEvidence
@@ -47,6 +48,24 @@ from app.modules.procurement_processes.models import (
     ProcurementVersion,
     PurchaseOrder,
 )
+from app.modules.public_debt.models import (
+    DebtBalanceSnapshot,
+    DebtDisbursement,
+    DebtInstrument,
+    DebtIssuance,
+    DebtPayment,
+    DebtRestructuringEvent,
+    DebtServiceSchedule,
+    DebtTerm,
+    DebtVersion,
+    FinancialTransfer,
+    FiscalRiskFinding,
+    GuaranteeEvent,
+    MultiYearCommitment,
+    PublicGuarantee,
+    PublicObligation,
+    PublicSubsidy,
+)
 from app.modules.sources.models import Source
 from app.modules.suppliers.models import Supplier, SupplierHistory
 from app.modules.territories.models import Territory
@@ -62,6 +81,8 @@ __all__ = [
     "BudgetProgram",
     "BudgetRevenue",
     "BudgetVersion",
+    "Creditor",
+    "CreditorHistory",
     "Evidence",
     "EmploymentRelationship",
     "Institution",
@@ -101,4 +122,20 @@ __all__ = [
     "FinancingOrganization",
     "FundingSource",
     "Territory",
+    "DebtBalanceSnapshot",
+    "DebtDisbursement",
+    "DebtInstrument",
+    "DebtIssuance",
+    "DebtPayment",
+    "DebtRestructuringEvent",
+    "DebtServiceSchedule",
+    "DebtTerm",
+    "DebtVersion",
+    "FinancialTransfer",
+    "FiscalRiskFinding",
+    "GuaranteeEvent",
+    "MultiYearCommitment",
+    "PublicGuarantee",
+    "PublicObligation",
+    "PublicSubsidy",
 ]

@@ -41,3 +41,9 @@ referencias registrales sensibles se almacenan únicamente como hash irreversibl
 Antes de entregar cambios ejecutar `make lint`, `make typecheck` y `make test`.
 Agregar una migración, pruebas unitarias, de arquitectura e integración cuando corresponda.
 
+El módulo `public_debt` conserva instrumentos, condiciones, desembolsos, calendarios,
+pagos, saldos, emisiones, garantías, obligaciones, transferencias, subsidios,
+compromisos plurianuales, reestructuraciones, versiones y riesgos fiscales observables.
+`creditors` conserva acreedores canónicos y su historial. Solo sus servicios autorizados
+escriben datos canónicos; la IA únicamente propone hallazgos o clasificaciones.
+
