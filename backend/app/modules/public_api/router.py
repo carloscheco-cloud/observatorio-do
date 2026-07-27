@@ -51,21 +51,12 @@ def institution(institution_id: uuid.UUID, db: Db) -> dict[str, Any]:
 
 @router.get("/institutions/{institution_id}/profile", tags=["Institutions"])
 def institution_profile(institution_id: uuid.UUID, db: Db) -> dict[str, Any]:
-    data = service.get_institution(db, institution_id)
+    data = service.institution_profile(db, institution_id)
     if data is None:
         raise not_found("La institución")
     return {
         "data": {
             **data,
-            "legal_basis": None,
-            "parent_institution": None,
-            "metrics": {},
-            "coverage": {
-                domain: "not_available"
-                for domain in ("employment", "payroll", "budget", "procurement", "debt", "assets")
-            },
-            "data_quality": "under_review",
-            "last_updated": None,
         },
         "generated_at": service.now(),
         "source_freshness": "unknown",
@@ -116,7 +107,7 @@ def institution_section(
 ) -> dict[str, Any]:
     if service.get_institution(db, institution_id) is None:
         raise not_found("La institución")
-    return service.empty(page, page_size, section)
+    return service.institution_section(db, institution_id, section, page, page_size)
 
 
 @router.get("/search", tags=["Search"])
@@ -177,7 +168,6 @@ def finding(finding_id: uuid.UUID, db: Db) -> dict[str, Any]:
     }
 
 
-@router.get("/risk-summary", tags=["Findings"])
 @router.get("/metrics", tags=["Sources"])
 def metrics(db: Db) -> dict[str, Any]:
     return {
@@ -191,6 +181,11 @@ def metrics(db: Db) -> dict[str, Any]:
     }
 
 
+@router.get("/risk-summary", tags=["Findings"])
+def risk_summary(db: Db) -> dict[str, Any]:
+    return service.risk_summary(db)
+
+
 @router.get("/risk-taxonomy", tags=["Findings"])
 def risk_taxonomy(db: Db, page: Page = 1, page_size: PageSize = 20) -> dict[str, Any]:
     return service.taxonomy(db, page, page_size)
@@ -198,6 +193,7 @@ def risk_taxonomy(db: Db, page: Page = 1, page_size: PageSize = 20) -> dict[str,
 
 @router.get("/compare", tags=["Compare"])
 def compare(
+    db: Db,
     entity_ids: Annotated[list[uuid.UUID], Query(min_length=1, max_length=5)],
     metrics: Annotated[list[str], Query(min_length=1, max_length=10)],
     entity_type: str = Query(pattern=r"^[a-z_]+$"),
@@ -205,15 +201,12 @@ def compare(
     period_end: date | None = None,
 ) -> dict[str, Any]:
     return {
-        "data": [
-            {"entity_id": str(item), "metrics": {metric: None for metric in metrics}}
-            for item in entity_ids
-        ],
+        "data": service.compare_entities(db, entity_ids, metrics, entity_type),
         "entity_type": entity_type,
         "period": {"start": period_start, "end": period_end},
         "generated_at": service.now(),
         "methodology": "Sólo se comparan unidades, monedas y períodos compatibles.",
-        "warnings": ["No hay métricas comparables disponibles."],
+        "warnings": [],
     }
 
 
@@ -285,7 +278,14 @@ def methodology() -> dict[str, Any]:
     return {
         "data": {
             "principles": ["trazabilidad", "privacidad", "revisión humana", "no acusación"],
-            "coverage_states": ["complete", "partial", "not_available", "stale", "under_review"],
+            "coverage_states": [
+                "complete",
+                "partial",
+                "not_available",
+                "not_applicable",
+                "stale",
+                "under_review",
+            ],
             "notice": (
                 "Las señales son hechos observables para revisión y no equivalen a acusaciones."
             ),
@@ -295,12 +295,8 @@ def methodology() -> dict[str, Any]:
 
 
 @router.get("/data-freshness", tags=["Sources"])
-def freshness() -> dict[str, Any]:
-    return {
-        "data": [],
-        "generated_at": service.now(),
-        "warnings": ["No hay fuentes con frescura pública calculada."],
-    }
+def freshness(db: Db) -> dict[str, Any]:
+    return service.freshness(db)
 
 
 COLLECTION_PATHS = {
@@ -333,8 +329,8 @@ COLLECTION_PATHS = {
 
 
 def _make_collection(domain: str) -> Any:
-    def endpoint(page: Page = 1, page_size: PageSize = 20) -> dict[str, Any]:
-        return service.empty(page, page_size, domain)
+    def endpoint(db: Db, page: Page = 1, page_size: PageSize = 20) -> dict[str, Any]:
+        return service.general_collection(db, domain, page, page_size)
 
     return endpoint
 
@@ -367,8 +363,11 @@ DETAIL_PATHS = {
 
 
 def _make_detail(domain: str) -> Any:
-    def endpoint(item_id: uuid.UUID) -> dict[str, Any]:
-        raise not_found(domain)
+    def endpoint(item_id: uuid.UUID, db: Db) -> dict[str, Any]:
+        result = service.public_detail(db, domain, item_id)
+        if result is None:
+            raise not_found(domain)
+        return result
 
     return endpoint
 
@@ -381,3 +380,21 @@ for _path, _tag in DETAIL_PATHS.items():
         tags=[_tag],
         name=f"public_{_path.replace('/', '_').replace('{item_id}', 'detail')}",
     )
+
+
+@router.get("/series/{metric}", tags=["Sources"])
+def time_series(
+    metric: Literal[
+        "employees",
+        "payroll",
+        "budget",
+        "execution",
+        "contracts",
+        "debt",
+        "assets",
+        "findings",
+    ],
+    db: Db,
+    institution_id: uuid.UUID | None = None,
+) -> dict[str, Any]:
+    return service.time_series(db, metric, institution_id)
