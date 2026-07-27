@@ -1,5 +1,26 @@
 # Observatorio del Estado Dominicano
 
+## Producto público (Bloque 12)
+
+La API estable de consulta está bajo `/api/v1/public`; las rutas internas y canónicas
+permanecen separadas. Ofrece perfiles, buscador, comparación, exportación limitada,
+alertas publicadas, fuentes, frescura, metodología y estado con paginación, errores
+seguros, ETag, caché y rate limiting. OpenAPI está en `/docs`.
+
+El frontend Next.js/TypeScript vive en `frontend/` e incluye todas las páginas ciudadanas.
+Es responsive, accesible, configurable para Vercel y no activa analítica externa.
+
+```bash
+make frontend-install
+make frontend-dev
+make stack
+```
+
+Variables: `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_ROBOTS_INDEX`,
+`CORS_ORIGINS` y `TRUSTED_HOSTS`. Consulte
+[docs/public-product.md](docs/public-product.md) para extender el producto respetando
+privacidad.
+
 API e infraestructura de datos independiente para registrar instituciones públicas con
 trazabilidad documental. Los bloques 1 a 4 implementan un monolito modular con FastAPI,
 SQLAlchemy, PostgreSQL y Alembic, incluyendo personas, cargos, fundamentos legales y
