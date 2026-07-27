@@ -378,11 +378,14 @@ def upgrade() -> None:
       IF NEW.evidence_id IS NOT NULL AND evidence_source IS DISTINCT FROM NEW.source_id THEN
         RAISE EXCEPTION 'Source must match evidence source';
       END IF;
-      IF TG_TABLE_NAME = 'payroll_entries' AND (
-        NEW.listed_name ~ '\m[0-9]{3}-?[0-9]{7}-?[0-9]\M'
-        OR NEW.normalized_name ~ '\m[0-9]{3}-?[0-9]{7}-?[0-9]\M'
-        OR NEW.raw_payload::text ~ '[0-9]{3}-?[0-9]{7}-?[0-9]'
-      ) THEN RAISE EXCEPTION 'Apparent national identifier is prohibited'; END IF;
+      IF TG_TABLE_NAME = 'payroll_entries' THEN
+        IF NEW.listed_name ~ '\m[0-9]{3}-?[0-9]{7}-?[0-9]\M'
+          OR NEW.normalized_name ~ '\m[0-9]{3}-?[0-9]{7}-?[0-9]\M'
+          OR NEW.raw_payload::text ~ '[0-9]{3}-?[0-9]{7}-?[0-9]'
+        THEN
+          RAISE EXCEPTION 'Apparent national identifier is prohibited';
+        END IF;
+      END IF;
       RETURN NEW;
     END; $$ LANGUAGE plpgsql;
     CREATE TRIGGER employment_relationships_validate

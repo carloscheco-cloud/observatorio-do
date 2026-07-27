@@ -70,16 +70,10 @@ def test_postgres_rejects_period_institution_mismatch(postgres_url: str) -> None
     with engine.connect() as connection:
         transaction = connection.begin()
         try:
-            other = connection.scalar(
-                text("SELECT id FROM institutions WHERE id <> :id LIMIT 1"),
-                {"id": entry.institution_id},
-            )
-            if other is None:
-                pytest.skip("Seed contains only one institution")
             with pytest.raises(DBAPIError, match="must match payroll period"):
                 connection.execute(
                     text("UPDATE payroll_entries SET institution_id=:other WHERE id=:id"),
-                    {"other": other, "id": entry.id},
+                    {"other": uuid.uuid4(), "id": entry.id},
                 )
         finally:
             transaction.rollback()
