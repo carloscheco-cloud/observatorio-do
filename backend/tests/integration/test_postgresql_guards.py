@@ -32,7 +32,7 @@ def test_postgres_rejects_confirmed_institution_without_evidence(postgres_url: s
                     "INSERT INTO territories (id, name, code, type) "
                     "VALUES (:id, 'Prueba', :code, 'MUNICIPALITY')"
                 ),
-                {"id": territory_id, "code": f"TEST-{territory_id}"},
+                {"id": territory_id, "code": f"TEST-{territory_id.hex[:27]}"},
             )
             with pytest.raises(DBAPIError, match="requires evidence"):
                 connection.execute(
@@ -63,7 +63,7 @@ def test_postgres_rejects_ai_canonical_write(postgres_url: str) -> None:
                         "INSERT INTO territories (id, name, code, type) "
                         "VALUES (:id, 'IA', :code, 'COUNTRY')"
                     ),
-                    {"id": uuid.uuid4(), "code": f"AI-{uuid.uuid4()}"},
+                    {"id": uuid.uuid4(), "code": f"AI-{uuid.uuid4().hex[:29]}"},
                 )
         finally:
             transaction.rollback()
