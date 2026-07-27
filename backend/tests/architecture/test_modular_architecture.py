@@ -22,6 +22,7 @@ MODULES = (
     "public_debt",
     "asset_categories",
     "public_assets",
+    "risk_engine",
 )
 
 
@@ -69,3 +70,39 @@ def test_ai_guards_exist_at_service_and_database_layers() -> None:
     for table in canonical:
         assert any(table in migration.read_text() for migration in migrations)
     assert any("reject_ai_canonical_write" in migration.read_text() for migration in migrations)
+
+
+def test_risk_engine_is_decoupled_from_domain_models() -> None:
+    engine = (ROOT / "modules/risk_engine/engine.py").read_text(encoding="utf-8")
+    assert "app.modules.payroll" not in engine
+    assert "app.modules.budget" not in engine
+    assert "app.modules.procurement" not in engine
+    assert "app.modules.public_debt" not in engine
+    assert "app.modules.public_assets" not in engine
+
+
+def test_domain_services_do_not_depend_on_risk_engine() -> None:
+    for service in (ROOT / "modules").glob("*/service.py"):
+        if service.parent.name != "risk_engine":
+            assert "risk_engine" not in service.read_text(encoding="utf-8")
+
+
+def test_risk_engine_registers_all_domain_adapters() -> None:
+    adapters = (ROOT / "modules/risk_engine/adapters.py").read_text(encoding="utf-8")
+    service = (ROOT / "modules/risk_engine/service.py").read_text(encoding="utf-8")
+    expected = (
+        "PayrollRiskAdapter",
+        "EmploymentRiskAdapter",
+        "BudgetRiskAdapter",
+        "ProcurementRiskAdapter",
+        "DebtRiskAdapter",
+        "AssetRiskAdapter",
+        "InstitutionRiskAdapter",
+        "OrganizationalRiskAdapter",
+        "AppointmentRiskAdapter",
+        "TraceabilityRiskAdapter",
+        "CrossDomainRiskAdapter",
+    )
+    for name in expected:
+        assert f"class {name}" in adapters
+        assert name in service

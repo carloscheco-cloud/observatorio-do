@@ -96,6 +96,7 @@ from app.modules.public_debt.models import (
     PublicObligation,
     PublicSubsidy,
 )
+from app.modules.risk_engine.seed import seed_risk_engine
 from app.modules.sources.models import Source
 from app.modules.suppliers.models import Supplier, SupplierType
 from app.modules.territories.models import Territory, TerritoryType
@@ -477,6 +478,13 @@ def seed(db: Session) -> None:
     _seed_block7(db, institution, directorate, bonao, block4_source, block4_evidence, block4_legal)
     _seed_block8(db, institution, source, evidence, legal_basis)
     _seed_block9(db, institution, bonao, block4_source, block4_evidence, block4_legal)
+    seed_risk_engine(
+        db,
+        institution_id=institution.id,
+        territory_id=bonao.id,
+        source_id=block4_source.id,
+        evidence_id=block4_evidence.id,
+    )
     db.commit()
 
 
