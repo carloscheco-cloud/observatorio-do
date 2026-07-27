@@ -5,6 +5,11 @@ from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
 from app.modules.appointments.models import Appointment, AppointmentStatus
+from app.modules.employment_relationships.models import (
+    EmploymentRelationship,
+    EmploymentType,
+    RelationshipStatus,
+)
 from app.modules.evidence.models import Evidence
 from app.modules.institutions.models import (
     Institution,
@@ -21,6 +26,8 @@ from app.modules.organizational_units.models import (
     UnitStatus,
     UnitType,
 )
+from app.modules.payroll_entries.models import PayrollEntry, PayrollEntryStatus
+from app.modules.payroll_periods.models import PayrollPeriod, PayrollPeriodStatus
 from app.modules.persons.models import Person, PersonStatus
 from app.modules.positions.models import AccessMethod, Position, PositionStatus
 from app.modules.sources.models import Source
@@ -396,7 +403,103 @@ def seed(db: Session) -> None:
                 metadata_={"controlled": True, "fictitious": True, "seed": "block-4"},
             )
         )
+    _seed_block5(
+        db, institution, person, head_position, directorate, block4_source, block4_evidence
+    )
     db.commit()
+
+
+def _seed_block5(
+    db: Session,
+    institution: Institution,
+    person: Person,
+    position: Position,
+    unit: OrganizationalUnit,
+    source: Source,
+    evidence: Evidence,
+) -> None:
+    """Idempotent, explicitly fictitious payroll sample; never production data."""
+    relationship = db.scalar(
+        select(EmploymentRelationship).where(
+            EmploymentRelationship.person_id == person.id,
+            EmploymentRelationship.institution_id == institution.id,
+            EmploymentRelationship.start_date == date(2025, 1, 1),
+        )
+    )
+    if relationship is None:
+        relationship = EmploymentRelationship(
+            person_id=person.id,
+            institution_id=institution.id,
+            position_id=position.id,
+            organizational_unit_id=unit.id,
+            employment_type=EmploymentType.CAREER,
+            relationship_status=RelationshipStatus.ACTIVE,
+            start_date=date(2025, 1, 1),
+            source_id=source.id,
+            evidence_id=evidence.id,
+            metadata_={"controlled": True, "fictitious": True, "seed": "block-5"},
+        )
+        db.add(relationship)
+        db.flush()
+    for month, gross in ((1, 50000), (2, 52500)):
+        period = db.scalar(
+            select(PayrollPeriod).where(
+                PayrollPeriod.institution_id == institution.id,
+                PayrollPeriod.year == 2025,
+                PayrollPeriod.month == month,
+                PayrollPeriod.version == 1,
+            )
+        )
+        if period is None:
+            period = PayrollPeriod(
+                institution_id=institution.id,
+                year=2025,
+                month=month,
+                period_start=date(2025, month, 1),
+                period_end=date(2025, month, 28),
+                status=PayrollPeriodStatus.CONFIRMED,
+                currency="DOP",
+                source_id=source.id,
+                evidence_id=evidence.id,
+                record_count=1,
+                calculated_gross_total=gross,
+                calculated_net_total=gross - 5000,
+                checksum=f"{month:064x}",
+                metadata_={"controlled": True, "fictitious": True, "seed": "block-5"},
+            )
+            db.add(period)
+            db.flush()
+        entry = db.scalar(
+            select(PayrollEntry).where(
+                PayrollEntry.payroll_period_id == period.id,
+                PayrollEntry.person_id == person.id,
+            )
+        )
+        if entry is None:
+            db.add(
+                PayrollEntry(
+                    payroll_period_id=period.id,
+                    employment_relationship_id=relationship.id,
+                    person_id=person.id,
+                    institution_id=institution.id,
+                    position_id=position.id,
+                    organizational_unit_id=unit.id,
+                    listed_name="Persona Ficticia de Control",
+                    normalized_name="persona ficticia de control",
+                    employment_type="career",
+                    base_salary=gross,
+                    gross_income=gross,
+                    total_deductions=5000,
+                    net_income=gross - 5000,
+                    other_compensation=0,
+                    currency="DOP",
+                    status=PayrollEntryStatus.CONFIRMED,
+                    source_id=source.id,
+                    evidence_id=evidence.id,
+                    raw_payload={"controlled": True, "fictitious": True},
+                    metadata_={"controlled": True, "fictitious": True, "seed": "block-5"},
+                )
+            )
 
 
 def main() -> None:

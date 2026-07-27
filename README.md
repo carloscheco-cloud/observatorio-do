@@ -53,5 +53,18 @@ make test-integration
   `/api/v1/institutions/{id}/organizational-chart?as_of=YYYY-MM-DD`; ancestros,
   descendientes, ruta, cargos y responsables se consultan desde `/organizational-units`.
 
-La cabeza Alembic actual es `0004`. Las semillas del bloque 4 son idempotentes y todos sus
-datos organizativos están marcados expresamente como ficticios y controlados.
+## Empleo público y nóminas
+
+El Bloque 5 incorpora relaciones laborales históricas, períodos mensuales versionados,
+entradas y componentes de remuneración, comparación entre períodos, métricas y señales
+observables. Los principales recursos están bajo `/api/v1/employment-relationships`,
+`/api/v1/payroll-periods` y `/api/v1/payroll-findings`.
+
+Las referencias sensibles se conservan únicamente como HMAC-SHA256 usando
+`PAYROLL_REFERENCE_SALT`; nunca se exponen `raw_payload` ni identificadores sensibles en
+respuestas públicas. La procedencia, evidencia, fila, payload original, procesamiento,
+versión, actor y estado de validación se conservan en capas diferenciadas. Los actores IA
+solo pueden proponer fuentes, evidencias o señales analíticas.
+
+La cabeza Alembic actual es `0005`. Las semillas de los bloques 4 y 5 son idempotentes y
+todos sus datos organizativos y salariales están marcados como ficticios y controlados.
