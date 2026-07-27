@@ -1,0 +1,55 @@
+import uuid
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.modules.evidence.models import Evidence
+from app.modules.institutions.models import (
+    Institution,
+    InstitutionEvidence,
+    InstitutionStatus,
+)
+from app.modules.institutions.schemas import InstitutionCreate
+from app.modules.territories.models import Territory
+
+
+class InvalidInstitution(ValueError):
+    pass
+
+
+def list_institutions(db: Session) -> list[Institution]:
+    return list(db.scalars(select(Institution).order_by(Institution.name)))
+
+
+def create_institution(
+    db: Session, payload: InstitutionCreate, *, actor_type: str = "human"
+) -> Institution:
+    if actor_type.lower() == "ai":
+        raise PermissionError("AI actors cannot write canonical institution records")
+    if db.get(Territory, payload.territory_id) is None:
+        raise InvalidInstitution("Territory does not exist")
+    if db.get(Evidence, payload.evidence_id) is None:
+        raise InvalidInstitution("Evidence does not exist")
+
+    institution = Institution(
+        name=payload.name,
+        kind=payload.kind,
+        territory_id=payload.territory_id,
+        status=InstitutionStatus.DRAFT,
+    )
+    institution.evidence_links.append(
+        InstitutionEvidence(evidence_id=payload.evidence_id, relation="supports_existence")
+    )
+    db.add(institution)
+    db.flush()
+    institution.status = InstitutionStatus.CONFIRMED
+    db.commit()
+    db.refresh(institution)
+    return institution
+
+
+def evidence_ids(db: Session, institution_id: uuid.UUID) -> list[uuid.UUID]:
+    statement = select(InstitutionEvidence.evidence_id).where(
+        InstitutionEvidence.institution_id == institution_id
+    )
+    return list(db.scalars(statement))
