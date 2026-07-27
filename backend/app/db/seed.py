@@ -1,4 +1,5 @@
 from datetime import UTC, date, datetime
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import select
@@ -6,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
 from app.modules.appointments.models import Appointment, AppointmentStatus
+from app.modules.asset_categories.models import AssetCategory
 from app.modules.budget.models import (
     BudgetAppropriation,
     BudgetClassifier,
@@ -61,6 +63,25 @@ from app.modules.procurement_processes.models import (
     ProcurementProcess,
     ProcurementType,
     PurchaseOrder,
+)
+from app.modules.public_assets.models import (
+    AssetAssignment,
+    AssetDisposal,
+    AssetEvent,
+    AssetFinding,
+    AssetInsurancePolicy,
+    AssetLocation,
+    AssetMaintenanceRecord,
+    AssetTransfer,
+    AssetValuation,
+    EquipmentAsset,
+    InfrastructureAsset,
+    IntangibleAsset,
+    PhysicalInventory,
+    PhysicalInventoryItem,
+    PublicAsset,
+    RealEstateAsset,
+    VehicleAsset,
 )
 from app.modules.public_debt.models import (
     DebtBalanceSnapshot,
@@ -455,6 +476,7 @@ def seed(db: Session) -> None:
     _seed_block6(db, institution, directorate, bonao, block4_source, block4_evidence, block4_legal)
     _seed_block7(db, institution, directorate, bonao, block4_source, block4_evidence, block4_legal)
     _seed_block8(db, institution, source, evidence, legal_basis)
+    _seed_block9(db, institution, bonao, block4_source, block4_evidence, block4_legal)
     db.commit()
 
 
@@ -1352,6 +1374,445 @@ def _seed_block8(
                 debt_instrument_id=instrument.id,
                 observed_value={"controlled_test": True},
                 explanation="Señal ficticia para revisión; no afirma ilegalidad ni corrupción.",
+                evidence_id=evidence.id,
+                metadata_=marker,
+            )
+        )
+
+
+def _seed_block9(
+    db: Session,
+    institution: Institution,
+    territory: Territory,
+    source: Source,
+    evidence: Evidence,
+    legal_basis: LegalBasis,
+) -> None:
+    """Create only controlled, explicitly fictitious patrimony examples."""
+    marker = {"controlled": True, "fictitious": True, "seed": "block-9"}
+    category_specs = (
+        ("B9-LAND", "Terreno ficticio de control", "land", False),
+        ("B9-BUILDING", "Edificio ficticio de control", "building", True),
+        ("B9-VEHICLE", "Vehículo ficticio de control", "vehicle", True),
+        ("B9-TECH", "Tecnología ficticia de control", "technology", True),
+        ("B9-FURNITURE", "Mobiliario ficticio de control", "furniture", True),
+        ("B9-INTANGIBLE", "Intangible ficticio de control", "intangible", True),
+        ("B9-CIP", "Obra en construcción ficticia", "construction_in_progress", False),
+    )
+    categories: dict[str, AssetCategory] = {}
+    for code, name, kind, depreciable in category_specs:
+        row = db.scalar(select(AssetCategory).where(AssetCategory.stable_code == code))
+        if row is None:
+            row = AssetCategory(
+                stable_code=code,
+                official_name=name,
+                normalized_name=name.casefold(),
+                category_type=kind,
+                is_depreciable=depreciable,
+                depreciation_method="straight_line" if depreciable else None,
+                default_useful_life_years=5 if depreciable else None,
+                status="confirmed",
+                valid_from=date(2099, 1, 1),
+                source_id=source.id,
+                evidence_id=evidence.id,
+                metadata_=marker,
+            )
+            db.add(row)
+            db.flush()
+        categories[kind] = row
+
+    unit = db.scalar(
+        select(OrganizationalUnit).where(OrganizationalUnit.institution_id == institution.id)
+    )
+    person = db.scalar(select(Person).where(Person.metadata_["controlled"].as_boolean() == True))  # noqa: E712
+    location = db.scalar(
+        select(AssetLocation).where(AssetLocation.official_name == "Almacén B9 ficticio")
+    )
+    if location is None:
+        location = AssetLocation(
+            institution_id=institution.id,
+            territory_id=territory.id,
+            organizational_unit_id=unit.id if unit else None,
+            location_type="warehouse",
+            official_name="Almacén B9 ficticio",
+            status="active",
+            is_restricted=True,
+            source_id=source.id,
+            evidence_id=evidence.id,
+            metadata_=marker,
+        )
+        db.add(location)
+        db.flush()
+
+    asset_specs = (
+        ("B9-ASSET-LAND-001", "Terreno ficticio B9", "land", "donation", 1000),
+        ("B9-ASSET-BLD-001", "Edificio ficticio B9", "building", "construction", 800),
+        ("B9-ASSET-VEH-001", "Vehículo ficticio B9 A", "vehicle", "purchase", 100),
+        ("B9-ASSET-VEH-002", "Vehículo ficticio B9 B", "vehicle", "purchase", 120),
+        ("B9-ASSET-TECH-001", "Equipo tecnológico ficticio B9", "technology", "purchase", 50),
+        ("B9-ASSET-FURN-001", "Mobiliario ficticio B9", "furniture", "purchase", 25),
+        ("B9-ASSET-LIC-001", "Licencia ficticia B9", "intangible", "purchase", 30),
+        (
+            "B9-ASSET-CIP-001",
+            "Obra ficticia en construcción B9",
+            "construction_in_progress",
+            "construction",
+            500,
+        ),
+        ("B9-ASSET-DISP-001", "Bien ficticio para baja B9", "furniture", "purchase", 10),
+    )
+    assets: dict[str, PublicAsset] = {}
+    for code, name, kind, method, value in asset_specs:
+        asset = db.scalar(select(PublicAsset).where(PublicAsset.asset_code == code))
+        if asset is None:
+            asset = PublicAsset(
+                owner_institution_id=institution.id,
+                managing_institution_id=institution.id,
+                organizational_unit_id=unit.id if unit else None,
+                asset_category_id=categories[kind].id,
+                asset_code=code,
+                official_name=name,
+                normalized_name=name.casefold(),
+                acquisition_method=method,
+                acquisition_date=date(2099, 1, 1),
+                original_cost=value,
+                current_book_value=value,
+                estimated_market_value=value,
+                currency="DOP",
+                quantity=1,
+                unit_of_measure="unit",
+                status="under_construction" if kind == "construction_in_progress" else "active",
+                condition_status="good",
+                ownership_status="owned",
+                territory_id=territory.id,
+                location_id=location.id,
+                source_id=source.id,
+                evidence_id=evidence.id,
+                raw_payload={"controlled": True},
+                metadata_=marker,
+            )
+            db.add(asset)
+            db.flush()
+        assets[code] = asset
+
+    extensions: tuple[tuple[type[Any], str, dict[str, object]], ...] = (
+        (
+            RealEstateAsset,
+            "B9-ASSET-LAND-001",
+            {
+                "property_type": "land",
+                "land_area": 100,
+                "unit_of_area": "m2",
+                "title_status": "controlled",
+                "occupancy_status": "idle",
+                "encumbrance_status": "none",
+            },
+        ),
+        (
+            RealEstateAsset,
+            "B9-ASSET-BLD-001",
+            {
+                "property_type": "building",
+                "built_area": 80,
+                "unit_of_area": "m2",
+                "title_status": "controlled",
+                "occupancy_status": "occupied",
+                "encumbrance_status": "none",
+                "parent_land_asset_id": assets["B9-ASSET-LAND-001"].id,
+            },
+        ),
+        (
+            VehicleAsset,
+            "B9-ASSET-VEH-001",
+            {
+                "vehicle_type": "car",
+                "plate_reference_masked": "TEST-***",
+                "vin_hash": "a" * 64,
+                "operational_status": "operational",
+                "insurance_status": "insured",
+            },
+        ),
+        (
+            VehicleAsset,
+            "B9-ASSET-VEH-002",
+            {
+                "vehicle_type": "pickup",
+                "plate_reference_masked": "CTRL-***",
+                "vin_hash": "b" * 64,
+                "operational_status": "maintenance",
+                "insurance_status": "uninsured",
+            },
+        ),
+        (
+            EquipmentAsset,
+            "B9-ASSET-TECH-001",
+            {
+                "equipment_type": "computer",
+                "serial_reference_hash": "c" * 64,
+                "technical_specifications": {"controlled": True},
+                "operational_status": "operational",
+            },
+        ),
+        (
+            EquipmentAsset,
+            "B9-ASSET-FURN-001",
+            {
+                "equipment_type": "furniture",
+                "technical_specifications": {"controlled": True},
+                "operational_status": "operational",
+            },
+        ),
+        (
+            IntangibleAsset,
+            "B9-ASSET-LIC-001",
+            {
+                "intangible_type": "software",
+                "license_type": "controlled_test",
+                "start_date": date(2099, 1, 1),
+                "expiration_date": date(2099, 12, 31),
+                "number_of_users": 5,
+                "annual_cost": 30,
+                "ownership_or_license_status": "licensed",
+            },
+        ),
+        (
+            InfrastructureAsset,
+            "B9-ASSET-CIP-001",
+            {
+                "infrastructure_type": "public_building",
+                "construction_start_date": date(2099, 1, 1),
+                "physical_progress_percentage": 40,
+                "financial_progress_percentage": 45,
+            },
+        ),
+    )
+    for model, code, values in extensions:
+        if db.get(model, assets[code].id) is None:
+            db.add(model(asset_id=assets[code].id, metadata_=marker, **values))
+
+    assigned = assets["B9-ASSET-TECH-001"]
+    if db.scalar(select(AssetAssignment).where(AssetAssignment.asset_id == assigned.id)) is None:
+        db.add(
+            AssetAssignment(
+                asset_id=assigned.id,
+                institution_id=institution.id,
+                organizational_unit_id=unit.id if unit else None,
+                person_id=person.id if person else None,
+                assignment_type="custody",
+                start_date=date(2099, 1, 1),
+                status="active",
+                responsibility_description="Custodia ficticia controlada.",
+                source_id=source.id,
+                evidence_id=evidence.id,
+                metadata_=marker,
+            )
+        )
+    if db.scalar(select(AssetEvent).where(AssetEvent.asset_id == assigned.id)) is None:
+        db.add(
+            AssetEvent(
+                asset_id=assigned.id,
+                institution_id=institution.id,
+                event_type="relocated",
+                event_date=date(2099, 2, 1),
+                new_location_id=location.id,
+                description="Traslado ficticio y controlado.",
+                source_id=source.id,
+                evidence_id=evidence.id,
+                metadata_=marker,
+            )
+        )
+    other = db.scalar(select(Institution).where(Institution.name == "Institución ficticia B9"))
+    if other is None:
+        other = Institution(
+            name="Institución ficticia B9",
+            kind="controlled_test",
+            territory_id=territory.id,
+            status=InstitutionStatus.DRAFT,
+        )
+        db.add(other)
+        db.flush()
+    other_link = db.scalar(
+        select(InstitutionEvidence).where(
+            InstitutionEvidence.institution_id == other.id,
+            InstitutionEvidence.evidence_id == evidence.id,
+        )
+    )
+    if other_link is None:
+        db.add(InstitutionEvidence(institution_id=other.id, evidence_id=evidence.id))
+    if (
+        db.scalar(
+            select(AssetTransfer).where(AssetTransfer.asset_id == assets["B9-ASSET-VEH-002"].id)
+        )
+        is None
+    ):
+        db.add(
+            AssetTransfer(
+                asset_id=assets["B9-ASSET-VEH-002"].id,
+                origin_institution_id=institution.id,
+                destination_institution_id=other.id,
+                transfer_type="temporary",
+                approval_date=date(2099, 2, 1),
+                effective_date=date(2099, 2, 2),
+                previous_book_value=120,
+                transferred_value=120,
+                currency="DOP",
+                legal_basis_id=legal_basis.id,
+                status="confirmed",
+                description="Transferencia ficticia controlada.",
+                source_id=source.id,
+                evidence_id=evidence.id,
+                metadata_=marker,
+            )
+        )
+    if (
+        db.scalar(
+            select(AssetMaintenanceRecord).where(
+                AssetMaintenanceRecord.asset_id == assets["B9-ASSET-VEH-001"].id
+            )
+        )
+        is None
+    ):
+        db.add(
+            AssetMaintenanceRecord(
+                asset_id=assets["B9-ASSET-VEH-001"].id,
+                institution_id=institution.id,
+                maintenance_type="preventive",
+                performed_date=date(2099, 2, 1),
+                description="Mantenimiento ficticio controlado.",
+                cost=5,
+                currency="DOP",
+                status="completed",
+                source_id=source.id,
+                evidence_id=evidence.id,
+                metadata_=marker,
+            )
+        )
+    for code in ("B9-ASSET-LAND-001", "B9-ASSET-VEH-001"):
+        if (
+            db.scalar(select(AssetValuation).where(AssetValuation.asset_id == assets[code].id))
+            is None
+        ):
+            valuation_amount = assets[code].original_cost or Decimal("0")
+            db.add(
+                AssetValuation(
+                    asset_id=assets[code].id,
+                    valuation_date=date(2099, 2, 1),
+                    valuation_type="accounting",
+                    gross_value=valuation_amount,
+                    accumulated_depreciation=0,
+                    impairment_amount=0,
+                    net_book_value=valuation_amount,
+                    currency="DOP",
+                    valuation_method="controlled_test",
+                    source_id=source.id,
+                    evidence_id=evidence.id,
+                    metadata_=marker,
+                )
+            )
+    if (
+        db.scalar(
+            select(AssetInsurancePolicy).where(
+                AssetInsurancePolicy.asset_id == assets["B9-ASSET-VEH-001"].id
+            )
+        )
+        is None
+    ):
+        db.add(
+            AssetInsurancePolicy(
+                asset_id=assets["B9-ASSET-VEH-001"].id,
+                policy_reference_hash="d" * 64,
+                coverage_type="controlled_test",
+                coverage_start=date(2099, 1, 1),
+                coverage_end=date(2099, 12, 31),
+                insured_value=100,
+                premium_amount=2,
+                currency="DOP",
+                status="active",
+                source_id=source.id,
+                evidence_id=evidence.id,
+                metadata_=marker,
+            )
+        )
+    inventory = db.scalar(
+        select(PhysicalInventory).where(PhysicalInventory.inventory_code == "B9-INV-001")
+    )
+    if inventory is None:
+        inventory = PhysicalInventory(
+            institution_id=institution.id,
+            location_id=location.id,
+            inventory_code="B9-INV-001",
+            inventory_date=date(2099, 3, 1),
+            scope="Inventario físico ficticio controlado.",
+            status="confirmed",
+            expected_asset_count=2,
+            observed_asset_count=1,
+            matched_count=1,
+            missing_count=1,
+            surplus_count=0,
+            source_id=source.id,
+            evidence_id=evidence.id,
+            metadata_=marker,
+        )
+        db.add(inventory)
+        db.flush()
+        db.add_all(
+            [
+                PhysicalInventoryItem(
+                    physical_inventory_id=inventory.id,
+                    asset_id=assets["B9-ASSET-TECH-001"].id,
+                    observed_reference="CONTROL-OBS-001",
+                    observed_name="Equipo tecnológico ficticio B9",
+                    observed_condition="good",
+                    observed_location_id=location.id,
+                    match_status="matched",
+                    evidence_id=evidence.id,
+                    metadata_=marker,
+                ),
+                PhysicalInventoryItem(
+                    physical_inventory_id=inventory.id,
+                    asset_id=assets["B9-ASSET-FURN-001"].id,
+                    observed_reference="CONTROL-OBS-002",
+                    observed_name="Mobiliario ficticio B9",
+                    observed_condition="unknown",
+                    match_status="missing",
+                    discrepancy_type="missing",
+                    notes="Diferencia controlada; no implica robo ni conducta ilícita.",
+                    evidence_id=evidence.id,
+                    metadata_=marker,
+                ),
+            ]
+        )
+    disposable = assets["B9-ASSET-DISP-001"]
+    if db.scalar(select(AssetDisposal).where(AssetDisposal.asset_id == disposable.id)) is None:
+        db.add(
+            AssetDisposal(
+                asset_id=disposable.id,
+                institution_id=institution.id,
+                disposal_type="write_off",
+                approval_date=date(2099, 4, 1),
+                effective_date=date(2099, 4, 2),
+                book_value=10,
+                disposal_value=0,
+                currency="DOP",
+                reason="Baja ficticia para pruebas.",
+                legal_basis_id=legal_basis.id,
+                status="completed",
+                source_id=source.id,
+                evidence_id=evidence.id,
+                metadata_=marker,
+            )
+        )
+    if db.scalar(select(AssetFinding).where(AssetFinding.inventory_id == inventory.id)) is None:
+        db.add(
+            AssetFinding(
+                finding_type="missing_asset",
+                severity="review_required",
+                institution_id=institution.id,
+                asset_id=assets["B9-ASSET-FURN-001"].id,
+                inventory_id=inventory.id,
+                observed_value={"present": False, "controlled_test": True},
+                expected_or_previous_value={"present": True},
+                explanation="Señal ficticia observable; no afirma robo, fraude ni corrupción.",
                 evidence_id=evidence.id,
                 metadata_=marker,
             )

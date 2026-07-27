@@ -1,6 +1,7 @@
 """Central model import used only for SQLAlchemy metadata discovery."""
 
 from app.modules.appointments.models import Appointment
+from app.modules.asset_categories.models import AssetCategory
 from app.modules.budget.models import (
     BudgetAppropriation,
     BudgetClassifier,
@@ -48,6 +49,27 @@ from app.modules.procurement_processes.models import (
     ProcurementVersion,
     PurchaseOrder,
 )
+from app.modules.public_assets.models import (
+    AssetAssignment,
+    AssetDisposal,
+    AssetEncumbrance,
+    AssetEvent,
+    AssetFinding,
+    AssetInsurancePolicy,
+    AssetLocation,
+    AssetMaintenanceRecord,
+    AssetTransfer,
+    AssetValuation,
+    AssetVersion,
+    EquipmentAsset,
+    InfrastructureAsset,
+    IntangibleAsset,
+    PhysicalInventory,
+    PhysicalInventoryItem,
+    PublicAsset,
+    RealEstateAsset,
+    VehicleAsset,
+)
 from app.modules.public_debt.models import (
     DebtBalanceSnapshot,
     DebtDisbursement,
@@ -72,6 +94,18 @@ from app.modules.territories.models import Territory
 
 __all__ = [
     "Appointment",
+    "AssetCategory",
+    "AssetAssignment",
+    "AssetDisposal",
+    "AssetEncumbrance",
+    "AssetEvent",
+    "AssetFinding",
+    "AssetInsurancePolicy",
+    "AssetLocation",
+    "AssetMaintenanceRecord",
+    "AssetTransfer",
+    "AssetValuation",
+    "AssetVersion",
     "BudgetAppropriation",
     "BudgetClassifier",
     "BudgetCycle",
@@ -84,8 +118,11 @@ __all__ = [
     "Creditor",
     "CreditorHistory",
     "Evidence",
+    "EquipmentAsset",
     "EmploymentRelationship",
     "Institution",
+    "InfrastructureAsset",
+    "IntangibleAsset",
     "InstitutionEvidence",
     "InterinstitutionalTransfer",
     "LegalBasis",
@@ -101,6 +138,10 @@ __all__ = [
     "PayrollVersion",
     "Position",
     "PositionUnitAssignment",
+    "PhysicalInventory",
+    "PhysicalInventoryItem",
+    "PublicAsset",
+    "RealEstateAsset",
     "ProcurementAward",
     "ProcurementBid",
     "ProcurementChallenge",
@@ -122,6 +163,7 @@ __all__ = [
     "FinancingOrganization",
     "FundingSource",
     "Territory",
+    "VehicleAsset",
     "DebtBalanceSnapshot",
     "DebtDisbursement",
     "DebtInstrument",

@@ -47,3 +47,12 @@ compromisos plurianuales, reestructuraciones, versiones y riesgos fiscales obser
 `creditors` conserva acreedores canónicos y su historial. Solo sus servicios autorizados
 escriben datos canónicos; la IA únicamente propone hallazgos o clasificaciones.
 
+El módulo `public_assets` conserva patrimonio, ubicaciones, extensiones inmobiliarias,
+vehículos, equipos, infraestructura, intangibles, custodias, transferencias, eventos,
+mantenimiento, valoraciones, seguros, gravámenes, inventarios, disposiciones y versiones.
+`asset_categories` contiene su clasificación controlada e histórica. Todo registro
+canónico exige fuente y evidencia coherentes y solo sus servicios autorizados lo escriben;
+los actores IA únicamente proponen clasificaciones o señales observables. Las referencias
+registrales, vehiculares, seriales y de pólizas se conservan como hashes irreversibles o
+versiones enmascaradas, y `raw_payload` nunca se expone públicamente.
+

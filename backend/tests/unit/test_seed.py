@@ -19,8 +19,8 @@ def test_seed_is_idempotent_and_traceable(db: Session) -> None:
     assert db.scalar(select(func.count()).select_from(Territory)) == 5
     assert db.scalar(select(func.count()).select_from(Source)) == 2
     assert db.scalar(select(func.count()).select_from(Evidence)) == 3
-    assert db.scalar(select(func.count()).select_from(Institution)) == 1
-    assert db.scalar(select(func.count()).select_from(InstitutionEvidence)) == 1
+    assert db.scalar(select(func.count()).select_from(Institution)) == 2
+    assert db.scalar(select(func.count()).select_from(InstitutionEvidence)) == 2
     assert db.scalar(select(func.count()).select_from(Person)) == 1
     assert db.scalar(select(func.count()).select_from(LegalBasis)) == 2
     assert db.scalar(select(func.count()).select_from(OrganizationalUnit)) == 5

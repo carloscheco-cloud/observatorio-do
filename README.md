@@ -66,7 +66,7 @@ respuestas públicas. La procedencia, evidencia, fila, payload original, procesa
 versión, actor y estado de validación se conservan en capas diferenciadas. Los actores IA
 solo pueden proponer fuentes, evidencias o señales analíticas.
 
-La cabeza Alembic actual es `0008`. Las semillas de los bloques 4 a 8 son idempotentes y
+La cabeza Alembic actual es `0009`. Las semillas de los bloques 4 a 9 son idempotentes y
 todos sus datos organizativos y salariales están marcados como ficticios y controlados.
 
 ## Presupuesto público y ejecución financiera
@@ -111,3 +111,21 @@ La API expone `/api/v1/creditors`, `/debt-instruments`, `/debt-disbursements`,
 `/debt-payments`, `/public-guarantees`, `/public-obligations`, `/financial-transfers`,
 `/public-subsidies`, `/multi-year-commitments` y `/fiscal-risk-findings`, además de
 exposición, historial, métricas, servicio y comparaciones institucionales.
+
+## Patrimonio y activos públicos
+
+El Bloque 9 incorpora categorías históricas, bienes públicos, ubicaciones, extensiones
+para inmuebles, vehículos, equipos, infraestructura e intangibles, además de custodia,
+transferencias, eventos, mantenimiento, valoraciones, seguros, gravámenes, inventarios,
+disposiciones, versiones y señales observables. Los importes usan `Numeric`/`Decimal`.
+
+La API expone `/api/v1/asset-categories`, `/public-assets`, `/asset-locations`,
+`/asset-assignments`, `/asset-transfers`, `/asset-maintenance-records`,
+`/asset-valuations`, `/physical-inventories`, `/asset-disposals` y `/asset-findings`,
+además de historial y métricas institucionales. La ingesta controlada ofrece vista previa,
+dry-run, checksum, errores por fila, límites de tamaño y protección CSV.
+
+Los actores IA no escriben datos patrimoniales canónicos. Placas, VIN, chasis, títulos,
+seriales y pólizas se conservan únicamente mediante hash o enmascaramiento; ubicaciones
+restringidas no exponen dirección pública y `raw_payload` queda fuera de los esquemas de
+respuesta. Las semillas del bloque son ficticias, controladas e idempotentes.
