@@ -4,6 +4,10 @@ import hashlib
 from abc import ABC, abstractmethod
 from pathlib import Path
 
+import boto3  # type: ignore[import-untyped]
+
+from app.core.config import Settings
+
 
 class ArtifactStorage(ABC):
     @abstractmethod
@@ -54,3 +58,18 @@ class S3CompatibleArtifactStorage(ArtifactStorage):
         if not isinstance(content, bytes):
             raise TypeError("storage client returned non-bytes content")
         return content
+
+
+def build_artifact_storage(settings: Settings) -> ArtifactStorage:
+    if settings.artifact_storage_backend == "local":
+        return LocalArtifactStorage(Path(settings.artifact_storage_path))
+    client = boto3.client(
+        "s3",
+        endpoint_url=settings.s3_endpoint_url,
+        region_name=settings.s3_region,
+        aws_access_key_id=settings.s3_access_key_id,
+        aws_secret_access_key=settings.s3_secret_access_key,
+    )
+    if settings.s3_bucket is None:
+        raise ValueError("S3_BUCKET is required")
+    return S3CompatibleArtifactStorage(client, settings.s3_bucket)

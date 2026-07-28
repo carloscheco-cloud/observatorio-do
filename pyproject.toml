@@ -9,6 +9,7 @@ description = "Observatorio del Estado Dominicano"
 requires-python = ">=3.12"
 dependencies = [
   "alembic>=1.14,<2",
+  "boto3>=1.35,<2",
   "fastapi>=0.115,<1",
   "psycopg[binary]>=3.2,<4",
   "pydantic-settings>=2.7,<3",

@@ -1,6 +1,10 @@
 import type { Collection, Institution, InstitutionProfile, PublicItem, SearchResult, Summary } from "@/types/public";
 
-const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1/public";
+const configuredBase = process.env.NEXT_PUBLIC_API_URL;
+if (!configuredBase) {
+  throw new Error("NEXT_PUBLIC_API_URL is required");
+}
+const base = configuredBase.replace(/\/$/, "");
 
 export class PublicApiError extends Error {
   constructor(public status: number, message: string) { super(message); }
