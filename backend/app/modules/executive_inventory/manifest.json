@@ -1,0 +1,49 @@
+{
+  "version": "2026-08-03",
+  "territory": {"code": "DO", "name": "República Dominicana", "type": "country"},
+  "sources": {
+    "constitution": {
+      "name": "Constitución de la República Dominicana (2015 actualizada)",
+      "url": "https://presidencia.gob.do/sites/default/files/statics/transparencia/base-legal/Constitucion-de-la-Republica-Dominicana-2015-actualizada.pdf",
+      "publisher": "Presidencia de la República Dominicana",
+      "source_type": "official_constitution",
+      "retrieved_at": "2026-08-03T00:00:00-04:00"
+    },
+    "coedom": {
+      "name": "Clasificador de Organismos del Estado Dominicano - A-Z (M)",
+      "url": "https://map.gob.do/COEDOM/Home/SearchAZ?page=1&searchString=M",
+      "publisher": "Ministerio de Administración Pública",
+      "source_type": "official_institutional_directory",
+      "retrieved_at": "2026-08-03T00:00:00-04:00"
+    }
+  },
+  "default_institution_source": "coedom",
+  "institutions": [
+    {"name":"Presidencia de la República","acronym":null,"slug":"presidencia-de-la-republica","institution_type":"presidency","official_website":"https://presidencia.gob.do/","functions_summary":"Órgano desde el cual la Presidencia ejerce la jefatura del Estado y del Gobierno.","source":"constitution","locator":"artículos 122 y 128","excerpt":"El Poder Ejecutivo es ejercido en nombre del pueblo por la Presidenta o el Presidente de la República."},
+    {"name":"Vicepresidencia de la República","acronym":null,"slug":"vicepresidencia-de-la-republica","institution_type":"vice_presidency","official_website":"https://vicepresidencia.gob.do/","functions_summary":"Órgano constitucional elegido conjuntamente con la Presidencia por el mismo período.","source":"constitution","locator":"artículo 125","excerpt":"Habrá un o una Vicepresidente de la República, elegido conjuntamente con el Presidente."},
+    {"name":"Ministerio Administrativo de la Presidencia","acronym":"MAPRE","slug":"ministerio-administrativo-de-la-presidencia","official_website":"https://mapre.gob.do/","sector":"Presidencia","locator":"https://map.gob.do/COEDOM/Home/Details/57?Ruta=2"},
+    {"name":"Ministerio de Administración Pública","acronym":"MAP","slug":"ministerio-de-administracion-publica","official_website":"https://map.gob.do/","sector":"Administración Pública","locator":"https://map.gob.do/COEDOM/Home/Details/34?Ruta=2"},
+    {"name":"Ministerio de Agricultura","acronym":"MA","slug":"ministerio-de-agricultura","official_website":"https://agricultura.gob.do/","sector":"Agricultura","locator":"https://map.gob.do/COEDOM/Home/Details/114?Ruta=2"},
+    {"name":"Ministerio de Cultura","acronym":"MINC","slug":"ministerio-de-cultura","official_website":"https://cultura.gob.do/","sector":"Cultura","locator":"https://map.gob.do/COEDOM/Home/Details/136?Ruta=2"},
+    {"name":"Ministerio de Defensa","acronym":"MIDE","slug":"ministerio-de-defensa","official_website":"https://mide.gob.do/","sector":"Defensa","locator":"https://map.gob.do/COEDOM/Home/Details/72?Ruta=2"},
+    {"name":"Ministerio de Deportes y Recreación","acronym":"MIDEREC","slug":"ministerio-de-deportes-y-recreacion","official_website":"https://miderec.gob.do/","sector":"Deportes y Recreación","locator":"https://map.gob.do/COEDOM/Home/Details/109?Ruta=2"},
+    {"name":"Ministerio de Educación","acronym":"MINERD","slug":"ministerio-de-educacion","official_website":"https://ministeriodeeducacion.gob.do/","sector":"Educación","locator":"https://map.gob.do/COEDOM/Home/Details/98?Ruta=2"},
+    {"name":"Ministerio de Educación Superior, Ciencia y Tecnología","acronym":"MESCYT","slug":"ministerio-de-educacion-superior-ciencia-y-tecnologia","official_website":"https://mescyt.gob.do/","sector":"Educación Superior, Ciencia y Tecnología","locator":"https://map.gob.do/COEDOM/Home/Details/141?Ruta=2"},
+    {"name":"Ministerio de Energía y Minas","acronym":"MEM","slug":"ministerio-de-energia-y-minas","official_website":"https://mem.gob.do/","sector":"Energía y Minas","locator":"https://map.gob.do/COEDOM/Home/Details/2233?Ruta=2"},
+    {"name":"Ministerio de Hacienda y Economía","acronym":"MHE","slug":"ministerio-de-hacienda-y-economia","official_website":"https://hacienda.gob.do/","sector":"Hacienda","locator":"https://map.gob.do/COEDOM/Home/Details/87?Ruta=2"},
+    {"name":"Ministerio de Industria, Comercio y Mipymes","acronym":"MICM","slug":"ministerio-de-industria-comercio-y-mipymes","official_website":"https://micm.gob.do/","sector":"Industria, Comercio y MIPYMES","locator":"https://map.gob.do/COEDOM/Home/Details/123?Ruta=2"},
+    {"name":"Ministerio de Interior y Policía","acronym":"MIP","slug":"ministerio-de-interior-y-policia","official_website":"https://mip.gob.do/","sector":"Interior y Policía","locator":"https://map.gob.do/COEDOM/Home/Details/65?Ruta=2"},
+    {"name":"Ministerio de Justicia","acronym":null,"slug":"ministerio-de-justicia","official_website":"https://mjusticia.gob.do/","sector":"Justicia","locator":"https://map.gob.do/COEDOM/Home/Details/26959?Ruta=2"},
+    {"name":"Ministerio de la Juventud","acronym":"MJ","slug":"ministerio-de-la-juventud","official_website":"https://juventud.gob.do/","sector":"Juventud","locator":"https://map.gob.do/COEDOM/Home/Details/139?Ruta=2"},
+    {"name":"Ministerio de la Mujer","acronym":"MMUJER","slug":"ministerio-de-la-mujer","official_website":"https://mujer.gob.do/","sector":"Mujer","locator":"https://map.gob.do/COEDOM/Home/Details/134?Ruta=2"},
+    {"name":"Ministerio de la Presidencia","acronym":"MINPRE","slug":"ministerio-de-la-presidencia","official_website":"https://minpre.gob.do/","sector":"Presidencia","locator":"https://map.gob.do/COEDOM/Home/Details/39?Ruta=2"},
+    {"name":"Ministerio de la Vivienda, Hábitat y Edificaciones","acronym":"MIVHED","slug":"ministerio-de-la-vivienda-habitat-y-edificaciones","official_website":"https://mived.gob.do/","sector":"Vivienda, Hábitat y Edificaciones","locator":"https://map.gob.do/COEDOM/Home/Details/181?Ruta=2"},
+    {"name":"Ministerio de Medio Ambiente y Recursos Naturales","acronym":"MIMARENA","slug":"ministerio-de-medio-ambiente-y-recursos-naturales","official_website":"https://ambiente.gob.do/","sector":"Medio Ambiente y Recursos Naturales","locator":"https://map.gob.do/COEDOM/Home/Details/140?Ruta=2"},
+    {"name":"Ministerio de Obras Públicas y Comunicaciones","acronym":"MOPC","slug":"ministerio-de-obras-publicas-y-comunicaciones","official_website":"https://mopc.gob.do/","sector":"Obras Públicas y Comunicaciones","locator":"https://map.gob.do/COEDOM/Home/Details/119?Ruta=2"},
+    {"name":"Ministerio de Relaciones Exteriores","acronym":"MIREX","slug":"ministerio-de-relaciones-exteriores","official_website":"https://mirex.gob.do/","sector":"Relaciones Exteriores","locator":"https://map.gob.do/COEDOM/Home/Details/84?Ruta=2"},
+    {"name":"Ministerio de Salud Pública y Asistencia Social","acronym":"MISPAS","slug":"ministerio-de-salud-publica-y-asistencia-social","official_website":"https://msp.gob.do/","sector":"Salud","locator":"https://map.gob.do/COEDOM/Home/Details/102?Ruta=2"},
+    {"name":"Ministerio de Trabajo","acronym":"MIT","slug":"ministerio-de-trabajo","official_website":"https://mt.gob.do/","sector":"Trabajo","locator":"https://map.gob.do/COEDOM/Home/Details/110?Ruta=2"},
+    {"name":"Ministerio de Turismo","acronym":"MITUR","slug":"ministerio-de-turismo","official_website":"https://mitur.gob.do/","sector":"Turismo","locator":"https://map.gob.do/COEDOM/Home/Details/130?Ruta=2"}
+  ],
+  "relationships": []
+}
