@@ -5,10 +5,12 @@ import uuid
 from datetime import UTC, datetime
 
 import pytest
+from alembic.config import Config
+from alembic.script import ScriptDirectory
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import DBAPIError
 
-from tests.integration.test_postgresql_guards import migrate
+from tests.integration.test_postgresql_guards import BACKEND_DIR, migrate
 
 pytestmark = pytest.mark.integration
 
@@ -39,9 +41,20 @@ def _source(connection: object) -> tuple[uuid.UUID, uuid.UUID]:
 
 def test_block_11_schema_and_single_head(postgres_url: str) -> None:
     migrate(postgres_url)
+    config = Config(BACKEND_DIR / "alembic.ini")
+    config.set_main_option("script_location", str(BACKEND_DIR / "alembic"))
+    script = ScriptDirectory.from_config(config)
+    heads = script.get_heads()
+
+    assert len(heads) == 1
+    executive_revision = script.get_revision("0012")
+    assert executive_revision is not None
+
     engine = create_engine(postgres_url)
     with engine.connect() as connection:
-        assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0011"
+        current = connection.scalar(text("SELECT version_num FROM alembic_version"))
+        assert current == heads[0]
+        assert current == executive_revision.revision
         tables = connection.execute(
             text(
                 "SELECT table_name FROM information_schema.tables "
