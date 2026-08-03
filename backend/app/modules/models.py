@@ -37,7 +37,11 @@ from app.modules.ingestion.models import (
     StagingBatch,
     StagingRecord,
 )
-from app.modules.institutions.models import Institution, InstitutionEvidence
+from app.modules.institutions.models import (
+    Institution,
+    InstitutionEvidence,
+    InstitutionRelationship,
+)
 from app.modules.legal_basis.models import LegalBasis
 from app.modules.organizational_units.models import (
     OrganizationalEvent,
@@ -176,6 +180,7 @@ __all__ = [
     "InfrastructureAsset",
     "IntangibleAsset",
     "InstitutionEvidence",
+    "InstitutionRelationship",
     "InterinstitutionalTransfer",
     "LegalBasis",
     "OrganizationalEvent",

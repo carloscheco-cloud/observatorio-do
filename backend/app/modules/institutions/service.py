@@ -1,6 +1,7 @@
 import uuid
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.modules.evidence.models import Evidence
@@ -32,8 +33,18 @@ def create_institution(
         raise InvalidInstitution("Evidence does not exist")
 
     institution = Institution(
-        name=payload.name,
-        kind=payload.kind,
+        name=payload.name.strip(),
+        kind=payload.kind.strip(),
+        acronym=payload.acronym.strip().upper() if payload.acronym else None,
+        slug=payload.slug,
+        state_branch=payload.state_branch,
+        institution_type=payload.institution_type,
+        operational_status=payload.operational_status,
+        coverage_level=payload.coverage_level,
+        official_website=str(payload.official_website) if payload.official_website else None,
+        functions_summary=payload.functions_summary,
+        creation_date=payload.creation_date,
+        last_reviewed_at=payload.last_reviewed_at,
         territory_id=payload.territory_id,
         status=InstitutionStatus.DRAFT,
     )
@@ -41,9 +52,13 @@ def create_institution(
         InstitutionEvidence(evidence_id=payload.evidence_id, relation="supports_existence")
     )
     db.add(institution)
-    db.flush()
-    institution.status = InstitutionStatus.CONFIRMED
-    db.commit()
+    try:
+        db.flush()
+        institution.status = InstitutionStatus.CONFIRMED
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise InvalidInstitution("Institution name or slug already exists") from exc
     db.refresh(institution)
     return institution
 
