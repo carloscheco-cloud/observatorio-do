@@ -2,7 +2,7 @@ import uuid
 from datetime import date, datetime
 from enum import StrEnum
 
-from sqlalchemy import Date, DateTime, Enum, String, func
+from sqlalchemy import Date, DateTime, Enum, ForeignKey, String, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.types import JSON
@@ -37,3 +37,17 @@ class Person(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
+
+
+class PersonEvidence(Base):
+    __tablename__ = "person_evidence"
+    __table_args__ = (UniqueConstraint("person_id", "evidence_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    person_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("persons.id", ondelete="CASCADE"), nullable=False
+    )
+    evidence_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("evidence.id", ondelete="RESTRICT"), nullable=False
+    )
+    relation: Mapped[str] = mapped_column(String(100), nullable=False)
