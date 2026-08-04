@@ -16,6 +16,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    event,
     func,
 )
 from sqlalchemy.dialects.postgresql import JSONB
@@ -74,6 +75,38 @@ class InformationRequestStatus(StrEnum):
     CLOSED = "closed"
 
 
+class ResourceCheckType(StrEnum):
+    HTTP_AVAILABILITY = "http_availability"
+    REDIRECT_RESOLUTION = "redirect_resolution"
+    CONTENT_METADATA = "content_metadata"
+
+
+class ResourceCheckStatus(StrEnum):
+    AVAILABLE = "available"
+    AVAILABLE_WITH_REDIRECT = "available_with_redirect"
+    RESTRICTED = "restricted"
+    RATE_LIMITED = "rate_limited"
+    SOURCE_UNAVAILABLE = "source_unavailable"
+    NOT_FOUND_PROVISIONAL = "not_found_provisional"
+    BROKEN_LINK_CONFIRMED = "broken_link_confirmed"
+    TECHNICAL_ERROR = "technical_error"
+
+
+class SearchabilityMethod(StrEnum):
+    HTML_TEXT_INSPECTION = "html_text_inspection"
+    PDF_TEXT_EXTRACTION = "pdf_text_extraction"
+    METADATA_INSPECTION = "metadata_inspection"
+    MANUAL_REVIEW = "manual_review"
+
+
+class SearchabilityResult(StrEnum):
+    SEARCHABLE = "searchable"
+    PARTIALLY_SEARCHABLE = "partially_searchable"
+    NOT_SEARCHABLE = "not_searchable"
+    INCONCLUSIVE = "inconclusive"
+    TECHNICAL_ERROR = "technical_error"
+
+
 class DocumentRequirement(Base):
     __tablename__ = "document_requirements"
     __table_args__ = (
@@ -127,6 +160,89 @@ class DocumentResource(Base):
     last_checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     archived_url: Mapped[str | None] = mapped_column(String(1000))
     notes: Mapped[str | None] = mapped_column(Text)
+
+
+class ResourceCheck(Base):
+    __tablename__ = "transparency_resource_checks"
+    __table_args__ = (
+        UniqueConstraint("resource_id", "checked_at", "check_type", "attempt_number"),
+        CheckConstraint("attempt_number >= 1"),
+        CheckConstraint("timeout_seconds > 0"),
+        CheckConstraint("redirect_count IS NULL OR redirect_count >= 0"),
+        CheckConstraint("response_time_ms IS NULL OR response_time_ms >= 0"),
+        CheckConstraint("content_length IS NULL OR content_length >= 0"),
+        CheckConstraint("http_status IS NULL OR (http_status >= 100 AND http_status <= 599)"),
+        CheckConstraint("final_url IS NULL OR http_status IS NOT NULL"),
+        CheckConstraint("status != 'RESTRICTED' OR http_status = 403"),
+        CheckConstraint("status != 'RATE_LIMITED' OR http_status = 429"),
+        CheckConstraint("status != 'NOT_FOUND_PROVISIONAL' OR http_status = 404"),
+        CheckConstraint("status != 'BROKEN_LINK_CONFIRMED' OR http_status IN (404, 410)"),
+        Index("ix_transparency_resource_checks_resource_checked", "resource_id", "checked_at"),
+        Index("ix_transparency_resource_checks_status", "status"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    resource_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("document_resources.id", ondelete="RESTRICT"), nullable=False
+    )
+    checked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    check_type: Mapped[ResourceCheckType] = mapped_column(Enum(ResourceCheckType), nullable=False)
+    status: Mapped[ResourceCheckStatus] = mapped_column(Enum(ResourceCheckStatus), nullable=False)
+    http_status: Mapped[int | None] = mapped_column(Integer)
+    final_url: Mapped[str | None] = mapped_column(String(1000))
+    redirect_count: Mapped[int | None] = mapped_column(Integer)
+    response_time_ms: Mapped[int | None] = mapped_column(Integer)
+    mime_type: Mapped[str | None] = mapped_column(String(150))
+    content_length: Mapped[int | None] = mapped_column(Integer)
+    error_type: Mapped[str | None] = mapped_column(String(80))
+    error_message: Mapped[str | None] = mapped_column(Text)
+    attempt_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    user_agent: Mapped[str] = mapped_column(String(300), nullable=False)
+    timeout_seconds: Mapped[int] = mapped_column(Integer, nullable=False)
+    tool_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    tool_version: Mapped[str] = mapped_column(String(100), nullable=False)
+    evidence_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("evidence.id", ondelete="RESTRICT")
+    )
+    notes: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class SearchabilityCheck(Base):
+    __tablename__ = "transparency_searchability_checks"
+    __table_args__ = (
+        CheckConstraint("page_count IS NULL OR page_count >= 0"),
+        CheckConstraint("extracted_character_count IS NULL OR extracted_character_count >= 0"),
+        CheckConstraint("selectable_text IS NOT TRUE OR text_detected IS TRUE"),
+        CheckConstraint("result != 'SEARCHABLE' OR text_detected IS TRUE"),
+        Index("ix_transparency_searchability_checks_resource_checked", "resource_id", "checked_at"),
+        Index("ix_transparency_searchability_checks_result", "result"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    resource_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("document_resources.id", ondelete="RESTRICT"), nullable=False
+    )
+    checked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    method: Mapped[SearchabilityMethod] = mapped_column(Enum(SearchabilityMethod), nullable=False)
+    result: Mapped[SearchabilityResult] = mapped_column(Enum(SearchabilityResult), nullable=False)
+    text_detected: Mapped[bool | None] = mapped_column(Boolean)
+    selectable_text: Mapped[bool | None] = mapped_column(Boolean)
+    metadata_detected: Mapped[bool | None] = mapped_column(Boolean)
+    title_detected: Mapped[bool | None] = mapped_column(Boolean)
+    publication_date_detected: Mapped[bool | None] = mapped_column(Boolean)
+    document_number_detected: Mapped[bool | None] = mapped_column(Boolean)
+    page_count: Mapped[int | None] = mapped_column(Integer)
+    extracted_character_count: Mapped[int | None] = mapped_column(Integer)
+    tool_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    tool_version: Mapped[str] = mapped_column(String(100), nullable=False)
+    evidence_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("evidence.id", ondelete="RESTRICT")
+    )
+    notes: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
 
 class TransparencyObservation(Base):
@@ -311,3 +427,12 @@ class DigitalTransparencyLoadRecord(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+
+def _reject_historical_mutation(*_: object) -> None:
+    raise ValueError("technical checks are immutable historical records")
+
+
+for _historical_model in (ResourceCheck, SearchabilityCheck):
+    event.listen(_historical_model, "before_update", _reject_historical_mutation)
+    event.listen(_historical_model, "before_delete", _reject_historical_mutation)
