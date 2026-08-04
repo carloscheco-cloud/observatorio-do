@@ -24,6 +24,8 @@ from app.modules.digital_transparency.models import (
     DocumentResource,
     InformationRequest,
     ManualResearchTask,
+    ResourceCheck,
+    SearchabilityCheck,
     TransparencyAssessment,
     TransparencyObservation,
 )
@@ -176,6 +178,8 @@ __all__ = [
     "DocumentResource",
     "InformationRequest",
     "ManualResearchTask",
+    "ResourceCheck",
+    "SearchabilityCheck",
     "TransparencyAssessment",
     "TransparencyObservation",
     "Evidence",
