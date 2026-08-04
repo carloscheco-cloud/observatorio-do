@@ -1,6 +1,6 @@
 """Central model import used only for SQLAlchemy metadata discovery."""
 
-from app.modules.appointments.models import Appointment
+from app.modules.appointments.models import Appointment, AppointmentEvidence
 from app.modules.asset_categories.models import AssetCategory
 from app.modules.budget.models import (
     BudgetAppropriation,
@@ -19,6 +19,7 @@ from app.modules.budget.models import (
 from app.modules.creditors.models import Creditor, CreditorHistory
 from app.modules.employment_relationships.models import EmploymentRelationship
 from app.modules.evidence.models import Evidence
+from app.modules.executive_authorities.models import ExecutiveAuthorityLoadRecord
 from app.modules.executive_dependencies.models import ExecutiveDependencyLoadRecord
 from app.modules.ingestion.models import (
     ColumnMapping,
@@ -53,8 +54,8 @@ from app.modules.organizational_units.models import (
 from app.modules.payroll_entries.models import PayrollConcept, PayrollEntry, PayrollEntryComponent
 from app.modules.payroll_findings.models import PayrollFinding
 from app.modules.payroll_periods.models import PayrollPeriod, PayrollVersion
-from app.modules.persons.models import Person
-from app.modules.positions.models import Position
+from app.modules.persons.models import Person, PersonEvidence
+from app.modules.positions.models import Position, PositionEvidence
 from app.modules.procurement_processes.models import (
     ContractAmendment,
     ContractDelivery,
@@ -135,6 +136,7 @@ from app.modules.territories.models import Territory
 
 __all__ = [
     "Appointment",
+    "AppointmentEvidence",
     "AssetCategory",
     "AssetAssignment",
     "AssetDisposal",
@@ -160,9 +162,12 @@ __all__ = [
     "CreditorHistory",
     "Evidence",
     "ExecutiveDependencyLoadRecord",
+    "ExecutiveAuthorityLoadRecord",
     "EquipmentAsset",
     "EmploymentRelationship",
     "Institution",
+    "PersonEvidence",
+    "PositionEvidence",
     "SourceCatalog",
     "IngestionRun",
     "RawArtifact",

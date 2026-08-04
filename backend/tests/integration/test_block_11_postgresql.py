@@ -54,7 +54,8 @@ def test_block_11_schema_and_single_head(postgres_url: str) -> None:
     with engine.connect() as connection:
         current = connection.scalar(text("SELECT version_num FROM alembic_version"))
         assert current == heads[0]
-        assert current == executive_revision.revision
+        assert executive_revision.revision == "0013"
+        assert current == "0014"
         tables = connection.execute(
             text(
                 "SELECT table_name FROM information_schema.tables "
