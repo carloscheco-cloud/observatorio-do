@@ -17,6 +17,16 @@ from app.modules.budget.models import (
     InterinstitutionalTransfer,
 )
 from app.modules.creditors.models import Creditor, CreditorHistory
+from app.modules.digital_transparency.models import (
+    AssessmentComponent,
+    DigitalTransparencyLoadRecord,
+    DocumentRequirement,
+    DocumentResource,
+    InformationRequest,
+    ManualResearchTask,
+    TransparencyAssessment,
+    TransparencyObservation,
+)
 from app.modules.employment_relationships.models import EmploymentRelationship
 from app.modules.evidence.models import Evidence
 from app.modules.executive_authorities.models import ExecutiveAuthorityLoadRecord
@@ -160,6 +170,14 @@ __all__ = [
     "BudgetVersion",
     "Creditor",
     "CreditorHistory",
+    "AssessmentComponent",
+    "DigitalTransparencyLoadRecord",
+    "DocumentRequirement",
+    "DocumentResource",
+    "InformationRequest",
+    "ManualResearchTask",
+    "TransparencyAssessment",
+    "TransparencyObservation",
     "Evidence",
     "ExecutiveDependencyLoadRecord",
     "ExecutiveAuthorityLoadRecord",
