@@ -19,6 +19,7 @@ from app.modules.budget.models import (
 from app.modules.creditors.models import Creditor, CreditorHistory
 from app.modules.employment_relationships.models import EmploymentRelationship
 from app.modules.evidence.models import Evidence
+from app.modules.executive_dependencies.models import ExecutiveDependencyLoadRecord
 from app.modules.ingestion.models import (
     ColumnMapping,
     DataLineageLink,
@@ -158,6 +159,7 @@ __all__ = [
     "Creditor",
     "CreditorHistory",
     "Evidence",
+    "ExecutiveDependencyLoadRecord",
     "EquipmentAsset",
     "EmploymentRelationship",
     "Institution",

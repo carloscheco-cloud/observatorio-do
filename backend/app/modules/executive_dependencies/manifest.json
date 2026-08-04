@@ -1,0 +1,111 @@
+{
+  "version": "PE-03.1",
+  "territory_code": "DO",
+  "sources": {
+    "map_inap": {
+      "name": "MAP - Dependencias: Instituto Nacional de Administración Pública",
+      "url": "https://map.gob.do/sobre-nosotros/dependencias/",
+      "publisher": "Ministerio de Administración Pública",
+      "source_type": "official_institutional_portal",
+      "retrieved_at": "2026-08-03T00:00:00-04:00"
+    },
+    "coedom_inap": {
+      "name": "COEDOM - Instituto Nacional de Administración Pública",
+      "url": "https://map.gob.do/COEDOM/Home/Details/36?Ruta=2",
+      "publisher": "Ministerio de Administración Pública",
+      "source_type": "official_classifier",
+      "retrieved_at": "2026-08-03T00:00:00-04:00"
+    },
+    "decree_693_24": {
+      "name": "Decreto núm. 693-24",
+      "url": "https://presidencia.gob.do/sites/default/files/decree/2024-12/Decreto%20693-24.pdf",
+      "publisher": "Presidencia de la República Dominicana",
+      "source_type": "decree",
+      "retrieved_at": "2026-08-03T00:00:00-04:00"
+    },
+    "law_589_16": {
+      "name": "Ley núm. 589-16",
+      "url": "https://www.consultoria.gov.do/Consulta/Home/FileManagement?documentId=3379448&managementType=2",
+      "publisher": "Consultoría Jurídica del Poder Ejecutivo",
+      "source_type": "law",
+      "retrieved_at": "2026-08-03T00:00:00-04:00"
+    }
+  },
+  "institutions": [
+    {
+      "name": "Instituto Nacional de Administración Pública",
+      "acronym": "INAP",
+      "slug": "instituto-nacional-de-administracion-publica",
+      "institution_type": "institute",
+      "kind": "órgano desconcentrado",
+      "official_website": "https://inap.gob.do/",
+      "functions_summary": "Órgano de formación y desarrollo de capacidades para el servicio público.",
+      "operational_status": "active",
+      "coverage_level": "basic"
+    },
+    {
+      "name": "Consejo Nacional para la Soberanía y Seguridad Alimentaria y Nutricional",
+      "acronym": "CONASSAN",
+      "slug": "consejo-nacional-para-la-soberania-y-seguridad-alimentaria-y-nutricional",
+      "institution_type": "council",
+      "kind": "consejo nacional",
+      "functions_summary": "Órgano rector y coordinador del SINASSAN.",
+      "operational_status": "active",
+      "coverage_level": "basic"
+    }
+  ],
+  "institution_evidence": [
+    {
+      "institution": "instituto-nacional-de-administracion-publica",
+      "source": "coedom_inap",
+      "title": "Existencia y naturaleza oficial del INAP",
+      "excerpt": "Instituto Nacional de Administración Pública (INAP); organismo matriz: Ministerio de Administración Pública.",
+      "locator": "Información General del Organismo y organigrama estructural"
+    },
+    {
+      "institution": "consejo-nacional-para-la-soberania-y-seguridad-alimentaria-y-nutricional",
+      "source": "decree_693_24",
+      "title": "Existencia vigente del CONASSAN",
+      "excerpt": "El artículo 12 de la Ley núm. 589-16 crea el CONASSAN, órgano rector y coordinador del SINASSAN.",
+      "locator": "considerandos, página 1"
+    }
+  ],
+  "relationships": [
+    {
+      "parent": "ministerio-de-administracion-publica",
+      "child": "instituto-nacional-de-administracion-publica",
+      "relationship_type": "dependent_on",
+      "valid_from": null,
+      "valid_to": null,
+      "notes": "La fuente oficial confirma que es una dependencia del MAP, pero esta carga no atribuye una fecha inicial sin texto legal consolidado verificable."
+    },
+    {
+      "parent": "ministerio-de-la-presidencia",
+      "child": "consejo-nacional-para-la-soberania-y-seguridad-alimentaria-y-nutricional",
+      "relationship_type": "attached",
+      "valid_from": null,
+      "valid_to": null,
+      "notes": "El párrafo del artículo 12 de la Ley núm. 589-16 establece la adscripción. La ley fue promulgada el 5 de julio de 2016 y publicada el 8 de julio de 2016, pero su disposición final condiciona la vigencia a los plazos del Código Civil; no se atribuye una fecha inicial sin verificar ese cómputo."
+    }
+  ],
+  "relationship_evidence": [
+    {
+      "parent": "ministerio-de-administracion-publica",
+      "child": "instituto-nacional-de-administracion-publica",
+      "relationship_type": "dependent_on",
+      "source": "map_inap",
+      "title": "Dependencia administrativa del INAP",
+      "excerpt": "El Instituto Nacional de Administración Pública (INAP) es una dependencia del Ministerio de Administración Pública (MAP).",
+      "locator": "sección Dependencias / INAP"
+    },
+    {
+      "parent": "ministerio-de-la-presidencia",
+      "child": "consejo-nacional-para-la-soberania-y-seguridad-alimentaria-y-nutricional",
+      "relationship_type": "attached",
+      "source": "law_589_16",
+      "title": "Adscripción del CONASSAN",
+      "excerpt": "Párrafo. El Consejo Nacional para la Soberanía y Seguridad Alimentaria y Nutricional (CONASSAN) está adscrito al Ministerio de la Presidencia.",
+      "locator": "artículo 12, párrafo, página 13; G. O. núm. 10849 del 8 de julio de 2016"
+    }
+  ]
+}
