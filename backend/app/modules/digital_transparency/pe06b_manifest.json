@@ -1,0 +1,48 @@
+{
+  "version": "PE-06B-2026-08-04",
+  "methodology_version": "OED-TD-1.0",
+  "assessment_date": "2026-08-04",
+  "observed_at": "2026-08-04T12:00:00-04:00",
+  "technical_checks": [
+    {
+      "slug": "ministerio-de-salud-publica-y-asistencia-social",
+      "dimension": "stable_links",
+      "title": "Índice general de transparencia MISPAS",
+      "url": "https://www.msp.gob.do/web/Transparencia",
+      "excerpt": "La comprobación real terminó por exceso de redirecciones automáticas; no se confirmó enlace roto ni URL final.",
+      "http": {
+        "status": 301,
+        "ms": 3960,
+        "error_type": "too_many_redirects",
+        "error_message": "Se intentaron demasiadas redirecciones automáticas."
+      }
+    }
+  ],
+  "institutions": [
+    {"slug":"ministerio-de-administracion-publica","name":"Ministerio de Administración Pública","portal":"https://map.gob.do/","resources":[
+      {"key":"legal","dimension":"legal_framework","title":"Mapa del portal de transparencia: base y marco legal","url":"https://map.gob.do/transparencia/mapa-de-sitio/","type":"html","excerpt":"La página oficial enumera Constitución, leyes, decretos, resoluciones y otras normativas; la revisión no comprobó cada archivo enlazado.","http":{"status":200,"mime":"text/html; charset=UTF-8","ms":3628,"length":223415},"search":{"result":"searchable","method":"html_text_inspection","title":true,"date":false,"number":false}},
+      {"key":"org","dimension":"organizational_structure","title":"Estructura Orgánica","url":"https://map.gob.do/wp-file-download/estructura-organica/","type":"html","excerpt":"Sección oficial atribuida al MAP; respondió, pero la tabla informó que no había publicaciones coincidentes, por lo que no se comprobó versión de organigrama institucional.","http":{"status":200,"mime":"text/html; charset=UTF-8","ms":1082,"length":159693},"search":{"result":"searchable","method":"html_text_inspection","title":true,"date":false,"number":false}},
+      {"key":"contact","dimension":"official_contact_information","title":"Portal de Transparencia MAP","url":"https://map.gob.do/transparencia/","type":"html","excerpt":"El portal oficial publica dirección y teléfono institucional; su mapa identifica OAI, responsable y canal SAIP. Correo OAI observado: transparencia@map.gob.do.","http":{"status":200,"mime":"text/html; charset=UTF-8","ms":1345,"length":187039},"search":{"result":"searchable","method":"html_text_inspection","title":true,"date":false,"number":false}}
+    ]},
+    {"slug":"ministerio-de-hacienda-y-economia","name":"Ministerio de Hacienda y Economía","portal":"https://hacienda.gob.do/","resources":[
+      {"key":"legal","dimension":"legal_framework","title":"Marco legal","url":"https://www.hacienda.gob.do/marco-legal/","type":"html","excerpt":"Sección oficial con leyes, decretos y resoluciones descargables, incluyendo número y fecha; no se inspeccionó exhaustivamente cada documento.","http":{"status":200,"mime":"text/html; charset=UTF-8","ms":2675,"length":255892},"search":{"result":"searchable","method":"html_text_inspection","title":true,"date":true,"number":true}},
+      {"key":"org","dimension":"organizational_structure","title":"Estructura Orgánica de la Institución","url":"https://www.hacienda.gob.do/transparencia/estructura-organica-de-la-institucion/","type":"html","excerpt":"Publica resolución 226-2025 y documentos de estructura; identifica versiones y fechas, además de organigrama descargable.","http":{"status":200,"mime":"text/html; charset=UTF-8","ms":629,"length":166766},"search":{"result":"searchable","method":"html_text_inspection","title":true,"date":true,"number":true}},
+      {"key":"contact","dimension":"official_contact_information","title":"Portal institucional MHE","url":"https://www.hacienda.gob.do/","type":"html","excerpt":"Publica Avenida México 45, teléfono 809-687-5131 e info@hacienda.gov.do; la sección de transparencia identifica la OAI.","http":{"status":200,"mime":"text/html; charset=UTF-8","ms":696,"length":189263},"search":{"result":"searchable","method":"html_text_inspection","title":true,"date":false,"number":false}}
+    ]},
+    {"slug":"ministerio-de-educacion","name":"Ministerio de Educación","portal":"https://minerd.gob.do/","resources":[
+      {"key":"legal","dimension":"legal_framework","title":"Marco legal MINERD","url":"https://minerd.gob.do/sobre-nosotros/marco-legal","type":"html","excerpt":"La sección oficial presenta la Ley General de Educación 66-97 con número; la fecha visible corresponde a la referencia oficial, no a una comprobación exhaustiva del catálogo.","http":{"status":200,"mime":"text/html; charset=UTF-8","ms":642,"length":67906},"search":{"result":"searchable","method":"html_text_inspection","title":true,"date":true,"number":true}},
+      {"key":"org","dimension":"organizational_structure","title":"Mapa del portal de transparencia MINERD","url":"https://minerd.gob.do/transparencia/mapa-sitio","type":"html","excerpt":"El mapa oficial enlaza organigrama institucional interactivo y estructura OAI; no se comprobó fecha o versión del organigrama.","http":{"status":200,"mime":"text/html; charset=UTF-8","ms":4877,"length":101686},"search":{"result":"searchable","method":"html_text_inspection","title":true,"date":false,"number":false}},
+      {"key":"contact","dimension":"official_contact_information","title":"Portal institucional MINERD","url":"https://minerd.gob.do/","type":"html","excerpt":"Portal institucional oficial con información general; el mapa de transparencia localiza la OAI y el canal oficial, sin que esta revisión confirmara un correo OAI vigente.","http":{"status":200,"mime":"text/html; charset=UTF-8","ms":1281,"length":92600},"search":{"result":"searchable","method":"html_text_inspection","title":true,"date":false,"number":false}}
+    ]},
+    {"slug":"ministerio-de-salud-publica-y-asistencia-social","name":"Ministerio de Salud Pública y Asistencia Social","portal":"https://msp.gob.do/","resources":[
+      {"key":"legal","dimension":"legal_framework","title":"Resolución DIGEIG 002-2021","url":"https://www.msp.gob.do/web/Transparencia/documentos_oai/34/reglamentos-y-resoluciones/18680/resolucion-digeig-no-002-2021.pdf","type":"pdf","excerpt":"PDF oficial descargable con texto extraído, título y número de resolución; es normativa de transparencia, no inventario completo del marco legal institucional.","http":{"status":200,"mime":"application/pdf","ms":11762,"length":5694371},"search":{"result":"searchable","method":"pdf_text_extraction","title":true,"date":true,"number":true}},
+      {"key":"org","dimension":"organizational_structure","title":"Organigrama OAI MISPAS","url":"https://www.msp.gob.do/web/Transparencia/documentos_oai/41/estructura-organizacional-oai/23490/organigrama.pdf","type":"pdf","excerpt":"Organigrama oficial OAI, PDF descargable con texto extraído; cita Resolución 168 de 17-12-2020. No representa el organigrama institucional completo.","http":{"status":200,"mime":"application/pdf","ms":1541,"length":443073},"search":{"result":"searchable","method":"pdf_text_extraction","title":true,"date":true,"number":true}},
+      {"key":"contact","dimension":"official_contact_information","title":"Portal de Servicios MISPAS","url":"https://servicios.msp.gob.do/vus/","type":"html","excerpt":"Publica dirección, teléfono 809-541-3121 e info@mispas.gob.do; no se confirmó en esta página contacto individual de OAI ni canal SAIP.","http":{"status":200,"mime":"text/html","ms":542,"length":61769},"search":{"result":"searchable","method":"html_text_inspection","title":true,"date":false,"number":false}}
+    ]},
+    {"slug":"ministerio-de-medio-ambiente-y-recursos-naturales","name":"Ministerio de Medio Ambiente y Recursos Naturales","portal":"https://ambiente.gob.do/","resources":[
+      {"key":"legal","dimension":"legal_framework","title":"Marco Legal","url":"https://ambiente.gob.do/marco-legal-3/","type":"html","excerpt":"Sección oficial que organiza leyes, decretos, reglamentos, resoluciones y normas; no se inspeccionó exhaustivamente cada descarga.","http":{"status":200,"mime":"text/html; charset=UTF-8","ms":3385,"length":383172},"search":{"result":"searchable","method":"html_text_inspection","title":true,"date":false,"number":false}},
+      {"key":"org","dimension":"organizational_structure","title":"Manual de Organización y Funciones 2024","url":"https://ambiente.gob.do/portal-transparencia/wp/download/956/estructura-organica-de-la-institucion/284559/manual-de-organizacion-y-funciones-del-ministerio-de-medio-ambiente-y-recursos-naturales-2024.pdf","type":"pdf","excerpt":"PDF oficial 2024 descargable con texto extraído y estructura textual; 463 páginas, con organigramas incluidos. No se usó OCR.","http":{"status":200,"mime":"application/pdf","ms":8572,"length":3257176},"search":{"result":"searchable","method":"pdf_text_extraction","title":true,"date":true,"number":false}},
+      {"key":"contact","dimension":"official_contact_information","title":"Contactos del Responsable de Acceso a la Información","url":"https://ambiente.gob.do/portal-transparencia/oai/contactos-del-responsable-de-acceso-a-la-informacion/","type":"html","excerpt":"Publica RAI, correos OAI, teléfono y extensiones, dirección institucional y acceso a formulario oficial de solicitud.","http":{"status":200,"mime":"text/html; charset=UTF-8","ms":2701,"length":243235},"search":{"result":"searchable","method":"html_text_inspection","title":true,"date":false,"number":false}}
+    ]}
+  ]
+}
