@@ -2,7 +2,19 @@ import uuid
 from datetime import date, datetime
 from enum import StrEnum
 
-from sqlalchemy import Date, DateTime, Enum, ForeignKey, String, Text, UniqueConstraint, func
+from sqlalchemy import (
+    CheckConstraint,
+    Date,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Index,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -33,6 +45,7 @@ class InstitutionType(StrEnum):
     SUPERINTENDENCY = "superintendency"
     COUNCIL = "council"
     COMMISSION = "commission"
+    INSTITUTE = "institute"
     CABINET = "cabinet"
     PUBLIC_COMPANY = "public_company"
     PROVINCIAL_GOVERNMENT = "provincial_government"
@@ -63,6 +76,7 @@ class InstitutionRelationshipType(StrEnum):
     SUPERVISED = "supervised"
     COORDINATED = "coordinated"
     TERRITORIAL = "territorial"
+    DEPENDENT_ON = "dependent_on"
 
 
 class Institution(Base):
@@ -122,12 +136,27 @@ class InstitutionEvidence(Base):
 class InstitutionRelationship(Base):
     __tablename__ = "institution_relationships"
     __table_args__ = (
-        UniqueConstraint(
+        CheckConstraint("parent_institution_id <> child_institution_id"),
+        CheckConstraint("valid_to IS NULL OR valid_from IS NULL OR valid_to >= valid_from"),
+        CheckConstraint("valid_from IS NOT NULL OR length(trim(notes)) > 0"),
+        Index(
+            "uq_institution_relationship_period_known",
             "parent_institution_id",
             "child_institution_id",
             "relationship_type",
             "valid_from",
-            name="uq_institution_relationship_period",
+            unique=True,
+            postgresql_where=text("valid_from IS NOT NULL"),
+            sqlite_where=text("valid_from IS NOT NULL"),
+        ),
+        Index(
+            "uq_institution_relationship_period_unknown",
+            "parent_institution_id",
+            "child_institution_id",
+            "relationship_type",
+            unique=True,
+            postgresql_where=text("valid_from IS NULL"),
+            sqlite_where=text("valid_from IS NULL"),
         ),
     )
 
@@ -141,8 +170,9 @@ class InstitutionRelationship(Base):
     relationship_type: Mapped[InstitutionRelationshipType] = mapped_column(
         Enum(InstitutionRelationshipType), nullable=False
     )
-    valid_from: Mapped[date] = mapped_column(Date, nullable=False)
+    valid_from: Mapped[date | None] = mapped_column(Date)
     valid_to: Mapped[date | None] = mapped_column(Date)
+    notes: Mapped[str | None] = mapped_column(Text)
     evidence_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("evidence.id", ondelete="RESTRICT"), nullable=False
     )

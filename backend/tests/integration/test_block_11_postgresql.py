@@ -47,7 +47,7 @@ def test_block_11_schema_and_single_head(postgres_url: str) -> None:
     heads = script.get_heads()
 
     assert len(heads) == 1
-    executive_revision = script.get_revision("0012")
+    executive_revision = script.get_revision("0013")
     assert executive_revision is not None
 
     engine = create_engine(postgres_url)

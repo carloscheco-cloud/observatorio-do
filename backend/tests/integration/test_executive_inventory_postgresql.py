@@ -59,11 +59,8 @@ def test_official_inventory_is_idempotent_on_postgresql(postgres_url: str) -> No
             db.scalar(
                 select(func.count())
                 .select_from(InstitutionRelationship)
-                .join(
-                    Institution,
-                    Institution.id == InstitutionRelationship.parent_institution_id,
-                )
-                .where(Institution.slug.in_(slugs))
+                .join(Evidence, Evidence.id == InstitutionRelationship.evidence_id)
+                .where(Evidence.metadata_["manifest_version"].as_string() == manifest["version"])
             )
             == 0
         )
