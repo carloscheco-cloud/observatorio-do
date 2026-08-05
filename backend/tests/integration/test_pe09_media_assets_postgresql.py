@@ -3,11 +3,11 @@ from __future__ import annotations
 import uuid
 
 import pytest
-from alembic import command
 from alembic.config import Config
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.exc import DBAPIError
 
+from alembic import command
 from tests.integration.test_postgresql_guards import BACKEND_DIR
 
 pytestmark = pytest.mark.integration
