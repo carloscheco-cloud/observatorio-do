@@ -1,4 +1,55 @@
-import type { Metadata } from "next"; import Link from "next/link"; import { notFound } from "next/navigation";
-import { ApiState,date,display,EvidenceLink,ExecutiveNav,TransparencyPanel } from "@/components/executive"; import { Breadcrumbs,StatusBadge } from "@/components/ui"; import { executive,ExecutiveApiError } from "@/lib/executive-api";
-export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{try{const i=await executive.institution((await params).slug);return {title:i.official_name,description:`Ficha institucional y documentación pública localizada de ${i.official_name}.`,alternates:{canonical:`/poder-ejecutivo/instituciones/${i.slug}`},openGraph:{title:i.official_name,description:"Ficha pública institucional del Poder Ejecutivo."}}}catch{return {title:"Ficha institucional"}}}
-export default async function Institution({params}:{params:Promise<{slug:string}>}){const {slug}=await params;try{const [i,rels,legal,transparency]=await Promise.all([executive.institution(slug),executive.relationships(slug),executive.legalBasis(slug),executive.transparency(slug)]);return <div className="shell section"><ExecutiveNav/><Breadcrumbs items={[{href:"/poder-ejecutivo",label:"Poder Ejecutivo"},{href:`/poder-ejecutivo/instituciones/${slug}`,label:i.short_name||i.official_name}]}/><header><p className="eyebrow">{i.institution_type}</p><h1>{i.official_name}</h1><StatusBadge>{i.status}</StatusBadge><p>{display(i.short_name)} · Última actualización: {date(i.last_updated_at)}</p>{i.official_website&&<a href={i.official_website} rel="noreferrer" target="_blank">Portal oficial</a>}</header><section className="section-block"><h2>Autoridad actual</h2>{i.current_authority?<dl><dt>Nombre</dt><dd>{i.current_authority.public_name}</dd><dt>Cargo</dt><dd>{i.current_authority.position}</dd><dt>Inicio</dt><dd>{date(i.current_authority.start_date)}</dd><dt>Acto de designación</dt><dd>{display(i.current_authority.appointment_act,i.current_authority.act_located?"No disponible":"No localizado en las fuentes revisadas")}</dd><dt>Verificación</dt><dd>{i.current_authority.verification_level}</dd>{i.current_authority.appointment_evidence.map(e=><dd key={e.id}><EvidenceLink evidence={e}/></dd>)}</dl>:<p className="empty">No se localizó una autoridad actual confirmada en las fuentes actualmente incorporadas.</p>}</section><section className="section-block"><h2>Identidad institucional</h2><p>{i.functions_summary??"No disponible"}</p><dl><dt>Nombre oficial</dt><dd>{i.official_name}</dd><dt>Tipo</dt><dd>{i.institution_type}</dd><dt>Fecha de creación</dt><dd>{date(i.creation_date)}</dd></dl></section><section className="section-block"><h2>Relaciones institucionales</h2>{rels.length?<div className="grid">{rels.map(r=>{const related=r.direction==="outgoing"?r.target_institution:r.source_institution;return <article className="card" key={r.id}><h3>{related.official_name}</h3><p>{r.direction==="outgoing"?"Saliente":"Entrante"} · {r.relationship_type}</p><p>Vigencia: {date(r.valid_from)} – {r.valid_to?date(r.valid_to):"Actual"}</p><p>Verificación: {r.verification_status}</p><EvidenceLink evidence={r.evidence}/></article>})}</div>:<p className="empty">No se localizaron datos estructurados para esta sección en las fuentes actualmente incorporadas.</p>}</section><section className="section-block"><h2>Base legal</h2>{legal.length?<div className="table-wrap"><table><thead><tr><th>Norma</th><th>Fecha y título</th><th>Localización</th><th>Fuente</th></tr></thead><tbody>{legal.map(x=><tr key={x.id}><td>{x.norm_type} {x.number}</td><td>{date(x.date)} · {x.title}</td><td>{x.located?"Localizada":"No localizada"} · {x.searchable===null?"Buscabilidad no disponible":x.searchable?"Buscable":"No buscable"}</td><td>{x.url?<a href={x.url} rel="noreferrer">Documento</a>:<EvidenceLink evidence={x.source}/>}</td></tr>)}</tbody></table></div>:<p className="empty">No se localizaron datos estructurados para esta sección en las fuentes actualmente incorporadas.</p>}</section><TransparencyPanel assessment={transparency.latest_assessment}/><section className="section-block"><h2>Historial de evaluaciones</h2>{transparency.historical_assessments.length?<ul>{transparency.historical_assessments.map(a=><li key={a.assessment_id}>{date(a.assessment_date)} · {a.methodology_version} · puntuación {a.normalized_score} · cobertura {a.coverage_percentage}% · {a.maturity_status}</li>)}</ul>:<p>Pendiente de evaluación.</p>}</section><section className="section-block"><h2>Fuentes</h2>{i.official_sources.length?<ul>{i.official_sources.map(s=><li key={s.id}><EvidenceLink evidence={s}/> · consulta {date(s.observed_at)} · {s.official_source?"Fuente oficial":"Fuente pública"}</li>)}</ul>:<p className="empty">No se localizaron fuentes estructuradas para esta sección.</p>}</section><section className="notice"><h2>Limitaciones y derecho de corrección</h2><p>{i.public_limitation}</p><ul>{i.documentary_gaps.map(x=><li key={x}>{x}</li>)}</ul><p>La información no localizada puede existir fuera del alcance de las fuentes revisadas. Consulta el mecanismo de corrección en <Link href="/acerca">Acerca del proyecto</Link>.</p></section></div>}catch(e){if(e instanceof ExecutiveApiError&&e.kind==="not_found")notFound();return <div className="shell section"><h1>Ficha institucional</h1><ApiState message={e instanceof Error?e.message:"API no disponible"}/></div>}}
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ApiState, date, display, EvidenceLink, ExecutiveNav, TransparencyPanel } from "@/components/executive";
+import { MediaGallery, PublicMedia } from "@/components/public-media";
+import { Breadcrumbs, StatusBadge } from "@/components/ui";
+import { executive, ExecutiveApiError } from "@/lib/executive-api";
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  try {
+    const i = await executive.institution((await params).slug);
+    return { title: i.official_name, description: `Ficha institucional y documentación pública localizada de ${i.official_name}.`, alternates: { canonical: `/poder-ejecutivo/instituciones/${i.slug}` }, openGraph: { title: i.official_name, description: "Ficha pública institucional del Poder Ejecutivo." } };
+  } catch {
+    return { title: "Ficha institucional" };
+  }
+}
+
+export default async function Institution({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  try {
+    const [i, rels, legal, transparency, media] = await Promise.all([
+      executive.institution(slug),
+      executive.relationships(slug),
+      executive.legalBasis(slug),
+      executive.transparency(slug),
+      executive.institutionMedia(slug),
+    ]);
+    return <div className="shell section">
+      <ExecutiveNav />
+      <Breadcrumbs items={[{ href: "/poder-ejecutivo", label: "Poder Ejecutivo" }, { href: `/poder-ejecutivo/instituciones/${slug}`, label: i.short_name || i.official_name }]} />
+      <header className="media-hero">
+        <div className="media-hero-copy">
+          <p className="eyebrow">{i.institution_type}</p>
+          <h1>{i.official_name}</h1>
+          <StatusBadge>{i.status}</StatusBadge>
+          <p>{display(i.short_name)} · Última actualización: {date(i.last_updated_at)}</p>
+          {i.official_website && <a href={i.official_website} rel="noreferrer" target="_blank">Portal oficial</a>}
+        </div>
+        <PublicMedia collection={media} label={i.official_name} preferred={["official_banner", "institution_building", "institution_logo", "fallback"]} />
+      </header>
+      <section className="section-block"><h2>Autoridad actual</h2>{i.current_authority ? <dl><dt>Nombre</dt><dd>{i.current_authority.public_name}</dd><dt>Cargo</dt><dd>{i.current_authority.position}</dd><dt>Inicio</dt><dd>{date(i.current_authority.start_date)}</dd><dt>Acto de designación</dt><dd>{display(i.current_authority.appointment_act, i.current_authority.act_located ? "No disponible" : "No localizado en las fuentes revisadas")}</dd><dt>Verificación</dt><dd>{i.current_authority.verification_level}</dd>{i.current_authority.appointment_evidence.map(e => <dd key={e.id}><EvidenceLink evidence={e} /></dd>)}</dl> : <p className="empty">No se localizó una autoridad actual confirmada en las fuentes actualmente incorporadas.</p>}</section>
+      <section className="section-block"><h2>Identidad institucional</h2><p>{i.functions_summary ?? "No disponible"}</p><dl><dt>Nombre oficial</dt><dd>{i.official_name}</dd><dt>Tipo</dt><dd>{i.institution_type}</dd><dt>Fecha de creación</dt><dd>{date(i.creation_date)}</dd></dl></section>
+      <MediaGallery collection={media} />
+      <section className="section-block"><h2>Relaciones institucionales</h2>{rels.length ? <div className="grid">{rels.map(r => { const related = r.direction === "outgoing" ? r.target_institution : r.source_institution; return <article className="card" key={r.id}><h3>{related.official_name}</h3><p>{r.direction === "outgoing" ? "Saliente" : "Entrante"} · {r.relationship_type}</p><p>Vigencia: {date(r.valid_from)} – {r.valid_to ? date(r.valid_to) : "Actual"}</p><p>Verificación: {r.verification_status}</p><EvidenceLink evidence={r.evidence} /></article>; })}</div> : <p className="empty">No se localizaron datos estructurados para esta sección en las fuentes actualmente incorporadas.</p>}</section>
+      <section className="section-block"><h2>Base legal</h2>{legal.length ? <div className="table-wrap"><table><thead><tr><th>Norma</th><th>Fecha y título</th><th>Localización</th><th>Fuente</th></tr></thead><tbody>{legal.map(x => <tr key={x.id}><td>{x.norm_type} {x.number}</td><td>{date(x.date)} · {x.title}</td><td>{x.located ? "Localizada" : "No localizada"} · {x.searchable === null ? "Buscabilidad no disponible" : x.searchable ? "Buscable" : "No buscable"}</td><td>{x.url ? <a href={x.url} rel="noreferrer">Documento</a> : <EvidenceLink evidence={x.source} />}</td></tr>)}</tbody></table></div> : <p className="empty">No se localizaron datos estructurados para esta sección en las fuentes actualmente incorporadas.</p>}</section>
+      <TransparencyPanel assessment={transparency.latest_assessment} />
+      <section className="section-block"><h2>Historial de evaluaciones</h2>{transparency.historical_assessments.length ? <ul>{transparency.historical_assessments.map(a => <li key={a.assessment_id}>{date(a.assessment_date)} · {a.methodology_version} · puntuación {a.normalized_score} · cobertura {a.coverage_percentage}% · {a.maturity_status}</li>)}</ul> : <p>Pendiente de evaluación.</p>}</section>
+      <section className="section-block"><h2>Fuentes</h2>{i.official_sources.length ? <ul>{i.official_sources.map(s => <li key={s.id}><EvidenceLink evidence={s} /> · consulta {date(s.observed_at)} · {s.official_source ? "Fuente oficial" : "Fuente pública"}</li>)}</ul> : <p className="empty">No se localizaron fuentes estructuradas para esta sección.</p>}</section>
+      <section className="notice"><h2>Limitaciones y derecho de corrección</h2><p>{i.public_limitation}</p><p>{media.limitation}</p><ul>{i.documentary_gaps.map(x => <li key={x}>{x}</li>)}</ul><p>La información no localizada puede existir fuera del alcance de las fuentes revisadas. Consulta el mecanismo de corrección en <Link href="/acerca">Acerca del proyecto</Link>.</p></section>
+    </div>;
+  } catch (e) {
+    if (e instanceof ExecutiveApiError && e.kind === "not_found") notFound();
+    return <div className="shell section"><h1>Ficha institucional</h1><ApiState message={e instanceof Error ? e.message : "API no disponible"} /></div>;
+  }
+}

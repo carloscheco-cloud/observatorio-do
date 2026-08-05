@@ -1,4 +1,4 @@
-import type { AuthorityDetail, AuthorityListItem, ChangeItem, ExecutiveSummary, InstitutionDetail, InstitutionListItem, LegalDocument, Page, PersonAuthorityDetail, RelationshipItem, TransparencyResponse } from "@/types/executive";
+import type { AuthorityDetail, AuthorityListItem, ChangeItem, ExecutiveSummary, InstitutionDetail, InstitutionListItem, LegalDocument, Page, PersonAuthorityDetail, PublicMediaAsset, PublicMediaCollection, RelationshipItem, TransparencyResponse } from "@/types/executive";
 
 export type ExecutiveApiErrorKind = "not_configured" | "timeout" | "network" | "not_found" | "validation" | "unavailable" | "empty";
 export class ExecutiveApiError extends Error { constructor(public kind: ExecutiveApiErrorKind, public status?: number) { super(publicMessage(kind)); this.name = "ExecutiveApiError"; } }
@@ -22,11 +22,14 @@ export const executive = {
   summary: () => executiveApi<ExecutiveSummary>("/summary"),
   institutions: (p?: URLSearchParams) => executiveApi<Page<InstitutionListItem>>(`/institutions${query(p)}`),
   institution: (slug:string) => executiveApi<InstitutionDetail>(`/institutions/${encodeURIComponent(slug)}`),
+  institutionMedia: (slug:string) => executiveApi<PublicMediaCollection>(`/institutions/${encodeURIComponent(slug)}/media`),
   authority: (slug:string) => executiveApi<AuthorityDetail>(`/institutions/${encodeURIComponent(slug)}/authority`),
   relationships: (slug:string) => executiveApi<RelationshipItem[]>(`/institutions/${encodeURIComponent(slug)}/relationships`),
   legalBasis: (slug:string) => executiveApi<LegalDocument[]>(`/institutions/${encodeURIComponent(slug)}/legal-basis`),
   transparency: (slug:string) => executiveApi<TransparencyResponse>(`/institutions/${encodeURIComponent(slug)}/transparency`),
   authorities: (p?:URLSearchParams) => executiveApi<Page<AuthorityListItem>>(`/authorities${query(p)}`),
   authorityDetail: (id:string) => executiveApi<PersonAuthorityDetail>(`/authorities/${encodeURIComponent(id)}`),
+  authorityMedia: (id:string) => executiveApi<PublicMediaCollection>(`/authorities/${encodeURIComponent(id)}/media`),
+  mediaAsset: (id:string) => executiveApi<PublicMediaAsset>(`/media/${encodeURIComponent(id)}`),
   changes: (p?:URLSearchParams) => executiveApi<Page<ChangeItem>>(`/changes${query(p)}`),
 };
