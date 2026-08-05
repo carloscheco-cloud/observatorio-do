@@ -7,6 +7,7 @@ from alembic import context
 from app.core.config import settings
 from app.db.base import Base
 from app.modules import models  # noqa: F401
+from app.modules.media_assets import models as media_asset_models  # noqa: F401
 
 config = context.config
 config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL", settings.database_url))
