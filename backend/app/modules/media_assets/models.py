@@ -79,6 +79,7 @@ class MediaAsset(Base):
             "asset_type",
             unique=True,
             postgresql_where=PRIMARY_INSTITUTION_ASSET_WHERE,
+            sqlite_where=PRIMARY_INSTITUTION_ASSET_WHERE,
         ),
         Index(
             "uq_media_assets_primary_person_type",
@@ -86,6 +87,7 @@ class MediaAsset(Base):
             "asset_type",
             unique=True,
             postgresql_where=PRIMARY_PERSON_ASSET_WHERE,
+            sqlite_where=PRIMARY_PERSON_ASSET_WHERE,
         ),
         Index("ix_media_assets_checksum", "checksum"),
         Index("ix_media_assets_approval_type", "approval_status", "asset_type"),
