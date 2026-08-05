@@ -40,30 +40,60 @@ def test_pe06b_postgresql_round_trip_preserves_pe05_and_pe06a(postgres_url: str)
         assert db.scalar(select(func.count()).select_from(ResourceCheck)) == 0
         assert db.scalar(select(func.count()).select_from(SearchabilityCheck)) == 0
 
+        load(db)
+        historical_assessments = db.scalar(text("SELECT count(*) FROM transparency_assessments"))
+        historical_observations = db.scalar(text("SELECT count(*) FROM transparency_observations"))
+
         config = Config(BACKEND_DIR / "alembic.ini")
         config.set_main_option("script_location", str(BACKEND_DIR / "alembic"))
         config.set_main_option("sqlalchemy.url", postgres_url)
         command.downgrade(config, "0016")
-        definition = db.scalar(
-            text(
-                "SELECT pg_get_functiondef('transparency_check_history_immutable()'::regprocedure)"
+        with engine.connect() as historical:
+            assert not historical.scalar(
+                text("SELECT to_regclass('transparency_methodologies') IS NOT NULL")
             )
-        )
-        assert definition is not None and "PE-06A-2026-08-03" in definition
-        db.rollback()
-        load(db)
-        with pytest.raises(DBAPIError, match="immutable"):
-            rollback(db)
-        db.rollback()
+            columns = set(
+                historical.scalars(
+                    text(
+                        "SELECT column_name FROM information_schema.columns "
+                        "WHERE table_name='transparency_assessment_components'"
+                    )
+                )
+            )
+            assert "rule_code" not in columns and "public_explanation" not in columns
+            assert (
+                historical.scalar(text("SELECT count(*) FROM transparency_assessments"))
+                == historical_assessments
+            )
+            assert (
+                historical.scalar(text("SELECT count(*) FROM transparency_observations"))
+                == historical_observations
+            )
+            definition = historical.scalar(
+                text(
+                    "SELECT pg_get_functiondef"
+                    "('transparency_check_history_immutable()'::regprocedure)"
+                )
+            )
+            assert definition is not None and "PE-06A-2026-08-03" in definition
+            with pytest.raises(DBAPIError, match="immutable"):
+                historical.execute(text("DELETE FROM transparency_resource_checks"))
         command.upgrade(config, "0017")
-        db.expire_all()
-        definition = db.scalar(
-            text(
-                "SELECT pg_get_functiondef('transparency_check_history_immutable()'::regprocedure)"
+        with engine.connect() as historical:
+            assert not historical.scalar(
+                text("SELECT to_regclass('transparency_methodologies') IS NOT NULL")
             )
-        )
-        assert definition is not None and "PE-06A-2026-08-03" not in definition
-        db.rollback()
+            definition = historical.scalar(
+                text(
+                    "SELECT pg_get_functiondef"
+                    "('transparency_check_history_immutable()'::regprocedure)"
+                )
+            )
+            assert definition is not None and "PE-06A-2026-08-03" not in definition
+            historical.execute(text("DELETE FROM transparency_resource_checks"))
+            historical.rollback()
+        command.upgrade(config, "0018")
+        db.expire_all()
         rollback(db)
         load(db)
         assert load(db).unchanged > 0

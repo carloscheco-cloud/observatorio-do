@@ -380,6 +380,42 @@ class TransparencyAssessment(Base):
     comparison_position: Mapped[str | None] = mapped_column(String(100))
 
 
+class TransparencyMethodology(Base):
+    __tablename__ = "transparency_methodologies"
+    __table_args__ = (CheckConstraint("status IN ('draft', 'published', 'retired')"),)
+    version: Mapped[str] = mapped_column(String(30), primary_key=True)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    supersedes_version: Mapped[str | None] = mapped_column(
+        ForeignKey("transparency_methodologies.version", ondelete="RESTRICT")
+    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False)
+    is_immutable: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+
+class TransparencyScoringRule(Base):
+    __tablename__ = "transparency_scoring_rules"
+    __table_args__ = (
+        UniqueConstraint("methodology_version", "dimension", "rule_code"),
+        CheckConstraint("awarded_score >= 0 AND awarded_score <= maximum_score"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    methodology_version: Mapped[str] = mapped_column(
+        ForeignKey("transparency_methodologies.version", ondelete="RESTRICT"), nullable=False
+    )
+    dimension: Mapped[str] = mapped_column(String(80), nullable=False)
+    rule_code: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    awarded_score: Mapped[Decimal] = mapped_column(Numeric(7, 3), nullable=False)
+    maximum_score: Mapped[Decimal] = mapped_column(Numeric(7, 3), nullable=False)
+    conditions_json: Mapped[dict[str, object]] = mapped_column(Json, nullable=False)
+    public_explanation: Mapped[str] = mapped_column(Text, nullable=False)
+    quality_level: Mapped[str | None] = mapped_column(String(30))
+    severity: Mapped[str | None] = mapped_column(String(30))
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+
 class AssessmentComponent(Base):
     __tablename__ = "transparency_assessment_components"
     __table_args__ = (
@@ -412,6 +448,8 @@ class AssessmentComponent(Base):
     )
     methodology_version: Mapped[str] = mapped_column(String(30), nullable=False)
     calculation_reason: Mapped[str] = mapped_column(Text, nullable=False)
+    rule_code: Mapped[str | None] = mapped_column(String(100))
+    public_explanation: Mapped[str | None] = mapped_column(Text)
 
 
 class DigitalTransparencyLoadRecord(Base):
@@ -433,6 +471,13 @@ def _reject_historical_mutation(*_: object) -> None:
     raise ValueError("technical checks are immutable historical records")
 
 
+def _reject_published_methodology_mutation(_: object, target: object, __: object) -> None:
+    if isinstance(target, TransparencyMethodology) and target.is_immutable:
+        raise ValueError("published methodologies are immutable")
+
+
 for _historical_model in (ResourceCheck, SearchabilityCheck):
     event.listen(_historical_model, "before_update", _reject_historical_mutation)
     event.listen(_historical_model, "before_delete", _reject_historical_mutation)
+for _operation in ("before_update", "before_delete"):
+    event.listen(TransparencyMethodology, _operation, _reject_published_methodology_mutation)
