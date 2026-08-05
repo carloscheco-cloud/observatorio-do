@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import uuid
 
 import pytest
@@ -23,13 +24,44 @@ def _migration_config(postgres_url: str) -> Config:
 def _institution_id(connection: object) -> uuid.UUID:
     suffix = uuid.uuid4().hex[:20]
     territory_id = uuid.uuid4()
+    source_id = uuid.uuid4()
+    evidence_id = uuid.uuid4()
     institution_id = uuid.uuid4()
+    source_url = f"https://example.gob.do/instituciones/{suffix}"
+    content_hash = hashlib.sha256(source_url.encode()).hexdigest()
+
     connection.execute(  # type: ignore[attr-defined]
         text(
             "INSERT INTO territories (id,name,code,type,parent_id) "
             "VALUES (:id,'República Dominicana',:code,'COUNTRY',NULL)"
         ),
         {"id": territory_id, "code": f"DO-{suffix}"},
+    )
+    connection.execute(  # type: ignore[attr-defined]
+        text(
+            "INSERT INTO sources (id,name,url,publisher,is_official) "
+            "VALUES (:id,:name,:url,'OED Test',true)"
+        ),
+        {
+            "id": source_id,
+            "name": f"Fuente institucional {suffix}",
+            "url": source_url,
+        },
+    )
+    connection.execute(  # type: ignore[attr-defined]
+        text(
+            "INSERT INTO evidence "
+            "(id,source_id,title,excerpt,locator,content_hash,metadata) "
+            "VALUES (:id,:source,:title,:excerpt,:locator,:hash,'{}')"
+        ),
+        {
+            "id": evidence_id,
+            "source": source_id,
+            "title": f"Evidencia institucional {suffix}",
+            "excerpt": "Registro controlado para validar PE-09.",
+            "locator": source_url,
+            "hash": content_hash,
+        },
     )
     connection.execute(  # type: ignore[attr-defined]
         text(
@@ -43,6 +75,14 @@ def _institution_id(connection: object) -> uuid.UUID:
             "slug": f"ministerio-prueba-{suffix}",
             "territory": territory_id,
         },
+    )
+    connection.execute(  # type: ignore[attr-defined]
+        text(
+            "INSERT INTO institution_evidence "
+            "(id,institution_id,evidence_id,relation) "
+            "VALUES (gen_random_uuid(),:institution,:evidence,'supports_existence')"
+        ),
+        {"institution": institution_id, "evidence": evidence_id},
     )
     return institution_id
 
