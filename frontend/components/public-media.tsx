@@ -8,12 +8,33 @@ const labels: Record<MediaAssetType, string> = {
   fallback: "Representación visual",
 };
 
-function initials(label: string) {
-  return label
+const acronymStopWords = new Set([
+  "a",
+  "al",
+  "de",
+  "del",
+  "e",
+  "el",
+  "en",
+  "la",
+  "las",
+  "los",
+  "para",
+  "por",
+  "y",
+]);
+
+export function institutionalInitials(label: string) {
+  const words = label
+    .trim()
     .split(/\s+/)
-    .filter(Boolean)
+    .map((part) => part.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
+    .filter(Boolean);
+  const meaningful = words.filter((part) => !acronymStopWords.has(part.toLocaleLowerCase("es")));
+  const source = meaningful.length > 0 ? meaningful : words;
+  return source
     .slice(0, 3)
-    .map((part) => part[0]?.toUpperCase())
+    .map((part) => part[0]?.toLocaleUpperCase("es"))
     .join("");
 }
 
@@ -45,7 +66,7 @@ export function PublicMedia({ collection, label, preferred, variant = "landscape
   if (!asset) {
     return (
       <aside className={`media-fallback media-${variant}`} aria-label={`Imagen no disponible para ${label}`}>
-        <span aria-hidden="true">{initials(label) || "OED"}</span>
+        <span aria-hidden="true">{institutionalInitials(label) || "OED"}</span>
         <p>Imagen oficial aprobada pendiente de incorporación.</p>
       </aside>
     );
