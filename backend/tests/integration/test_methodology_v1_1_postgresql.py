@@ -10,6 +10,7 @@ from app.modules.executive_authorities.loader import load_authorities
 from app.modules.executive_dependencies.loader import load_dependencies
 from app.modules.executive_inventory.loader import load_inventory
 from tests.integration.test_postgresql_guards import BACKEND_DIR
+from tests.postgres import EXPECTED_SCHEMA_REVISION
 
 pytestmark = pytest.mark.integration
 
@@ -23,7 +24,7 @@ def config(postgres_url: str) -> Config:
 
 def test_oed_td_1_1_upgrade_immutability_and_round_trip(postgres_url: str) -> None:
     migration = config(postgres_url)
-    command.upgrade(migration, "0018")
+    command.upgrade(migration, EXPECTED_SCHEMA_REVISION)
     engine = create_engine(postgres_url)
     from sqlalchemy.orm import Session
 
@@ -105,9 +106,12 @@ def test_oed_td_1_1_upgrade_immutability_and_round_trip(postgres_url: str) -> No
             == before_assessments
         )
     command.upgrade(migration, "0017")
-    command.upgrade(migration, "0018")
+    command.upgrade(migration, EXPECTED_SCHEMA_REVISION)
     with engine.connect() as connection:
-        assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0018"
+        assert (
+            connection.scalar(text("SELECT version_num FROM alembic_version"))
+            == EXPECTED_SCHEMA_REVISION
+        )
         assert connection.scalar(text("SELECT count(*) FROM transparency_scoring_rules")) == 30
         assert connection.scalar(text("SELECT count(*) FROM transparency_methodologies")) == 2
         assert (

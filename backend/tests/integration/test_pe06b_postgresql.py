@@ -15,6 +15,7 @@ from app.modules.digital_transparency.pe06b import load, recalculate, rollback
 from app.modules.executive_authorities.loader import load_authorities
 from app.modules.executive_inventory.loader import load_inventory
 from tests.integration.test_postgresql_guards import BACKEND_DIR, migrate
+from tests.postgres import EXPECTED_SCHEMA_REVISION
 
 pytestmark = pytest.mark.integration
 
@@ -92,7 +93,7 @@ def test_pe06b_postgresql_round_trip_preserves_pe05_and_pe06a(postgres_url: str)
             assert definition is not None and "PE-06A-2026-08-03" not in definition
             historical.execute(text("DELETE FROM transparency_resource_checks"))
             historical.rollback()
-        command.upgrade(config, "0018")
+        command.upgrade(config, EXPECTED_SCHEMA_REVISION)
         db.expire_all()
         rollback(db)
         load(db)

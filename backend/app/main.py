@@ -43,7 +43,7 @@ _requests: defaultdict[str, deque[float]] = defaultdict(deque)
 @app.middleware("http")
 async def public_security(request: Request, call_next: object) -> Response:
     request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))[:80]
-    if request.url.path.startswith("/api/v1/public/"):
+    if request.url.path.startswith(("/api/v1/public/", "/api/v1/executive/")):
         now = time.monotonic()
         key = request.client.host if request.client else "unknown"
         bucket = _requests[key]
@@ -67,7 +67,9 @@ async def public_security(request: Request, call_next: object) -> Response:
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    if request.method == "GET" and request.url.path.startswith("/api/v1/public/"):
+    if request.method == "GET" and request.url.path.startswith(
+        ("/api/v1/public/", "/api/v1/executive/")
+    ):
         cache_identity = f"{request.url.path}?{request.url.query}".encode()
         etag = f'"{hashlib.sha256(cache_identity).hexdigest()}"'
         response.headers["ETag"] = etag
