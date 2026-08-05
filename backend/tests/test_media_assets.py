@@ -10,13 +10,15 @@ from app.modules.territories.models import Territory, TerritoryType
 
 def _institution(db: Session) -> Institution:
     territory = Territory(name="República Dominicana", code="DO", type=TerritoryType.COUNTRY)
+    db.add(territory)
+    db.flush()
     institution = Institution(
         name="Ministerio de Prueba",
         kind="ministry",
         slug="ministerio-prueba",
         territory_id=territory.id,
     )
-    db.add_all([territory, institution])
+    db.add(institution)
     db.flush()
     return institution
 
