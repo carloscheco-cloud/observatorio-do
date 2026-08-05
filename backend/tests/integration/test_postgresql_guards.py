@@ -1,9 +1,10 @@
+import os
 import uuid
 from pathlib import Path
 
 import pytest
 from alembic.config import Config
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.exc import DBAPIError
 
 from alembic import command
@@ -14,6 +15,16 @@ BACKEND_DIR = Path(__file__).resolve().parents[2]
 
 
 def migrate(postgres_url: str) -> None:
+    if os.getenv("OED_TEST_SCHEMA_VERSION") == "0018":
+        return
+    engine = create_engine(postgres_url)
+    try:
+        if inspect(engine).has_table("alembic_version"):
+            with engine.connect() as connection:
+                if connection.scalar(text("SELECT version_num FROM alembic_version")) == "0018":
+                    return
+    finally:
+        engine.dispose()
     config = Config(BACKEND_DIR / "alembic.ini")
     config.set_main_option("script_location", str(BACKEND_DIR / "alembic"))
     config.set_main_option("sqlalchemy.url", postgres_url)

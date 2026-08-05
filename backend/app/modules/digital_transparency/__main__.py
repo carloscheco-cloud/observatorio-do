@@ -34,9 +34,49 @@ from app.modules.digital_transparency.pe06b import (
 from app.modules.digital_transparency.pe06b import (
     summary_dict as pe06b_summary_dict,
 )
+from app.modules.digital_transparency.pe06d import (
+    audit_report as pe06d_audit_report,
+)
+from app.modules.digital_transparency.pe06d import (
+    load as pe06d_load,
+)
+from app.modules.digital_transparency.pe06d import (
+    recalculate as pe06d_recalculate,
+)
+from app.modules.digital_transparency.pe06d import (
+    rollback as pe06d_rollback,
+)
+from app.modules.digital_transparency.pe06d import (
+    summary_dict as pe06d_summary_dict,
+)
 
 
 def main() -> None:
+    if len(sys.argv) > 1 and sys.argv[1] == "pe06d":
+        parser = argparse.ArgumentParser()
+        parser.add_argument(
+            "pe06d_command",
+            nargs="?",
+            choices=("load", "recalculate", "audit-report", "rollback"),
+            default="load",
+        )
+        parser.add_argument("--dry-run", action="store_true")
+        args = parser.parse_args(sys.argv[2:])
+        with SessionLocal() as db:
+            if args.pe06d_command == "audit-report":
+                print(json.dumps(pe06d_audit_report(db), ensure_ascii=False, sort_keys=True))
+            else:
+                operation = {
+                    "load": pe06d_load,
+                    "recalculate": pe06d_recalculate,
+                    "rollback": pe06d_rollback,
+                }[args.pe06d_command]
+                print(
+                    json.dumps(
+                        pe06d_summary_dict(operation(db, dry_run=args.dry_run)), sort_keys=True
+                    )
+                )
+        return
     if len(sys.argv) > 1 and sys.argv[1] == "pe06b":
         parser = argparse.ArgumentParser()
         parser.add_argument(
