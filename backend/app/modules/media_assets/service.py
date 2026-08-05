@@ -2,6 +2,7 @@ import uuid
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.elements import ColumnElement
 
 from app.modules.institutions.models import Institution
 from app.modules.media_assets.models import MediaApprovalStatus, MediaAsset
@@ -37,14 +38,20 @@ def _serialize(asset: MediaAsset) -> dict[str, object] | None:
     }
 
 
-def _approved_assets(db: Session, *filters: object) -> list[dict[str, object]]:
+def _approved_assets(
+    db: Session, *filters: ColumnElement[bool]
+) -> list[dict[str, object]]:
     rows = db.scalars(
         select(MediaAsset)
         .where(
             MediaAsset.approval_status == MediaApprovalStatus.APPROVED.value,
             *filters,
         )
-        .order_by(MediaAsset.is_primary.desc(), MediaAsset.asset_type, MediaAsset.created_at.desc())
+        .order_by(
+            MediaAsset.is_primary.desc(),
+            MediaAsset.asset_type,
+            MediaAsset.created_at.desc(),
+        )
     ).all()
     return [serialized for row in rows if (serialized := _serialize(row)) is not None]
 
