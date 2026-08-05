@@ -1,0 +1,1 @@
+import Link from "next/link"; export default function NotFound(){return <div className="shell section empty"><h1>Institución no localizada</h1><p>No se localizaron datos públicos para esta institución.</p><Link href="/poder-ejecutivo">Volver al directorio</Link></div>}

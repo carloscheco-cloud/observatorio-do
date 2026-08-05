@@ -1,0 +1,20 @@
+import Link from "next/link";
+import type { EvidenceRef, TransparencyAssessment } from "@/types/executive";
+
+export const display = (value: string | number | null | undefined, fallback="No disponible") => value === null || value === undefined || value === "" ? fallback : String(value);
+export const date = (value:string|null|undefined) => value ? new Intl.DateTimeFormat("es-DO",{dateStyle:"medium"}).format(new Date(value)) : "No disponible";
+export function ApiState({message}:{message:string}) { return <section className="empty" role="alert"><h2>No pudimos mostrar esta información</h2><p>{message}</p><a className="button" href="">Reintentar</a></section> }
+export function EvidenceLink({evidence}:{evidence:EvidenceRef}) { return <a href={evidence.source_url} rel="noreferrer" target="_blank">{evidence.title || evidence.source_name}<span className="sr-only"> (abre en una pestaña nueva)</span></a> }
+const dimensions = [
+  ["institutional_identity","Identidad institucional"], ["legal_framework","Marco legal"],
+  ["organizational_structure","Estructura y organigrama"], ["current_authorities","Autoridades actuales"],
+  ["appointment_acts","Actos de designación"], ["official_contact_information","Contacto institucional y OAI"],
+  ["document_searchability","Buscabilidad"], ["stable_links","Estabilidad de enlaces"],
+] as const;
+const score = (value:number) => new Intl.NumberFormat("es-DO",{maximumFractionDigits:3}).format(value);
+export function TransparencyPanel({assessment}:{assessment:TransparencyAssessment|null}) {
+  if(!assessment) return <section><h2>Transparencia documental</h2><p className="empty">Pendiente de evaluación.</p></section>;
+  const byDimension=new Map(assessment.components.map(component=>[component.dimension,component]));
+  return <section className="section-block"><h2>Transparencia documental</h2><div className="notice"><strong>{score(assessment.normalized_score)} de 100 puntos disponibles · cobertura {score(assessment.coverage_percentage)}% · {assessment.maturity_status}</strong><p>La puntuación mide disponibilidad y calidad documental observada. No mide corrupción, honestidad, legalidad ni desempeño político.</p><p>Completa significa que las dimensiones metodológicas fueron evaluadas. No significa que la institución tenga documentación perfecta ni que su gestión sea buena o mala.</p><p>Metodología: {assessment.methodology_version}</p></div><div className="dimension-list">{dimensions.map(([key,label])=>{const c=byDimension.get(key);if(!c)return <article className="card dimension pending" key={key}><h3>{label}</h3><p><strong>Pendiente de evaluación</strong></p><p>No se localizó una evaluación estructurada para esta dimensión dentro del alcance actual.</p></article>;const pending=c.observation_status.toLowerCase().includes("pending"); const pct=pending?0:Math.min(100,(c.awarded_score/c.maximum_score)*100); return <article className="card dimension" key={`${c.dimension}-${c.rule_code}`}><h3>{label}</h3><p><strong>{pending?"Pendiente de evaluación":`${score(c.awarded_score)} de ${score(c.maximum_score)}`}</strong> · {c.observation_status}</p><div className="progress" role="progressbar" aria-label={`Puntuación documental de ${label}`} aria-valuemin={0} aria-valuemax={c.maximum_score} aria-valuenow={pending?undefined:c.awarded_score} aria-valuetext={pending?"Pendiente de evaluación":`${score(c.awarded_score)} de ${score(c.maximum_score)}`}><span style={{width:`${pct}%`}} /></div><p>{c.public_explanation}</p>{c.rule_code&&<p><small>Regla: {c.rule_code}</small></p>}<p><EvidenceLink evidence={c.evidence}/></p></article>})}</div>{assessment.limitations.length>0&&<><h3>Limitaciones</h3><ul>{assessment.limitations.map(x=><li key={x}>{x}</li>)}</ul></>}</section>
+}
+export function ExecutiveNav(){return <nav className="subnav" aria-label="Poder Ejecutivo"><Link href="/poder-ejecutivo">Resumen y directorio</Link><Link href="/poder-ejecutivo/autoridades">Autoridades</Link><Link href="/poder-ejecutivo/cambios">Cambios recientes</Link></nav>}
