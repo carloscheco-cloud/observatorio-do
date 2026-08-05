@@ -38,9 +38,7 @@ def _serialize(asset: MediaAsset) -> dict[str, object] | None:
     }
 
 
-def _approved_assets(
-    db: Session, *filters: ColumnElement[bool]
-) -> list[dict[str, object]]:
+def _approved_assets(db: Session, *filters: ColumnElement[bool]) -> list[dict[str, object]]:
     rows = db.scalars(
         select(MediaAsset)
         .where(
