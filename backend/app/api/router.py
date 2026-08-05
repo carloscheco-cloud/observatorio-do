@@ -9,6 +9,7 @@ from app.modules.evidence.router import router as evidence_router
 from app.modules.ingestion.router import router as ingestion_router
 from app.modules.institutions.router import router as institutions_router
 from app.modules.legal_basis.router import router as legal_basis_router
+from app.modules.media_assets.router import router as media_assets_public_router
 from app.modules.organizational_units.router import router as organizational_units_router
 from app.modules.payroll_entries.router import router as payroll_entries_router
 from app.modules.payroll_findings.router import router as payroll_findings_router
@@ -50,3 +51,4 @@ api_router.include_router(public_assets_router)
 api_router.include_router(risk_engine_router)
 api_router.include_router(public_api_router)
 api_router.include_router(executive_public_router)
+api_router.include_router(media_assets_public_router)
