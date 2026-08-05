@@ -21,7 +21,7 @@ def _migration_config(postgres_url: str) -> Config:
 
 
 def _institution_id(connection: object) -> uuid.UUID:
-    suffix = uuid.uuid4().hex
+    suffix = uuid.uuid4().hex[:20]
     territory_id = uuid.uuid4()
     institution_id = uuid.uuid4()
     connection.execute(  # type: ignore[attr-defined]
