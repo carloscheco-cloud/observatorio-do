@@ -19,6 +19,13 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
 
+PRIMARY_INSTITUTION_ASSET_WHERE = text(
+    "is_primary AND institution_id IS NOT NULL AND approval_status = 'approved'"
+)
+PRIMARY_PERSON_ASSET_WHERE = text(
+    "is_primary AND person_id IS NOT NULL AND approval_status = 'approved'"
+)
+
 
 class MediaAssetType(StrEnum):
     INSTITUTION_BUILDING = "institution_building"
@@ -71,20 +78,14 @@ class MediaAsset(Base):
             "institution_id",
             "asset_type",
             unique=True,
-            postgresql_where=text(
-                "is_primary AND institution_id IS NOT NULL "
-                "AND approval_status = 'approved'"
-            ),
+            postgresql_where=PRIMARY_INSTITUTION_ASSET_WHERE,
         ),
         Index(
             "uq_media_assets_primary_person_type",
             "person_id",
             "asset_type",
             unique=True,
-            postgresql_where=text(
-                "is_primary AND person_id IS NOT NULL "
-                "AND approval_status = 'approved'"
-            ),
+            postgresql_where=PRIMARY_PERSON_ASSET_WHERE,
         ),
         Index("ix_media_assets_checksum", "checksum"),
         Index("ix_media_assets_approval_type", "approval_status", "asset_type"),
