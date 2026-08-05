@@ -1,2 +1,3 @@
 import { StatusBadge } from "@/components/ui";
-export default function Status(){return <div className="shell section"><h1>Estado del servicio</h1><p><StatusBadge>Disponible</StatusBadge></p><p>La cobertura y las fuentes retrasadas se publican sin detalles operativos sensibles.</p></div>}
+import status from "../../../docs/status/oed-implementation-status.json";
+export default function Status(){return <div className="shell section"><h1>Estado de implementación</h1><p><StatusBadge>{status.mvp_status}</StatusBadge> · actualizado {status.last_updated}</p><p>{status.data_scope}</p><h2>Bloques completados</h2><ul>{status.completed_blocks.map(block=><li key={block}>{block} <StatusBadge>validado</StatusBadge></li>)}</ul><h2>Siguiente bloque</h2><p>{status.next_blocks.length?status.next_blocks.join(", "):"No definido"}</p><h2>Limitaciones</h2><ul>{status.limitations.map(item=><li key={item}>{item}</li>)}</ul></div>}
