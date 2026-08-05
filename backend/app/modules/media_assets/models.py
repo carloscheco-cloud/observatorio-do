@@ -71,14 +71,20 @@ class MediaAsset(Base):
             "institution_id",
             "asset_type",
             unique=True,
-            postgresql_where=text("is_primary AND institution_id IS NOT NULL AND approval_status = 'approved'"),
+            postgresql_where=text(
+                "is_primary AND institution_id IS NOT NULL "
+                "AND approval_status = 'approved'"
+            ),
         ),
         Index(
             "uq_media_assets_primary_person_type",
             "person_id",
             "asset_type",
             unique=True,
-            postgresql_where=text("is_primary AND person_id IS NOT NULL AND approval_status = 'approved'"),
+            postgresql_where=text(
+                "is_primary AND person_id IS NOT NULL "
+                "AND approval_status = 'approved'"
+            ),
         ),
         Index("ix_media_assets_checksum", "checksum"),
         Index("ix_media_assets_approval_type", "approval_status", "asset_type"),
@@ -119,5 +125,8 @@ class MediaAsset(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
     )
