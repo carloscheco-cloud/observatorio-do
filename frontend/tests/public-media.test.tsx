@@ -1,7 +1,7 @@
 import React from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { PublicMedia, selectPrimaryMedia } from "../components/public-media";
+import { institutionalInitials, PublicMedia, selectPrimaryMedia } from "../components/public-media";
 import type { PublicMediaCollection } from "../types/executive";
 
 afterEach(() => cleanup());
@@ -45,6 +45,13 @@ describe("media pública trazable", () => {
   it("respeta el orden editorial de tipos preferidos", () => {
     expect(selectPrimaryMedia(collection, ["institution_building", "institution_logo"])?.id).toBe("building");
     expect(selectPrimaryMedia(collection, ["official_banner", "institution_logo"])?.id).toBe("logo");
+  });
+
+  it("genera siglas institucionales sin artículos ni preposiciones", () => {
+    expect(institutionalInitials("Ministerio de Salud Pública")).toBe("MSP");
+    expect(institutionalInitials("Dirección General de Impuestos Internos")).toBe("DGI");
+    expect(institutionalInitials("Oficina para el Reordenamiento del Transporte")).toBe("ORT");
+    expect(institutionalInitials("  de la  ")).toBe("DL");
   });
 
   it("muestra fuente, texto alternativo y atribución", () => {
