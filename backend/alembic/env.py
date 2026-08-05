@@ -1,3 +1,4 @@
+import os
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
@@ -8,7 +9,7 @@ from app.db.base import Base
 from app.modules import models  # noqa: F401
 
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.database_url)
+config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL", settings.database_url))
 if config.config_file_name:
     fileConfig(config.config_file_name)
 target_metadata = Base.metadata
