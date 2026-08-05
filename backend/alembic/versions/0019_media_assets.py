@@ -7,7 +7,6 @@ Revises: 0018
 from collections.abc import Sequence
 
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 from alembic import op
 
@@ -30,7 +29,12 @@ def upgrade() -> None:
         sa.Column("storage_key", sa.String(length=1024), nullable=True),
         sa.Column("source_name", sa.String(length=300), nullable=False),
         sa.Column("verified_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("approval_status", sa.String(length=30), nullable=False, server_default="pending"),
+        sa.Column(
+            "approval_status",
+            sa.String(length=30),
+            nullable=False,
+            server_default="pending",
+        ),
         sa.Column("is_primary", sa.Boolean(), nullable=False, server_default=sa.false()),
         sa.Column("alt_text", sa.String(length=500), nullable=False),
         sa.Column("caption", sa.Text(), nullable=True),
@@ -43,10 +47,23 @@ def upgrade() -> None:
         sa.Column("approved_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("rejection_reason", sa.Text(), nullable=True),
         sa.Column("supersedes_asset_id", sa.Uuid(), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
         sa.CheckConstraint(
-            "asset_type IN ('institution_building','authority_portrait','institution_logo','official_banner','fallback')",
+            "asset_type IN ("
+            "'institution_building','authority_portrait','institution_logo',"
+            "'official_banner','fallback'"
+            ")",
             name="ck_media_assets_asset_type",
         ),
         sa.CheckConstraint(
@@ -70,14 +87,28 @@ def upgrade() -> None:
             name="ck_media_assets_source_or_generated_fallback",
         ),
         sa.CheckConstraint("width IS NULL OR width > 0", name="ck_media_assets_width_positive"),
-        sa.CheckConstraint("height IS NULL OR height > 0", name="ck_media_assets_height_positive"),
-        sa.ForeignKeyConstraint(["institution_id"], ["institutions.id"], ondelete="RESTRICT"),
+        sa.CheckConstraint(
+            "height IS NULL OR height > 0",
+            name="ck_media_assets_height_positive",
+        ),
+        sa.ForeignKeyConstraint(
+            ["institution_id"],
+            ["institutions.id"],
+            ondelete="RESTRICT",
+        ),
         sa.ForeignKeyConstraint(["person_id"], ["persons.id"], ondelete="RESTRICT"),
-        sa.ForeignKeyConstraint(["supersedes_asset_id"], ["media_assets.id"], ondelete="RESTRICT"),
+        sa.ForeignKeyConstraint(
+            ["supersedes_asset_id"],
+            ["media_assets.id"],
+            ondelete="RESTRICT",
+        ),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("storage_key", name="uq_media_assets_storage_key"),
         sa.UniqueConstraint(
-            "institution_id", "person_id", "asset_type", "source_url",
+            "institution_id",
+            "person_id",
+            "asset_type",
+            "source_url",
             name="uq_media_assets_owner_type_source",
         ),
     )
@@ -85,7 +116,9 @@ def upgrade() -> None:
     op.create_index("ix_media_assets_person_id", "media_assets", ["person_id"])
     op.create_index("ix_media_assets_checksum", "media_assets", ["checksum"])
     op.create_index(
-        "ix_media_assets_approval_type", "media_assets", ["approval_status", "asset_type"]
+        "ix_media_assets_approval_type",
+        "media_assets",
+        ["approval_status", "asset_type"],
     )
     op.create_index(
         "uq_media_assets_primary_institution_type",
