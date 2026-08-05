@@ -19,6 +19,7 @@ jobs:
           --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       DATABASE_URL: postgresql+psycopg://observatorio:observatorio@localhost:5432/observatorio_test
+      POSTGRES_TEST_ADMIN_URL: postgresql+psycopg://observatorio:observatorio@localhost:5432/postgres
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -31,7 +32,8 @@ jobs:
       - run: mypy
       - run: python -m compileall -q backend
       - run: cd backend && alembic upgrade head
-      - run: pytest
+      - run: pytest -m "not integration"
+      - run: pytest -m integration
       - run: cd backend && alembic heads
 
   frontend:

@@ -11,6 +11,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.exc import DBAPIError
 
 from tests.integration.test_postgresql_guards import BACKEND_DIR, migrate
+from tests.postgres import EXPECTED_SCHEMA_REVISION
 
 pytestmark = pytest.mark.integration
 
@@ -55,7 +56,7 @@ def test_block_11_schema_and_single_head(postgres_url: str) -> None:
         current = connection.scalar(text("SELECT version_num FROM alembic_version"))
         assert current == heads[0]
         assert executive_revision.revision == "0013"
-        assert current == "0018"
+        assert current == EXPECTED_SCHEMA_REVISION
         tables = connection.execute(
             text(
                 "SELECT table_name FROM information_schema.tables "
