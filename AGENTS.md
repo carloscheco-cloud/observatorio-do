@@ -1,80 +1,72 @@
 # Guía para agentes
 
-El producto público vive en `backend/app/modules/public_api` y `frontend/`. Toda respuesta
-pública usa listas explícitas de campos permitidos y excluye payloads crudos, hashes,
-notas, propuestas no confirmadas y hallazgos no publicados. No reutilizar esquemas
-internos en `/api/v1/public`; representar ausencia como no disponible, no como cero.
+## Misión operativa
+
+El OED debe maximizar continuamente la cobertura pública verificable del Estado dominicano. La prioridad de construcción es:
+
+1. Poder Ejecutivo
+2. Poder Legislativo
+3. Poder Judicial
+
+La estrategia de esta fase es **cobertura primero, profundidad después**. Si existe una fuente trazable suficiente para una ficha básica, publicar la cobertura útil y continuar. El Auditor mejora fuentes, clasificación, vigencia y profundidad de manera posterior y continua.
+
+## Modo autónomo
+
+Con `AUTONOMY_MODE_ENABLED=true`, los agentes autorizados usan `actor_type=autonomy` y pueden escribir registros canónicos a través de los servicios del dominio. No esperar aprobación humana rutinaria para crear o actualizar instituciones, autoridades, fundamentos, relaciones, estructura u otros datos públicos soportados por evidencia.
+
+Con el modo autónomo apagado, `actor_type=ai` continúa bloqueado para escrituras canónicas.
+
+El Director usa `app.modules.autonomy` para medir cobertura y decidir el siguiente foco. Terminar un backlog **no** significa terminar la misión: volver a medir, crear el siguiente lote y continuar.
+
+## Controles mínimos que no deben eliminarse
+
+- Conservar fuente/evidencia para los hechos publicados.
+- No borrar silenciosamente historia; versionar o cerrar vigencias cuando cambien datos.
+- No exponer payloads crudos, secretos, hashes o identificadores sensibles en la API pública.
+- No publicar automáticamente acusaciones de corrupción, fraude, delitos, culpabilidad o intención. Las señales son observaciones para análisis.
+- Mantener los cambios de código trazables en Git y ejecutar pruebas antes de promoverlos a producción.
 
 ## Arquitectura
 
 - Mantener un monolito modular bajo `backend/app/modules`.
-- PostgreSQL es la base canónica y Alembic es la única vía para cambiar su esquema.
+- PostgreSQL es la base canónica y Alembic es la vía para cambios de esquema.
 - `territories` e `institutions` contienen datos canónicos.
-- `sources` describe procedencia; `evidence` conserva afirmaciones y su contenido original.
-- Toda institución confirmada debe tener evidencia enlazada.
-- Las automatizaciones de IA solo pueden proponer datos en fuentes/evidencias; nunca escribir en tablas canónicas.
-- `organizational_units` y `organizational_events` conservan la estructura y sus cambios
-  históricos; no se sobrescriben nombres, dependencias ni vigencias sin registrar el evento.
-- Toda unidad canónica requiere fundamento legal y enlace diferido a evidencia y fuente.
-- Los cargos vinculados a unidades deben pertenecer a la misma institución y su adscripción
-  histórica se conserva en `position_unit_assignments`.
-- `employment_relationships` conserva vínculos laborales y sus vigencias sin eliminar
-  historia; cargo y unidad pertenecen siempre a la institución del vínculo.
-- `payroll_periods` y `payroll_entries` son datos canónicos versionados. Una nómina
-  confirmada nunca se sobrescribe: toda corrección crea una nueva versión enlazada.
-- `payroll_entry_components` desglosa ingresos y descuentos; `payroll_findings` contiene
-  únicamente señales observables, nunca conclusiones de fraude o corrupción.
-- Ningún identificador sensible se guarda en texto plano. Las referencias se protegen con
-  HMAC-SHA256 y `PAYROLL_REFERENCE_SALT`; `raw_payload` no se expone públicamente.
-- Solo los servicios autorizados de empleo y nómina escriben sus tablas canónicas. La IA
-  puede proponer clasificaciones y hallazgos, pero no realizar escrituras canónicas.
+- `sources` describe procedencia y `evidence` conserva afirmaciones y contenido original.
+- `organizational_units` y `organizational_events` conservan estructura e historia.
+- `employment_relationships`, nómina, presupuesto, compras, deuda y patrimonio conservan sus versiones y procedencia.
+- `ingestion` separa adquisición, artefactos, parsing, normalización, staging y canonicalización. En modo autónomo, staging puede ser breve y no debe convertirse en un cuello de botella para hechos públicos básicos bien soportados.
+- `risk_engine` nunca convierte una señal automática en una acusación.
+- El producto público vive en `backend/app/modules/public_api`, `backend/app/modules/autonomy/public_router.py` y `frontend/`.
 
-## Calidad
+## Roles
 
-El módulo `budget` conserva ciclos, clasificadores, programas, apropiaciones,
-modificaciones, ejecución, ingresos, transferencias, versiones y hallazgos observables.
-Un presupuesto confirmado no se sobrescribe; solo el servicio presupuestario autorizado
-escribe datos canónicos y los actores IA solo proponen clasificaciones o hallazgos.
+### Director
+Analiza cobertura, decide prioridades, crea lotes y continúa iterativamente.
 
-El módulo `procurement_processes` conserva procesos, lotes, ítems, ofertas, evaluaciones,
-adjudicaciones, contratos, modificaciones, entregas, pagos, garantías, impugnaciones,
-versiones y señales observables. `suppliers` conserva proveedores canónicos e historial.
-Solo sus servicios autorizados escriben datos canónicos; la IA no puede hacerlo. Las
-referencias registrales sensibles se almacenan únicamente como hash irreversible y
-`raw_payload` no se expone en la API.
+### Researcher
+Busca fuentes oficiales y públicas, extrae hechos y conserva procedencia.
 
-Antes de entregar cambios ejecutar `make lint`, `make typecheck` y `make test`.
-Agregar una migración, pruebas unitarias, de arquitectura e integración cuando corresponda.
+### Builder / Data Engineer
+Normaliza, programa conectores/parsers cuando hagan falta, escribe datos usando el actor `autonomy` y hace visible cobertura parcial útil.
 
-El módulo `public_debt` conserva instrumentos, condiciones, desembolsos, calendarios,
-pagos, saldos, emisiones, garantías, obligaciones, transferencias, subsidios,
-compromisos plurianuales, reestructuraciones, versiones y riesgos fiscales observables.
-`creditors` conserva acreedores canónicos y su historial. Solo sus servicios autorizados
-escriben datos canónicos; la IA únicamente propone hallazgos o clasificaciones.
+### Auditor
+Trabaja detrás del flujo principal: detecta duplicados, fuentes débiles, autoridades desactualizadas, clasificaciones erróneas y contradicciones; corrige mediante nuevas versiones o eventos históricos.
 
-El módulo `public_assets` conserva patrimonio, ubicaciones, extensiones inmobiliarias,
-vehículos, equipos, infraestructura, intangibles, custodias, transferencias, eventos,
-mantenimiento, valoraciones, seguros, gravámenes, inventarios, disposiciones y versiones.
-`asset_categories` contiene su clasificación controlada e histórica. Todo registro
-canónico exige fuente y evidencia coherentes y solo sus servicios autorizados lo escriben;
-los actores IA únicamente proponen clasificaciones o señales observables. Las referencias
-registrales, vehiculares, seriales y de pólizas se conservan como hashes irreversibles o
-versiones enmascaradas, y `raw_payload` nunca se expone públicamente.
+### Software Engineer / DevOps
+Aparece cuando fallan herramientas, código, despliegue o infraestructura. Corrige, prueba y devuelve el flujo al Director.
 
-El módulo `risk_engine` es transversal y desacoplado. Versiona taxonomías, reglas y
-umbrales; registra ejecuciones, evidencia, entidades relacionadas, deduplicación,
-revisiones, supresiones, puntuaciones y auditoría inmutable. Sus señales son hechos
-observables para revisión y nunca acusaciones. Los dominios no dependen del motor y sus
-evaluadores no escriben tablas canónicas. Toda propuesta de IA permanece sin confirmar
-hasta revisión humana; toda publicación exige evidencia y revisor humano. La ausencia de
-datos se registra separadamente del riesgo sustantivo y ninguna explicación pública
-expone `raw_payload`, notas internas o referencias sensibles.
+## Calidad técnica
 
-El módulo `ingestion` separa adquisición, almacenamiento crudo, parsing, normalización,
-validación, staging, resolución, canonicalización y eventos. Los parsers nunca importan
-servicios canónicos ni escriben sus tablas. Todo artefacto y ejecución cerrada es
-inmutable; el linaje enlaza fuente, ejecución, artefacto, ubicación, staging, evidencia y
-dato canónico. Los destinos de red deben pasar la validación SSRF y los secretos solo se
-referencian mediante entorno. La programación es pasiva por defecto y los workers reclaman
-jobs PostgreSQL con `FOR UPDATE SKIP LOCKED`.
+Antes de promover cambios de código ejecutar:
 
+```bash
+make lint
+make typecheck
+make test
+```
+
+Agregar migraciones y pruebas cuando un cambio de esquema lo requiera. Para expansión de cobertura que use el esquema existente, preferir cambios pequeños y reversibles.
+
+## Seguridad de datos
+
+Ningún identificador sensible se guarda o expone en texto plano cuando el dominio ya define hashing/enmascaramiento. `raw_payload` nunca se publica. Los destinos de red de ingesta deben conservar validación SSRF y los secretos solo se referencian mediante entorno.

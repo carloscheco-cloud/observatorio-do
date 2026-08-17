@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.modules.appointments.router import router as appointments_router
 from app.modules.asset_categories.router import router as asset_categories_router
+from app.modules.autonomy.public_router import router as autonomy_public_router
 from app.modules.budget.router import router as budget_router
 from app.modules.creditors.router import router as creditors_router
 from app.modules.employment_relationships.router import router as employment_router
@@ -51,4 +52,5 @@ api_router.include_router(public_assets_router)
 api_router.include_router(risk_engine_router)
 api_router.include_router(public_api_router)
 api_router.include_router(executive_public_router)
+api_router.include_router(autonomy_public_router)
 api_router.include_router(media_assets_public_router)

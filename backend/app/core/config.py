@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     ingestion_http_timeout_seconds: int = 20
     ingestion_scheduler_enabled: bool = False
     ingestion_timezone: str = "America/Santo_Domingo"
+    autonomy_mode_enabled: bool = False
+    autonomy_target_basic_coverage: float = 0.80
     public_api_page_size_max: int = 100
     public_api_cache_seconds: int = 60
     public_api_rate_limit_per_minute: int = 120
@@ -48,6 +50,13 @@ class Settings(BaseSettings):
     def require_nonempty_list(cls, value: str) -> str:
         if not [item.strip() for item in value.split(",") if item.strip()]:
             raise ValueError("must contain at least one explicit value")
+        return value
+
+    @field_validator("autonomy_target_basic_coverage")
+    @classmethod
+    def validate_autonomy_target(cls, value: float) -> float:
+        if not 0 < value <= 1:
+            raise ValueError("AUTONOMY_TARGET_BASIC_COVERAGE must be greater than 0 and at most 1")
         return value
 
     @model_validator(mode="after")

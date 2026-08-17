@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.actors import canonical_actor_type
 from app.modules.evidence.models import Evidence
 from app.modules.institutions.models import (
     Institution,
@@ -25,8 +26,7 @@ def list_institutions(db: Session) -> list[Institution]:
 def create_institution(
     db: Session, payload: InstitutionCreate, *, actor_type: str = "human"
 ) -> Institution:
-    if actor_type.lower() == "ai":
-        raise PermissionError("AI actors cannot write canonical institution records")
+    canonical_actor_type(actor_type)
     if db.get(Territory, payload.territory_id) is None:
         raise InvalidInstitution("Territory does not exist")
     if db.get(Evidence, payload.evidence_id) is None:
