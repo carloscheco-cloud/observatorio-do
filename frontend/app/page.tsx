@@ -13,10 +13,18 @@ export default async function Home() {
   return <>
     <section className="hero"><div className="shell">
       <p className="eyebrow">Información pública para comprender el Estado</p>
-      <h1>Datos trazables. Consulta ciudadana clara.</h1>
-      <p className="lede">Explora instituciones, empleo, presupuesto, compras, deuda y patrimonio sin exponer información interna o sensible.</p>
+      <h1>El Estado dominicano, cada vez más visible.</h1>
+      <p className="lede">Explora instituciones, autoridades, empleo, presupuesto, compras, deuda y patrimonio. La cobertura se amplía de manera continua y conserva sus fuentes.</p>
       <SearchBar />
     </div></section>
+    <section className="section shell">
+      <h2>Los tres poderes</h2>
+      <div className="grid">
+        <Link className="card" href="/poder-ejecutivo"><p className="eyebrow">Poder Ejecutivo</p><h3>Presidencia, ministerios e instituciones</h3><p>Explora la rama con mayor cobertura actual del OED.</p></Link>
+        <Link className="card" href="/poder-legislativo"><p className="eyebrow">Poder Legislativo</p><h3>Congreso Nacional</h3><p>Senado, Cámara de Diputados y estructura legislativa.</p></Link>
+        <Link className="card" href="/poder-judicial"><p className="eyebrow">Poder Judicial</p><h3>Tribunales y estructura judicial</h3><p>Suprema Corte, Consejo del Poder Judicial y tribunales.</p></Link>
+      </div>
+    </section>
     <section className="section shell">
       <h2>Panorama público</h2>
       <div className="grid">
