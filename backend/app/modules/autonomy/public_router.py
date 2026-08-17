@@ -23,18 +23,19 @@ def branch_institutions(
         Institution.status == InstitutionStatus.CONFIRMED,
         Institution.state_branch == branch,
     )
-    total = db.scalar(
-        select(func.count()).select_from(Institution).where(
-            Institution.status == InstitutionStatus.CONFIRMED,
-            Institution.state_branch == branch,
+    total = (
+        db.scalar(
+            select(func.count())
+            .select_from(Institution)
+            .where(
+                Institution.status == InstitutionStatus.CONFIRMED,
+                Institution.state_branch == branch,
+            )
         )
-    ) or 0
+        or 0
+    )
     rows = list(
-        db.scalars(
-            base.order_by(Institution.name)
-            .offset((page - 1) * page_size)
-            .limit(page_size)
-        )
+        db.scalars(base.order_by(Institution.name).offset((page - 1) * page_size).limit(page_size))
     )
     return {
         "data": [
