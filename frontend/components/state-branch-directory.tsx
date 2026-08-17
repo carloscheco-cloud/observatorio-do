@@ -52,7 +52,7 @@ export async function StateBranchDirectory({
   return (
     <div className="shell section">
       {!compactHeader && <p className="eyebrow">Observatorio del Estado Dominicano</p>}
-      <h1>{title}</h1>
+      {compactHeader ? <h2>{title}</h2> : <h1>{title}</h1>}
       <p className="lede">{description}</p>
 
       <div className="grid metrics">
