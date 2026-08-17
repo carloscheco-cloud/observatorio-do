@@ -1,65 +1,151 @@
 import Link from "next/link";
 
-import { EmptyState } from "@/components/ui";
-import { api, optional } from "@/lib/api";
+import { EmptyState, MetricCard } from "@/components/ui";
+import { optional } from "@/lib/api";
+import {
+  coverageLabel,
+  getStateCoverage,
+  getStateInstitutions,
+  institutionTypeLabel,
+  type StateBranch,
+} from "@/lib/state-api";
 
-interface BranchInstitution {
-  id: string;
-  name: string;
-  kind: string;
-  acronym: string | null;
-  slug: string | null;
-  state_branch: string;
-  institution_type: string | null;
-  operational_status: string;
-  coverage_level: string;
-  official_website: string | null;
-}
+type SearchParams = Record<string, string | string[] | undefined>;
 
-interface BranchResponse {
-  data: BranchInstitution[];
-  pagination: { page: number; page_size: number; total_items: number };
-  filters_applied: { branch: string };
-  warnings: string[];
-}
+const one = (value: string | string[] | undefined) =>
+  Array.isArray(value) ? value[0] : value;
 
 export async function StateBranchDirectory({
   branch,
   title,
   description,
+  searchParams = {},
+  compactHeader = false,
 }: {
-  branch: "legislative" | "judicial";
+  branch: StateBranch;
   title: string;
   description: string;
+  searchParams?: SearchParams;
+  compactHeader?: boolean;
 }) {
-  const response = await optional(
-    api<BranchResponse>(`/state/institutions?branch=${branch}&page_size=250`),
-  );
-  const institutions = response?.data ?? [];
+  const [response, coverage] = await Promise.all([
+    optional(getStateInstitutions(branch)),
+    optional(getStateCoverage()),
+  ]);
+
+  const query = (one(searchParams.search) ?? "").trim().toLocaleLowerCase("es");
+  const type = (one(searchParams.institution_type) ?? "").trim();
+  const institutions = (response?.data ?? []).filter((institution) => {
+    const matchesQuery =
+      !query ||
+      institution.name.toLocaleLowerCase("es").includes(query) ||
+      (institution.acronym ?? "").toLocaleLowerCase("es").includes(query);
+    const matchesType = !type || institution.institution_type === type;
+    return matchesQuery && matchesType;
+  });
+
+  const branchCoverage = coverage?.branches[branch];
+  const types = Array.from(
+    new Set((response?.data ?? []).map((item) => item.institution_type).filter(Boolean)),
+  ).sort() as string[];
 
   return (
     <div className="shell section">
-      <p className="eyebrow">Observatorio del Estado Dominicano</p>
+      {!compactHeader && <p className="eyebrow">Observatorio del Estado Dominicano</p>}
       <h1>{title}</h1>
       <p className="lede">{description}</p>
-      <p className="card">
-        Instituciones visibles: <strong>{response?.pagination.total_items ?? 0}</strong>. La cobertura
-        se amplía y audita de manera continua.
+
+      <div className="grid metrics">
+        <MetricCard
+          label="Instituciones documentadas"
+          value={response?.pagination.total_items ?? "No disponible"}
+        />
+        <MetricCard
+          label="Con ficha básica o mejor"
+          value={branchCoverage?.basic_or_better ?? "No disponible"}
+        />
+        <MetricCard
+          label="Cobertura básica"
+          value={
+            branchCoverage
+              ? `${Math.round(branchCoverage.basic_ratio * 100)}%`
+              : "No disponible"
+          }
+        />
+      </div>
+
+      <aside className="notice">
+        <strong>Cobertura viva</strong>
+        <p>
+          Esta superficie lee directamente las instituciones confirmadas del OED. Una ficha básica
+          publica identidad institucional y procedencia disponible; la profundidad documental se
+          agrega de forma iterativa y no debe interpretarse como una evaluación de desempeño.
+        </p>
+      </aside>
+
+      <form className="filters" role="search">
+        <label>
+          Buscar institución
+          <input name="search" defaultValue={one(searchParams.search)} />
+        </label>
+        <label>
+          Tipo
+          <select name="institution_type" defaultValue={type}>
+            <option value="">Todos</option>
+            {types.map((item) => (
+              <option value={item} key={item}>
+                {institutionTypeLabel(item, item)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button className="button">Aplicar filtros</button>
+      </form>
+
+      <p>
+        Mostrando <strong>{institutions.length}</strong> de{" "}
+        <strong>{response?.pagination.total_items ?? 0}</strong> instituciones confirmadas.
       </p>
+
       {institutions.length > 0 ? (
-        <div className="grid">
+        <div className="directory">
           {institutions.map((institution) => (
-            <Link className="card" key={institution.id} href={`/instituciones/${institution.id}`}>
-              <p className="eyebrow">{institution.acronym ?? institution.kind}</p>
-              <h3>{institution.name}</h3>
+            <article className="card" key={institution.id}>
+              <div>
+                <p className="eyebrow">
+                  {institution.acronym ?? institutionTypeLabel(institution.institution_type, institution.kind)}
+                </p>
+                <h3>{institution.name}</h3>
+                <p>{institutionTypeLabel(institution.institution_type, institution.kind)}</p>
+                <p>
+                  <strong>{coverageLabel(institution.coverage_level)}</strong> · Estado:{" "}
+                  {institution.operational_status}
+                </p>
+              </div>
               <p>
-                Cobertura: {institution.coverage_level} · Estado: {institution.operational_status}
+                <Link className="button" href={`/instituciones/${institution.id}`}>
+                  Ver ficha pública
+                </Link>
               </p>
-            </Link>
+              {institution.official_website && (
+                <p>
+                  <a href={institution.official_website} target="_blank" rel="noreferrer">
+                    Portal oficial
+                  </a>
+                </p>
+              )}
+            </article>
           ))}
         </div>
       ) : (
-        <EmptyState title="La compañía autónoma todavía está construyendo esta rama del Estado" />
+        <EmptyState title="No hay instituciones que coincidan con estos filtros" />
+      )}
+
+      {(response?.warnings ?? []).length > 0 && (
+        <section>
+          <h2>Notas de cobertura</h2>
+          <ul>{response?.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
+        </section>
       )}
     </div>
   );
