@@ -5,7 +5,7 @@ import {
   institutionTypeLabel,
   totalStateInstitutions,
   type StateCoverageResponse,
-} from "@/lib/state-api";
+} from "../lib/state-api";
 
 const coverage: StateCoverageResponse = {
   mission: "Cobertura pública verificable",
