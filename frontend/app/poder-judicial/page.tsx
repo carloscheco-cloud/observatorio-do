@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { PowerObservationMap } from "@/components/power-observation-map";
 import { StateBranchDirectory } from "@/components/state-branch-directory";
 
 export const metadata: Metadata = {
@@ -16,11 +17,28 @@ export default async function JudicialBranchPage({
   searchParams: Promise<SearchParams>;
 }) {
   return (
-    <StateBranchDirectory
-      branch="judicial"
-      title="Poder Judicial"
-      description="Suprema Corte de Justicia, Consejo del Poder Judicial, cortes, tribunales y demás estructura judicial incorporada por el OED con fuentes públicas trazables."
-      searchParams={await searchParams}
-    />
+    <>
+      <section className="hero">
+        <div className="shell">
+          <p className="eyebrow">Estructura, magistrados y decisiones públicas</p>
+          <h1>Poder Judicial</h1>
+          <p className="lede">
+            El OED documentará la estructura judicial, sus jueces y magistrados, formación,
+            trayectoria, mecanismo de designación, decisiones públicas relevantes y recursos
+            institucionales, siempre con fuentes documentales y sin evaluaciones personales.
+          </p>
+        </div>
+      </section>
+
+      <PowerObservationMap branch="judicial" />
+
+      <StateBranchDirectory
+        branch="judicial"
+        title="Directorio del Poder Judicial"
+        description="Suprema Corte de Justicia, Consejo del Poder Judicial, cortes, tribunales y demás estructura judicial confirmada. Sobre esta base se incorporarán perfiles, designaciones, decisiones y recursos públicos trazables."
+        searchParams={await searchParams}
+        compactHeader
+      />
+    </>
   );
 }
