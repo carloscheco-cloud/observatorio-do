@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { ExecutiveNav } from "@/components/executive";
+import { PowerObservationMap } from "@/components/power-observation-map";
 import { StateBranchDirectory } from "@/components/state-branch-directory";
 
 export const metadata: Metadata = {
@@ -28,18 +29,20 @@ export default async function ExecutivePage({
           <p className="eyebrow">Cobertura pública viva</p>
           <h1>Poder Ejecutivo</h1>
           <p className="lede">
-            Explora las instituciones confirmadas del Poder Ejecutivo que la operación autónoma del
-            OED incorpora con fuentes públicas trazables. La ficha básica aparece primero y se
-            enriquece progresivamente con autoridades, fundamento, estructura y documentación.
+            Explora las instituciones confirmadas del Poder Ejecutivo y sigue, por institución,
+            quién la dirige, cuánto presupuesto recibe, cuánto ejecuta, su nómina, sus compras,
+            proveedores, contratos y la evidencia pública disponible.
           </p>
           <ExecutiveNav />
         </div>
       </section>
 
+      <PowerObservationMap branch="executive" />
+
       <StateBranchDirectory
         branch="executive"
         title="Directorio completo del Ejecutivo"
-        description="Esta es la cobertura canónica confirmada actualmente disponible, no una lista fija del antiguo MVP."
+        description="Instituciones confirmadas actualmente disponibles en el OED. Cada ficha se irá enriqueciendo con autoridades, presupuesto, ejecución, nómina, compras, patrimonio y fuentes trazables."
         searchParams={await searchParams}
         compactHeader
       />
