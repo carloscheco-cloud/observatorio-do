@@ -15,6 +15,8 @@ export const senateObservationSources = {
   approvedInitiatives: "https://www.senadord.gob.do/secretaria-general-legislativa/iniciativas-aprobadas/",
   openData: "https://transparencia.senadord.gob.do/datos-abiertos/",
   transparency: "https://transparencia.senadord.gob.do/",
+  declarations: "https://transparencia.senadord.gob.do/declaraciones-juradas-de-patrimonio/",
+  declarationLaw: "https://transparencia.senadord.gob.do/wpfd_file/ley-311-14-sobre-declaracion-jurada-de-patrimonio/",
   senateRules: "https://transparencia.senadord.gob.do/download/725/resoluciones/43294/reglamento-del-senado-rep-dom.pdf",
   vehicleExemption:
     "https://vucerd.gob.do/media/2307/exoneraci%C3%B3n-de-impuestos-de-importaci%C3%B3n-a-senadores-y-diputados-de-la-rep%C3%BAblica-dominicana-ley-57-96.pdf",
@@ -181,3 +183,48 @@ export type SenatorAttendance = {
 };
 
 export const senatorAttendance: Record<string, SenatorAttendance[]> = {};
+
+export type SenatorAssetDeclaration = {
+  date: string;
+  type: "inicio" | "actualizacion" | "cese";
+  sourceUrl: string;
+  assets?: number;
+  liabilities?: number;
+  netWorth?: number;
+  note?: string;
+};
+
+// Direct official PDFs are added only after the exact file has been resolved.
+// The public transparency index remains available for every senator in the
+// meantime so the OED never invents a declaration link.
+export const senatorAssetDeclarations: Record<string, SenatorAssetDeclaration[]> = {
+  "jonhson-encarnacion-diaz": [
+    {
+      date: "2024-08-16",
+      type: "inicio",
+      sourceUrl: "https://transparencia.senadord.gob.do/download/187/declaraciones-juradas/43670/jonhson-encarnacion-diaz.pdf",
+      note: "Declaración jurada de inicio en el cargo, DJP-42652.",
+    },
+  ],
+  "alexis-victoria-yeb": [
+    {
+      date: "2024",
+      type: "inicio",
+      sourceUrl: "https://transparencia.senadord.gob.do/download/187/declaraciones-juradas/41290/alexis-victoria-yeb.pdf",
+    },
+  ],
+  "milciades-aneudy-ortiz-sajiun": [
+    {
+      date: "2024",
+      type: "inicio",
+      sourceUrl: "https://transparencia.senadord.gob.do/download/187/declaraciones-juradas/43672/milciades-aneudy-ortiz-sajiun.pdf",
+    },
+  ],
+  "manuel-maria-rodriguez-ortega": [
+    {
+      date: "2024",
+      type: "inicio",
+      sourceUrl: "https://transparencia.senadord.gob.do/download/187/declaraciones-juradas/43668/manuel-maria-rodriguez-ortega.pdf",
+    },
+  ],
+};
