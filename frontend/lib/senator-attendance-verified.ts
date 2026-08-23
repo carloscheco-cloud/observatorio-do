@@ -45,6 +45,36 @@ export const verifiedSenatorAttendance: Record<string, VerifiedSenatorAttendance
       methodologyNote: "El informe oficial consolida 67 sesiones/actas, 61 presencias, 6 excusas y 0 ausencias.",
     },
   ],
+  "lia-ynocencia-diaz-santana": [
+    {
+      period: "16 ago. 2025 – 12 ene. 2026",
+      plenarySessions: 24,
+      attended: 24,
+      excused: 0,
+      unjustifiedAbsences: 0,
+      presenceRate: 100,
+      excusedRate: 0,
+      absenceRate: 0,
+      sourceUrl: "https://www.diariolibre.com/politica/congreso-nacional/2026/02/06/legisladores-registran-altas-cifras-de-ausencia-a-sesiones/3427897",
+      sourceLabel: "Diario Libre · revisión de actas y resúmenes oficiales del Senado, legislatura ago. 2025-ene. 2026",
+      methodologyNote: "La revisión reporta asistencia perfecta en las 24 sesiones celebradas durante el período.",
+    },
+  ],
+  "bernardo-aleman-rodriguez": [
+    {
+      period: "16 ago. 2025 – 12 ene. 2026",
+      plenarySessions: 24,
+      attended: 14,
+      excused: 10,
+      unjustifiedAbsences: 0,
+      presenceRate: 58.3,
+      excusedRate: 41.7,
+      absenceRate: 0,
+      sourceUrl: "https://www.diariolibre.com/politica/congreso-nacional/2026/02/06/legisladores-registran-altas-cifras-de-ausencia-a-sesiones/3427897",
+      sourceLabel: "Diario Libre · revisión de actas y resúmenes oficiales del Senado, legislatura ago. 2025-ene. 2026",
+      methodologyNote: "10 ausencias de 24 sesiones, todas registradas con excusa; 14 presencias calculadas por diferencia.",
+    },
+  ],
   "ricardo-de-los-santos-polanco": [
     {
       period: "27 feb. – 5 ago. 2025",
@@ -155,6 +185,19 @@ export const verifiedSenatorAttendance: Record<string, VerifiedSenatorAttendance
   ],
   "daniel-enrique-rivera-reyes": [
     {
+      period: "16 ago. 2025 – 12 ene. 2026",
+      plenarySessions: 24,
+      attended: 24,
+      excused: 0,
+      unjustifiedAbsences: 0,
+      presenceRate: 100,
+      excusedRate: 0,
+      absenceRate: 0,
+      sourceUrl: "https://www.diariolibre.com/politica/congreso-nacional/2026/02/06/legisladores-registran-altas-cifras-de-ausencia-a-sesiones/3427897",
+      sourceLabel: "Diario Libre · revisión de actas y resúmenes oficiales del Senado, legislatura ago. 2025-ene. 2026",
+      methodologyNote: "Asistencia perfecta en las 24 sesiones celebradas durante el período.",
+    },
+    {
       period: "27 feb. – 26 jul. 2026",
       plenarySessions: 26,
       attended: 26,
@@ -170,6 +213,19 @@ export const verifiedSenatorAttendance: Record<string, VerifiedSenatorAttendance
   ],
   "felix-ramon-bautista-rosario": [
     {
+      period: "16 ago. 2025 – 12 ene. 2026",
+      plenarySessions: 24,
+      attended: 13,
+      excused: 11,
+      unjustifiedAbsences: 0,
+      presenceRate: 54.2,
+      excusedRate: 45.8,
+      absenceRate: 0,
+      sourceUrl: "https://www.diariolibre.com/politica/congreso-nacional/2026/02/06/legisladores-registran-altas-cifras-de-ausencia-a-sesiones/3427897",
+      sourceLabel: "Diario Libre · revisión de actas y resúmenes oficiales del Senado, legislatura ago. 2025-ene. 2026",
+      methodologyNote: "11 ausencias de 24 sesiones, todas registradas con excusa; 13 presencias calculadas por diferencia.",
+    },
+    {
       period: "27 feb. – 26 jul. 2026",
       plenarySessions: 26,
       attended: 15,
@@ -184,6 +240,19 @@ export const verifiedSenatorAttendance: Record<string, VerifiedSenatorAttendance
     },
   ],
   "hector-elpidio-acosta-restituyo": [
+    {
+      period: "16 ago. 2025 – 12 ene. 2026",
+      plenarySessions: 24,
+      attended: 8,
+      excused: 16,
+      unjustifiedAbsences: 0,
+      presenceRate: 33.3,
+      excusedRate: 66.7,
+      absenceRate: 0,
+      sourceUrl: "https://www.diariolibre.com/politica/congreso-nacional/2026/02/06/legisladores-registran-altas-cifras-de-ausencia-a-sesiones/3427897",
+      sourceLabel: "Diario Libre · revisión de actas y resúmenes oficiales del Senado, legislatura ago. 2025-ene. 2026",
+      methodologyNote: "16 ausencias de 24 sesiones, todas registradas con excusa. La fuente señala que el senador atravesó una situación de salud que hizo pública.",
+    },
     {
       period: "27 feb. – 26 jul. 2026",
       plenarySessions: 26,
