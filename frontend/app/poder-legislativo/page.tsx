@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 
 import { PowerObservationMap } from "@/components/power-observation-map";
+import { SenateDirectory } from "@/components/senate-directory";
 import { StateBranchDirectory } from "@/components/state-branch-directory";
 
 export const metadata: Metadata = {
   title: "Poder Legislativo",
-  description: "Directorio vivo de instituciones del Poder Legislativo documentadas por el OED.",
+  description: "Senadores, diputados e instituciones del Poder Legislativo documentados por el OED.",
   alternates: { canonical: "/poder-legislativo" },
 };
 
@@ -23,19 +24,22 @@ export default async function LegislativeBranchPage({
           <p className="eyebrow">Representación, actividad y trazabilidad</p>
           <h1>Poder Legislativo</h1>
           <p className="lede">
-            El OED seguirá no solo las instituciones legislativas, sino también quién representa a
-            cada territorio, su partido actual e histórico, trayectoria, asistencia, comisiones,
-            iniciativas, votaciones, leyes, declaraciones juradas y beneficios públicos documentados.
+            El OED documenta quién representa a cada territorio y, progresivamente, su formación,
+            partido, trayectoria, asistencia, comisiones, iniciativas, votaciones, declaraciones y
+            beneficios públicos, conservando las fuentes de cada dato.
           </p>
+          <p><a className="button" href="#senadores">Ver los 32 senadores</a></p>
         </div>
       </section>
+
+      <SenateDirectory />
 
       <PowerObservationMap branch="legislative" />
 
       <StateBranchDirectory
         branch="legislative"
-        title="Directorio del Poder Legislativo"
-        description="Senado, Cámara de Diputados y demás instituciones legislativas incorporadas con fuentes públicas trazables. La cobertura personal y parlamentaria se agregará sobre esta base institucional."
+        title="Instituciones del Poder Legislativo"
+        description="Senado, Cámara de Diputados y demás instituciones legislativas incorporadas con fuentes públicas trazables. El directorio personal se construye sobre esta base institucional."
         searchParams={await searchParams}
         compactHeader
       />
