@@ -49,4 +49,12 @@ export const verifiedSenatorAssetDeclarations: Record<string, SenatorAssetDeclar
       note: "Declaración jurada oficial publicada por el Senado/Cámara de Cuentas.",
     },
   ],
+  "franklin-martin-romero-morillo": [
+    {
+      date: "2024",
+      type: "actualizacion",
+      sourceUrl: "https://transparencia.senadord.gob.do/wp-content/uploads/wpfd/preview_files/FRANKLIN-MARTIN-ROMERO-MORILLO%28af5f1871fc32857b6d868452b4addac7%29.pdf",
+      note: "Declaración jurada oficial del período vigente. El formulario registra RD$320,000 de salario bruto mensual y complementos individualizados de combustible, representación y hospedaje.",
+    },
+  ],
 };
