@@ -32,6 +32,7 @@ export default async function LegislativeBranchPage({
             <a className="button" href="#senadores">Ver los 32 senadores</a>
             <a className="button secondary" href="/poder-legislativo/asistencia">Ranking de asistencia y comisiones</a>
             <a className="button secondary" href="/poder-legislativo/patrimonio">Patrimonio y declaraciones juradas</a>
+            <a className="button secondary" href="/poder-legislativo/patrimonio/evolucion">Evolución patrimonial histórica</a>
           </p>
         </div>
       </section>
