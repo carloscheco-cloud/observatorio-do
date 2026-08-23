@@ -25,9 +25,129 @@ export type Legislator = {
   educationNote?: string;
 };
 
+const senateRosterSource =
+  "https://www.senadord.gob.do/senadores-reciben-certificados-de-elecciones-de-la-jce/";
+
+const senatorEnrichment: Record<string, Partial<Legislator>> = {
+  "lia-ynocencia-diaz-santana": {
+    officialProfileUrl: "https://www.senadord.gob.do/provincia/azua/",
+    educationStatus: "verified",
+    education: [
+      {
+        level: "grado",
+        credential: "Doctora en Medicina",
+        institution: "Universidad Central del Este (UCE)",
+        status: "completed",
+        sourceUrl: "https://www.senadord.gob.do/provincia/azua/",
+      },
+      {
+        level: "especialidad",
+        credential: "Médico Pediatra",
+        institution: "Hospital Materno Infantil San Lorenzo de Los Mina / UASD",
+        status: "completed",
+        sourceUrl: "https://www.senadord.gob.do/provincia/azua/",
+      },
+      {
+        level: "formación continua",
+        credential: "Infectología Pediátrica; manejo y tratamiento del dengue",
+        institution: "San Juan, Puerto Rico",
+        status: "completed",
+        sourceUrl: "https://www.senadord.gob.do/provincia/azua/",
+      },
+    ],
+  },
+  "omar-leonel-fernandez-dominguez": {
+    officialProfileUrl: "https://www.senadord.gob.do/provincia/distrito-nacional/",
+    educationStatus: "verified",
+    education: [
+      {
+        level: "grado",
+        credential: "Licenciatura en Derecho",
+        institution: "Pontificia Universidad Católica Madre y Maestra (PUCMM)",
+        status: "completed",
+        sourceUrl: "https://www.senadord.gob.do/provincia/distrito-nacional/",
+      },
+      {
+        level: "maestría",
+        credential: "Máster en Derecho de los Negocios Internacionales",
+        institution: "Boston University",
+        status: "completed",
+        sourceUrl: "https://www.senadord.gob.do/provincia/distrito-nacional/",
+      },
+    ],
+  },
+  "franklin-martin-romero-morillo": {
+    officialProfileUrl: "https://www.senadord.gob.do/provincia/duarte/",
+    educationStatus: "verified",
+    education: [
+      {
+        level: "secundaria/equivalencia",
+        credential: "GED",
+        institution: "Estados Unidos",
+        status: "completed",
+        sourceUrl: "https://www.senadord.gob.do/provincia/duarte/",
+      },
+      {
+        level: "grado",
+        credential: "Derecho",
+        status: "completed",
+        sourceUrl: "https://www.senadord.gob.do/provincia/duarte/",
+      },
+      {
+        level: "maestría",
+        credential: "Derecho Constitucional y Derecho Público",
+        institution: "Universidad de Castilla-La Mancha",
+        status: "in_progress",
+        sourceUrl: "https://www.senadord.gob.do/provincia/duarte/",
+      },
+      {
+        level: "maestría",
+        credential: "Gestión Pública y Liderazgo, especialidad en Derecho Administrativo",
+        institution: "Universidad Europea del Atlántico (UNEATLANTICO)",
+        status: "in_progress",
+        sourceUrl: "https://www.senadord.gob.do/provincia/duarte/",
+      },
+    ],
+  },
+  "ricardo-de-los-santos-polanco": {
+    officialProfileUrl:
+      "https://memoriahistorica.senadord.gob.do/items/8a4bd1e3-2a5c-4061-b3e4-989bf29bdc5f/full",
+    photoUrl:
+      "https://memoriahistorica.senadord.gob.do/bitstreams/6738e97e-6424-474b-95e1-46d7fd13cd53/download",
+    educationStatus: "verified",
+    education: [
+      {
+        level: "grado",
+        credential: "Licenciatura en Administración de Empresas",
+        institution: "Universidad de la Tercera Edad (UTE)",
+        status: "completed",
+        sourceUrl:
+          "https://memoriahistorica.senadord.gob.do/items/8a4bd1e3-2a5c-4061-b3e4-989bf29bdc5f/full",
+      },
+      {
+        level: "maestría",
+        credential: "Comunicación Corporativa",
+        institution: "TECH Universidad Tecnológica",
+        status: "completed",
+        sourceUrl:
+          "https://memoriahistorica.senadord.gob.do/items/8a4bd1e3-2a5c-4061-b3e4-989bf29bdc5f/full",
+      },
+      {
+        level: "maestría",
+        credential:
+          "Derecho Constitucional y Derecho Público: Derechos Fundamentales y Derechos Constitucionales",
+        institution: "Universidad de Castilla-La Mancha",
+        status: "in_progress",
+        sourceUrl:
+          "https://memoriahistorica.senadord.gob.do/items/8a4bd1e3-2a5c-4061-b3e4-989bf29bdc5f/full",
+      },
+    ],
+  },
+};
+
 // Canonical 2024-2028 Senate roster. Names/provinces are grounded in the
-// official Senate certificate-delivery roster. Education/photo fields are
-// enriched only when a traceable institutional source has been verified.
+// official Senate certificate-delivery roster. Current party labels follow
+// the Senate's current party representation page where available.
 export const senators: Legislator[] = [
   ["lia-ynocencia-diaz-santana", "Lía Ynocencia Díaz Santana", "Azua", "PRM"],
   ["andres-guillermo-lama-perez", "Andrés Guillermo Lama Pérez", "Bahoruco", "PRM"],
@@ -41,7 +161,7 @@ export const senators: Legislator[] = [
   ["cristobal-venerado-castillo-liriano", "Cristóbal Venerado Antonio Castillo Liriano", "Hato Mayor", "PRM"],
   ["maria-mercedes-ortiz-dilone", "María Mercedes Ortiz Diloné", "Hermanas Mirabal", "PRM"],
   ["dagoberto-rodriguez-adames", "Dagoberto Rodríguez Adames", "Independencia", "PRM"],
-  ["rafael-baron-duluc-rijo", "Rafael Barón Duluc Rijo", "La Altagracia", "PLR"],
+  ["rafael-baron-duluc-rijo", "Rafael Barón Duluc Rijo", "La Altagracia", "PRM"],
   ["eduard-alexis-espiritusanto-castillo", "Eduard Alexis Espiritusanto Castillo", "La Romana", "FP"],
   ["ramon-rogelio-genao-duran", "Ramón Rogelio Genao Durán", "La Vega", "PRSC"],
   ["alexis-victoria-yeb", "Alexis Victoria Yeb", "María Trinidad Sánchez", "PRM"],
@@ -58,8 +178,8 @@ export const senators: Legislator[] = [
   ["aracelis-villanueva-figueroa", "Aracelis Villanueva Figueroa", "San Pedro de Macorís", "PRM"],
   ["ricardo-de-los-santos-polanco", "Ricardo De Los Santos Polanco", "Sánchez Ramírez", "PRM"],
   ["daniel-enrique-rivera-reyes", "Daniel Enrique de Jesús Rivera Reyes", "Santiago", "PRM"],
-  ["casimiro-antonio-marte-familia", "Casimiro Antonio Marte Familia", "Santiago Rodríguez", "PPG"],
-  ["antonio-manuel-taveras-guzman", "Antonio Manuel Taveras Guzmán", "Santo Domingo", "PRM"],
+  ["casimiro-antonio-marte-familia", "Casimiro Antonio Marte Familia", "Santiago Rodríguez", "PRSC"],
+  ["antonio-manuel-taveras-guzman", "Antonio Manuel Taveras Guzmán", "Santo Domingo", "Independiente"],
   ["odalis-rafael-rodriguez-rodriguez", "Odalis Rafael Rodríguez Rodríguez", "Valverde", "PRM"],
 ].map(([id, fullName, province, party]) => ({
   id,
@@ -69,10 +189,11 @@ export const senators: Legislator[] = [
   representation: "provincial" as const,
   party,
   officialProfileUrl: "https://www.senadord.gob.do/",
-  rosterSourceUrl: "https://www.senadord.gob.do/senadores-reciben-certificados-de-elecciones-de-la-jce/",
+  rosterSourceUrl: senateRosterSource,
   education: [],
   educationStatus: "pending" as const,
   educationNote: "Currículo educativo en verificación documental.",
+  ...senatorEnrichment[id],
 }));
 
 export const deputies: Legislator[] = [];
