@@ -9,12 +9,14 @@ export type VerifiedSenatorAttendance = {
   absenceRate: number;
   sourceUrl: string;
   sourceLabel: string;
+  methodologyNote?: string;
 };
 
 /**
- * Attendance is added only when an identifiable 2024-2028 Senate source
- * publishes either the exact roll-up or explicit percentages. Excused absence
- * is kept separate from absence without excuse.
+ * Attendance is added only when an identifiable source based on Senate records
+ * publishes either the exact roll-up or an explicit percentage. Excused absence
+ * is kept separate from absence without excuse. We do not manufacture a
+ * percentage from incomplete pass-of-list counts.
  */
 export const verifiedSenatorAttendance: Record<string, VerifiedSenatorAttendance[]> = {
   "julito-fulcar-encarnacion": [
@@ -25,6 +27,7 @@ export const verifiedSenatorAttendance: Record<string, VerifiedSenatorAttendance
       absenceRate: 0,
       sourceUrl: "https://fliphtml5.com/qintr/wqwa/web-memoriasJulito-new/",
       sourceLabel: "Informe de Gestión Social y Legislativa 2024-2025 · Senador Julito Fulcar",
+      methodologyNote: "El informe publica directamente los porcentajes de presencia, excusas y ausencias.",
     },
   ],
   "secundino-velazquez-pimentel": [
@@ -39,6 +42,29 @@ export const verifiedSenatorAttendance: Record<string, VerifiedSenatorAttendance
       absenceRate: 0,
       sourceUrl: "https://cdnc.heyzine.com/files/uploaded/v3/dde740efa9deac1b2f6a844dca68328a4226b74e.pdf",
       sourceLabel: "Informe de Gestión Senatorial Pedernales 2024-2025 · Departamento Elaboración de Actas",
+      methodologyNote: "El informe oficial consolida 67 sesiones/actas, 61 presencias, 6 excusas y 0 ausencias.",
+    },
+  ],
+  "ricardo-de-los-santos-polanco": [
+    {
+      period: "27 feb. – 5 ago. 2025",
+      presenceRate: 100,
+      excusedRate: 0,
+      absenceRate: 0,
+      sourceUrl: "https://www.diariolibre.com/politica/congreso-nacional/2025/08/26/tres-legisladores-del-prm-tienen-record-de-inasistencias-al-senado/3223892",
+      sourceLabel: "Diario Libre · revisión de listados oficiales de asistencia publicados por el Senado",
+      methodologyNote: "La revisión reporta asistencia perfecta en ambos pases de lista durante todas las sesiones del período analizado.",
+    },
+  ],
+  "odalis-rafael-rodriguez-rodriguez": [
+    {
+      period: "27 feb. – 5 ago. 2025",
+      presenceRate: 100,
+      excusedRate: 0,
+      absenceRate: 0,
+      sourceUrl: "https://www.diariolibre.com/politica/congreso-nacional/2025/08/26/tres-legisladores-del-prm-tienen-record-de-inasistencias-al-senado/3223892",
+      sourceLabel: "Diario Libre · revisión de listados oficiales de asistencia publicados por el Senado",
+      methodologyNote: "La revisión reporta asistencia perfecta en ambos pases de lista durante todas las sesiones del período analizado.",
     },
   ],
 };
