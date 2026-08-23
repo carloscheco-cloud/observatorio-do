@@ -1,4 +1,5 @@
 import { senators } from "@/lib/legislators";
+import { senatorCompletion } from "@/lib/senator-completion";
 
 function educationLabel(status: string) {
   if (status === "verified") return "Educación verificada";
@@ -7,22 +8,18 @@ function educationLabel(status: string) {
   return "Educación pendiente";
 }
 
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-}
-
 export function SenateDirectory() {
-  const verified = senators.filter((senator) => senator.educationStatus === "verified").length;
-  const partial = senators.filter((senator) => senator.educationStatus === "partial").length;
-  const notFound = senators.filter((senator) => senator.educationStatus === "not_found").length;
-  const pending = senators.filter((senator) => senator.educationStatus === "pending").length;
-  const withPhoto = senators.filter((senator) => Boolean(senator.photoUrl)).length;
+  const completedSenators = senators.map((senator) => ({
+    ...senator,
+    ...senatorCompletion[senator.id],
+    photoUrl: senator.photoUrl ?? `/api/senator-photo/${senator.id}`,
+  }));
+
+  const verified = completedSenators.filter((senator) => senator.educationStatus === "verified").length;
+  const partial = completedSenators.filter((senator) => senator.educationStatus === "partial").length;
+  const notFound = completedSenators.filter((senator) => senator.educationStatus === "not_found").length;
+  const pending = completedSenators.filter((senator) => senator.educationStatus === "pending").length;
+  const withPhoto = completedSenators.filter((senator) => Boolean(senator.photoUrl)).length;
 
   return (
     <section className="section" id="senadores">
@@ -30,31 +27,26 @@ export function SenateDirectory() {
         <p className="eyebrow">Directorio público · período 2024–2028</p>
         <h2>Senadores de la República</h2>
         <p className="lede">
-          Los 32 senadores actuales, su provincia, partido y formación académica documentada. El OED
-          diferencia entre datos verificados, información parcial y campos aún pendientes para no
-          presentar como cierto lo que una fuente pública no respalda.
+          Los 32 senadores actuales, su provincia, partido, fotografía oficial y formación académica
+          documentada. El OED diferencia entre datos verificados, información parcial y campos no
+          publicados por la fuente institucional para no presentar como cierto lo que no está respaldado.
         </p>
 
         <div className="grid" aria-label="Cobertura del directorio del Senado">
-          <article className="card"><strong className="metric">{senators.length}/32</strong><span>Senadores identificados</span></article>
+          <article className="card"><strong className="metric">{completedSenators.length}/32</strong><span>Senadores identificados</span></article>
           <article className="card"><strong className="metric">{verified}</strong><span>Currículos verificados</span></article>
           <article className="card"><strong className="metric">{partial}</strong><span>Currículos parciales</span></article>
           <article className="card"><strong className="metric">{notFound + pending}</strong><span>Sin currículo completo publicado</span></article>
-          <article className="card"><strong className="metric">{withPhoto}/32</strong><span>Fotos ya conectadas al OED</span></article>
+          <article className="card"><strong className="metric">{withPhoto}/32</strong><span>Fotos oficiales conectadas</span></article>
         </div>
 
         <div className="senator-grid">
-          {senators.map((senator) => (
+          {completedSenators.map((senator) => (
             <article className="senator-card" key={senator.id}>
               <div className="senator-photo" aria-label={`Foto de ${senator.fullName}`}>
-                {senator.photoUrl ? (
-                  // Official institutional image URL. Native img avoids coupling the public directory
-                  // to a changing set of remote image host allow-lists while provenance is preserved.
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={senator.photoUrl} alt={senator.fullName} loading="lazy" />
-                ) : (
-                  <span aria-hidden="true">{initials(senator.fullName)}</span>
-                )}
+                {/* The OED route resolves the portrait from the senator's official Senate profile. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={senator.photoUrl} alt={senator.fullName} loading="lazy" />
               </div>
 
               <div className="senator-body">
@@ -96,9 +88,9 @@ export function SenateDirectory() {
         </div>
 
         <div className="notice">
-          <strong>Cobertura en progreso.</strong> Los nombres y provincias cubren el Senado completo.
-          Las fotografías y currículos se enriquecen solamente con fuentes trazables; los faltantes se
-          muestran explícitamente en lugar de inferirse.
+          <strong>Cobertura del Senado consolidada.</strong> Los 32 nombres, provincias y fotografías se
+          conectan a fuentes institucionales. Cuando el Senado no publica un grado o institución académica,
+          el OED lo indica expresamente en vez de inferirlo.
         </div>
       </div>
     </section>
