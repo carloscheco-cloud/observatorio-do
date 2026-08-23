@@ -28,7 +28,10 @@ export default async function LegislativeBranchPage({
             partido, trayectoria, asistencia, comisiones, iniciativas, votaciones, declaraciones y
             beneficios públicos, conservando las fuentes de cada dato.
           </p>
-          <p><a className="button" href="#senadores">Ver los 32 senadores</a></p>
+          <p className="senator-links">
+            <a className="button" href="#senadores">Ver los 32 senadores</a>
+            <a className="button secondary" href="/poder-legislativo/asistencia">Ranking de asistencia y comisiones</a>
+          </p>
         </div>
       </section>
 
