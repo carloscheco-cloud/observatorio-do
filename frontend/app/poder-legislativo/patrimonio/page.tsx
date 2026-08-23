@@ -3,11 +3,12 @@ import Link from "next/link";
 
 import { senators } from "@/lib/legislators";
 import { senatorPatrimonyFirst16 } from "@/lib/senator-patrimony-first16";
+import { senatorPatrimonySecond16 } from "@/lib/senator-patrimony-second16";
 
 export const metadata: Metadata = {
   title: "Patrimonio de senadores",
   description:
-    "Declaraciones juradas, activos, pasivos y patrimonio neto documentado de los senadores de la República Dominicana.",
+    "Declaraciones juradas, activos, pasivos y patrimonio neto documentado de los 32 senadores de la República Dominicana.",
   alternates: { canonical: "/poder-legislativo/patrimonio" },
 };
 
@@ -21,27 +22,35 @@ function money(value?: number) {
 }
 
 export default function SenatePatrimonyPage() {
+  const snapshots = { ...senatorPatrimonyFirst16, ...senatorPatrimonySecond16 };
   const rows = senators
-    .slice(0, 16)
-    .map((senator) => ({ senator, snapshot: senatorPatrimonyFirst16[senator.id] }))
-    .sort((a, b) => (b.snapshot?.reportedNetWorth ?? -1) - (a.snapshot?.reportedNetWorth ?? -1));
+    .map((senator) => ({ senator, snapshot: snapshots[senator.id] }))
+    .sort((a, b) => {
+      const aValue = a.snapshot?.reportedNetWorth ?? a.snapshot?.reportedAssets ?? -1;
+      const bValue = b.snapshot?.reportedNetWorth ?? b.snapshot?.reportedAssets ?? -1;
+      return bValue - aValue;
+    });
 
   const directPdfCount = rows.filter((item) => item.snapshot?.declarationLinkType === "direct_pdf").length;
   const withNetWorth = rows.filter((item) => item.snapshot?.reportedNetWorth != null).length;
+  const withPublishedValue = rows.filter(
+    (item) => item.snapshot?.reportedNetWorth != null || item.snapshot?.reportedAssets != null,
+  ).length;
 
   return (
     <>
       <section className="hero">
         <div className="shell">
           <p className="eyebrow">Transparencia patrimonial · Senado 2024–2028</p>
-          <h1>Patrimonio y declaraciones juradas</h1>
+          <h1>Patrimonio y declaraciones juradas de los 32 senadores</h1>
           <p className="lede">
-            Primera ola: 16 senadores. El OED reúne la declaración jurada, activos, pasivos y patrimonio neto cuando la fuente permite identificarlos con precisión. Los valores no constituyen una auditoría independiente ni una acusación de irregularidad.
+            El OED reúne declaración jurada, activos, pasivos y patrimonio neto cuando la fuente permite identificarlos con precisión. Un aumento o disminución patrimonial no constituye por sí mismo evidencia de irregularidad.
           </p>
           <div className="grid">
-            <article className="card"><strong className="metric">16</strong><span>senadores en esta primera ola</span></article>
+            <article className="card"><strong className="metric">32</strong><span>senadores incluidos</span></article>
+            <article className="card"><strong className="metric">{withPublishedValue}</strong><span>con cifra patrimonial publicada</span></article>
+            <article className="card"><strong className="metric">{withNetWorth}</strong><span>con patrimonio neto identificado</span></article>
             <article className="card"><strong className="metric">{directPdfCount}</strong><span>PDF individuales ya resueltos</span></article>
-            <article className="card"><strong className="metric">{withNetWorth}</strong><span>con patrimonio neto cuantificado</span></article>
           </div>
           <p className="profile-actions">
             <Link className="button secondary" href="/poder-legislativo">← Poder Legislativo</Link>
@@ -52,9 +61,9 @@ export default function SenatePatrimonyPage() {
       <section className="section">
         <div className="shell">
           <p className="eyebrow">Ranking patrimonial documentado</p>
-          <h2>Primeros 16 senadores</h2>
+          <h2>Los 32 senadores</h2>
           <p className="lede">
-            Ordenado por patrimonio neto cuando está disponible. Si una fuente solo publica activos o un total consolidado, el OED lo mantiene separado y no lo presenta como patrimonio neto sin sustento.
+            El orden usa patrimonio neto cuando está disponible; en su defecto usa el total de activos publicado. Por eso cada tarjeta indica exactamente qué magnitud está documentada y evita presentar activos como si fueran patrimonio neto.
           </p>
           <div className="initiative-list">
             {rows.map(({ senator, snapshot }, index) => (
@@ -68,8 +77,8 @@ export default function SenatePatrimonyPage() {
                 {snapshot ? (
                   <>
                     <div className="grid attendance-detail">
-                      <article className="card"><strong className="metric">{money(snapshot.reportedAssets)}</strong><span>Activos reportados</span></article>
-                      <article className="card"><strong className="metric">{money(snapshot.reportedLiabilities)}</strong><span>Pasivos reportados</span></article>
+                      <article className="card"><strong className="metric">{money(snapshot.reportedAssets)}</strong><span>Activos / total publicado</span></article>
+                      <article className="card"><strong className="metric">{money(snapshot.reportedLiabilities)}</strong><span>Pasivos identificados</span></article>
                       <article className="card"><strong className="metric">{money(snapshot.reportedNetWorth)}</strong><span>Patrimonio neto</span></article>
                     </div>
                     <p><strong>Declaración:</strong> {snapshot.declarationPeriod}</p>
@@ -77,7 +86,7 @@ export default function SenatePatrimonyPage() {
                     {snapshot.note ? <p>{snapshot.note}</p> : null}
                     <p className="senator-links">
                       <a className="button" href={snapshot.declarationUrl} target="_blank" rel="noreferrer">
-                        {snapshot.declarationLinkType === "direct_pdf" ? "Ver declaración jurada" : "Abrir portal oficial"}
+                        {snapshot.declarationLinkType === "direct_pdf" ? "Ver declaración jurada" : "Abrir fuente oficial"}
                       </a>
                       <a href={snapshot.sourceUrl} target="_blank" rel="noreferrer">Fuente de las cifras</a>
                       <Link href={`/poder-legislativo/senadores/${senator.id}`}>Expediente completo</Link>
@@ -97,9 +106,10 @@ export default function SenatePatrimonyPage() {
           <p className="eyebrow">Metodología</p>
           <h2>Cómo leer este ranking</h2>
           <div className="grid">
-            <article className="card"><h3>Activos ≠ patrimonio neto</h3><p>El patrimonio neto requiere descontar pasivos. El OED evita tratar un total de activos como patrimonio neto cuando la fuente no lo permite.</p></article>
-            <article className="card"><h3>Monedas separadas</h3><p>Bienes y cuentas en dólares no se suman automáticamente a pesos dominicanos sin una política explícita de conversión y fecha de tasa.</p></article>
-            <article className="card"><h3>Evolución ≠ irregularidad</h3><p>El aumento o disminución patrimonial por sí solo no demuestra enriquecimiento ilícito, corrupción ni otra conducta ilegal. El OED presenta documentos y variaciones para análisis público.</p></article>
+            <article className="card"><h3>Activos ≠ patrimonio neto</h3><p>El patrimonio neto requiere descontar pasivos. Cuando una fuente solo publica un total de activos, el OED lo identifica como tal y deja el neto pendiente.</p></article>
+            <article className="card"><h3>Monedas separadas</h3><p>Bienes, deudas o inversiones en dólares no se convierten automáticamente a pesos sin una tasa y fecha explícitas.</p></article>
+            <article className="card"><h3>Evolución ≠ irregularidad</h3><p>La variación patrimonial por sí sola no demuestra enriquecimiento ilícito, corrupción ni otra conducta ilegal. El OED muestra documentos y cálculos para análisis público.</p></article>
+            <article className="card"><h3>Siguiente capa</h3><p>Para reelectos y exfuncionarios se enlazarán declaraciones anteriores y se calculará la evolución entre fechas comparables, manteniendo activos, pasivos y monedas con la misma metodología.</p></article>
           </div>
         </div>
       </section>
