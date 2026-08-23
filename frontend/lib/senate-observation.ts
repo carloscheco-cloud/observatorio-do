@@ -1,10 +1,12 @@
 export type SenateCompensationItem = {
   label: string;
   amount?: number;
-  unit: "monthly" | "per_session" | "variable";
+  unit: "monthly" | "per_session" | "variable" | "per_two_years" | "entitlement";
   status: "verified" | "reported" | "requires_current_verification";
+  kind: "personal_income" | "institutional_support" | "social_fund" | "tax_benefit" | "social_security";
   description: string;
   sourceUrl: string;
+  legalBasis?: string;
 };
 
 export const senateObservationSources = {
@@ -12,61 +14,129 @@ export const senateObservationSources = {
   initiatives: "https://www.senadord.gob.do/secretaria-general-legislativa/iniciativas-legislativas/",
   approvedInitiatives: "https://www.senadord.gob.do/secretaria-general-legislativa/iniciativas-aprobadas/",
   openData: "https://transparencia.senadord.gob.do/datos-abiertos/",
+  transparency: "https://transparencia.senadord.gob.do/",
+  senateRules: "https://transparencia.senadord.gob.do/download/725/resoluciones/43294/reglamento-del-senado-rep-dom.pdf",
+  vehicleExemption:
+    "https://vucerd.gob.do/media/2307/exoneraci%C3%B3n-de-impuestos-de-importaci%C3%B3n-a-senadores-y-diputados-de-la-rep%C3%BAblica-dominicana-ley-57-96.pdf",
 };
 
-// Compensation is deliberately split by provenance/status. A senator's fixed
-// salary is corroborated by an official 2024 sworn asset declaration. Other
-// recurring benefits have been publicly reported but should not be presented
-// as current 2026 entitlements until the OED has attached the corresponding
-// current Senate transparency record.
+// IMPORTANT: benefits are not uniform across all senators. The sworn asset
+// declarations published by the Senate/Cámara de Cuentas show different
+// amounts for fuel, representation, diets and lodging. The OED therefore
+// exposes these items as variable until each senator's current declaration or
+// Senate payment record is attached to the individual profile.
 export const senateCompensation: SenateCompensationItem[] = [
   {
     label: "Salario fijo",
     amount: 320000,
     unit: "monthly",
     status: "verified",
-    description: "Remuneración mensual fija del cargo de senador/a.",
+    kind: "personal_income",
+    description:
+      "Remuneración mensual bruta del cargo. Declaraciones juradas de senadores del período 2024–2028 registran RD$320,000 mensuales.",
     sourceUrl:
-      "https://transparencia.senadord.gob.do/download/187/declaraciones-juradas/43668/manuel-maria-rodriguez-ortega.pdf",
+      "https://transparencia.senadord.gob.do/download/187/declaraciones-juradas/41290/alexis-victoria-yeb.pdf",
   },
   {
     label: "Gastos de representación",
-    amount: 50000,
-    unit: "monthly",
-    status: "requires_current_verification",
-    description:
-      "Compensación de representación reportada públicamente. El OED la muestra separada del salario y pendiente de corroboración contra el registro oficial vigente.",
-    sourceUrl:
-      "https://www.diariolibre.com/actualidad/politica/senado-de-la-republica-corre-con-los-gastos-de-los-empleados-de-las-oficinas-senatoriales-NF22277659",
-  },
-  {
-    label: "Viáticos",
-    amount: 25000,
-    unit: "monthly",
-    status: "requires_current_verification",
-    description:
-      "Monto reportado para viáticos; requiere actualización documental individual/institucional para 2026.",
-    sourceUrl:
-      "https://www.diariolibre.com/actualidad/politica/senado-de-la-republica-corre-con-los-gastos-de-los-empleados-de-las-oficinas-senatoriales-NF22277659",
-  },
-  {
-    label: "Dieta por sesión",
-    amount: 3500,
-    unit: "per_session",
-    status: "reported",
-    description:
-      "Remuneración adicional asociada a la asistencia a sesiones, reportada históricamente. La asistencia oficial se documenta por sesión.",
-    sourceUrl:
-      "https://www.diariolibre.com/actualidad/politica/senado-de-la-republica-corre-con-los-gastos-de-los-empleados-de-las-oficinas-senatoriales-NF22277659",
-  },
-  {
-    label: "Fondo de gestión social / oficina senatorial",
     unit: "variable",
-    status: "requires_current_verification",
+    status: "verified",
+    kind: "personal_income",
     description:
-      "No es salario personal. Históricamente ha existido una asignación variable asociada a gestión social/oficina senatorial. Debe mostrarse separada de la remuneración personal y con el monto vigente por provincia cuando se verifique.",
+      "Ingreso/compensación mensual que aparece en declaraciones juradas recientes, pero su monto no es idéntico para todos. Se han documentado valores de RD$24,000 y RD$48,000 mensuales. El OED lo fijará por senador cuando conecte su declaración individual.",
     sourceUrl:
-      "https://listindiario.com/la-republica/2020/11/12/643662/el-barrilito-detalles-ocultos-de-un-fondo-para-asistencia-social/amp.html",
+      "https://transparencia.senadord.gob.do/download/187/declaraciones-juradas/43672/milciades-aneudy-ortiz-sajiun.pdf",
+  },
+  {
+    label: "Combustible",
+    unit: "variable",
+    status: "verified",
+    kind: "personal_income",
+    description:
+      "Asignación mensual documentada en declaraciones juradas del período vigente. Los montos observados no son uniformes: existen registros de RD$16,000 y RD$32,000 mensuales, por lo que se mostrará el valor individual de cada senador.",
+    sourceUrl:
+      "https://transparencia.senadord.gob.do/download/187/declaraciones-juradas/41290/alexis-victoria-yeb.pdf",
+  },
+  {
+    label: "Dietas",
+    unit: "variable",
+    status: "verified",
+    kind: "personal_income",
+    description:
+      "Compensación adicional registrada en declaraciones juradas. Un registro oficial reciente reporta RD$24,600 mensuales; el monto individual debe verificarse antes de atribuirlo a cada senador.",
+    sourceUrl:
+      "https://transparencia.senadord.gob.do/download/187/declaraciones-juradas/41290/alexis-victoria-yeb.pdf",
+  },
+  {
+    label: "Hospedaje",
+    unit: "variable",
+    status: "verified",
+    kind: "personal_income",
+    description:
+      "Beneficio/ingreso que aparece en algunas declaraciones juradas. Pedro Catrain, por ejemplo, declara RD$48,000 mensuales. No debe asumirse que todos los senadores lo reciben.",
+    sourceUrl:
+      "https://www.transparencia.senadord.gob.do/wp-content/uploads/wpfd/preview_files/PEDRO-MANUEL-CATRAIN-BONILLA%28443ecbd48bc81e881b05d044e4376b6f%29.pdf",
+  },
+  {
+    label: "Fondo de asistencia social (\"barrilito\")",
+    unit: "variable",
+    status: "verified",
+    kind: "social_fund",
+    description:
+      "Fondo institucional para gestión/asistencia social en la provincia; no es salario personal. Sigue activo en 2026 y su asignación varía por demarcación. El OED mostrará el monto mensual de cada provincia y si el senador lo recibe o ha renunciado a él.",
+    sourceUrl:
+      "https://www.diariolibre.com/politica/congreso-nacional/2026/03/26/el-barrilito-no-desaparecera-pese-a-crisis-internacional/3481793",
+  },
+  {
+    label: "Exoneración de vehículo",
+    unit: "per_two_years",
+    status: "verified",
+    kind: "tax_benefit",
+    description:
+      "La Ley 57-96 permite a cada legislador importar libre de impuestos un vehículo de motor cada dos años. Es un beneficio tributario, no un pago mensual en efectivo.",
+    sourceUrl: senateObservationSources.vehicleExemption,
+    legalBasis: "Ley 57-96 sobre exoneraciones a miembros del Poder Legislativo",
+  },
+  {
+    label: "Seguridad social: salud y pensiones",
+    unit: "entitlement",
+    status: "verified",
+    kind: "social_security",
+    description:
+      "El Reglamento del Senado reconoce a los senadores el derecho a seguridad social en salud y pensiones conforme al Sistema Dominicano de Seguridad Social y a disposiciones internas aplicables.",
+    sourceUrl: senateObservationSources.senateRules,
+    legalBasis: "Reglamento del Senado, artículo 51",
+  },
+  {
+    label: "Personal y apoyo logístico",
+    unit: "entitlement",
+    status: "verified",
+    kind: "institutional_support",
+    description:
+      "El Reglamento del Senado reconoce el derecho a disponer de personal y apoyo logístico tanto en la sede del Congreso como en oficinas provinciales. Esto es soporte institucional, no remuneración personal.",
+    sourceUrl: senateObservationSources.senateRules,
+    legalBasis: "Reglamento del Senado, artículo 60, numeral 16",
+  },
+];
+
+export const senateBenefitResearchNotes = [
+  {
+    claim: "Pago general de colegiatura de hijos de senadores",
+    status: "not_verified" as const,
+    note:
+      "La revisión legal y documental realizada hasta ahora no ha localizado una norma general que garantice al senador el pago de la colegiatura de sus hijos. No se publicará como beneficio sin una fuente normativa o financiera específica.",
+  },
+  {
+    claim: "Seguro médico internacional/VIP",
+    status: "historically_reported" as const,
+    note:
+      "Ha sido reportado en prensa en períodos anteriores, pero el Reglamento vigente solo garantiza seguridad social en salud y pensiones. El OED requiere póliza, contrato o ejecución presupuestaria vigente antes de marcarlo como beneficio actual.",
+  },
+  {
+    claim: "Chofer, seguridad, celulares, oficina y otros apoyos",
+    status: "partially_verified" as const,
+    note:
+      "El Reglamento sí reconoce personal y apoyo logístico. Los componentes concretos y costos por senador deben documentarse con nómina, contratos y ejecución presupuestaria antes de cuantificarse individualmente.",
   },
 ];
 
@@ -80,10 +150,6 @@ export type SenatorInitiative = {
   sourceUrl: string;
 };
 
-// Per-senator initiative and attendance observations will be progressively
-// populated from the official Senate systems. Keeping the schema here means
-// every public profile can expose the sections immediately without inventing
-// counts while documentary extraction is still incomplete.
 export const senatorInitiatives: Record<string, SenatorInitiative[]> = {};
 
 export type SenatorAttendance = {
