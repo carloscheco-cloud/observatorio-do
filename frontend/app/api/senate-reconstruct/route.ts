@@ -5,8 +5,9 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 // Temporary execution route on PR #29. It is not intended to remain in production.
+// Import the library implementation directly: pdf-parse's package entry runs its sample PDF when bundled by Next.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse: (buffer: Buffer) => Promise<{ text: string; numpages: number }> = require("pdf-parse");
+const pdfParse: (buffer: Buffer) => Promise<{ text: string; numpages: number }> = require("pdf-parse/lib/pdf-parse.js");
 
 const ATTENDANCE_INDEX = "https://www.senadord.gob.do/elaboracion-de-actas/asistencia-a-sesiones/";
 const ACTAS_INDEX = "https://www.senadord.gob.do/elaboracion-de-actas/actas-de-sesiones/";
