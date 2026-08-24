@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import tempfile
 from dataclasses import asdict
 from pathlib import Path
 
@@ -43,21 +45,40 @@ def official_sources():
     ]
 
 
+def ocr_first_page(content: bytes) -> str:
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        pdf = root / "source.pdf"
+        image = root / "page"
+        pdf.write_bytes(content)
+        try:
+            subprocess.run(
+                ["pdftoppm", "-f", "1", "-singlefile", "-r", "220", "-png", str(pdf), str(image)],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=45,
+            )
+            completed = subprocess.run(
+                ["tesseract", str(root / "page.png"), "stdout", "--psm", "6", "-l", "eng"],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=45,
+            )
+            return completed.stdout
+        except Exception as exc:
+            return f"OCR_ERROR {type(exc).__name__}: {exc}"
+
+
 def print_source_diagnostics(sessions) -> None:
     attendance = next((source for source in sessions if source.source_kind == "attendance"), None)
     if attendance:
-        text = sr.pdf_text(sr.fetch(attendance.url))
+        content = sr.fetch(attendance.url)
+        text = sr.pdf_text(content)
         print("ATTENDANCE_FORMAT_SESSION", attendance.session)
-        print("ATTENDANCE_FORMAT_TEXT", " ".join(text.split())[:12000])
-
-    acta = next((source for source in sessions if source.source_kind == "acta"), None)
-    if acta:
-        normalized = sr.normalize(sr.pdf_text(sr.fetch(acta.url)))
-        for needle in ("cristobal", "jonhson", "secundino"):
-            pos = normalized.find(needle)
-            start = max(0, pos - 180) if pos >= 0 else 0
-            end = min(len(normalized), pos + 420) if pos >= 0 else 0
-            print(f"ACTA_NAME_CONTEXT_{needle.upper()}", normalized[start:end] if pos >= 0 else "NOT_FOUND")
+        print("ATTENDANCE_PYPDF_CHARS", len(text.strip()))
+        print("ATTENDANCE_OCR_TEXT", " ".join(ocr_first_page(content).split())[:14000])
 
 
 def main() -> None:
