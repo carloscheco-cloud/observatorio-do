@@ -122,3 +122,128 @@ for (const id of ["alexis-victoria-yeb", "ramon-rogelio-genao-duran", "felix-ram
     sourceUrl: "https://www.senadord.gob.do/comision-de-salud-publica-continua-analisis-del-proyecto-para-la-creacion-de-la-historia-clinica-electronica-y-su-registro/",
   });
 }
+
+const additionalVerifiedInitiatives: Record<string, SenatorInitiative[]> = {
+  "milciades-aneudy-ortiz-sajiun": [
+    {
+      number: "01019-2025-SLO-SE",
+      title: "Proyecto de ley que crea el Monumento Natural Lomas Redonda-El Comején, en la provincia San José de Ocoa",
+      role: "Proponente",
+      status: "committee",
+      introducedAt: "21/08/2025",
+      sourceUrl: "https://www.senadord.gob.do/Descargas/1380/orden-del-dia-pleno/55954/agenda-ordinaria-00108-plo-23-04-2026-sil",
+    },
+    {
+      number: "01123-2025-SLO-SE",
+      title: "Resolución que solicita instalar una oficina de Pro Consumidor en San José de Ocoa",
+      role: "Proponente",
+      status: "committee",
+      introducedAt: "23/09/2025",
+      sourceUrl: "https://www.senadord.gob.do/Descargas/1380/orden-del-dia-pleno/55954/agenda-ordinaria-00108-plo-23-04-2026-sil",
+    },
+    {
+      number: "0122-2025-SLO-SE",
+      title: "Proyecto de ley que modifica el artículo 3 de la Ley 75-25, que modifica el artículo 21 de la Ley 176-07 del Distrito Nacional y los Municipios",
+      role: "Proponente",
+      status: "approved_senate",
+      sourceUrl: "https://www.senadord.gob.do/Descargas/1389/iniciativas-aprobadas/55125/enero-2026",
+    },
+  ],
+  "maria-mercedes-ortiz-dilone": [
+    {
+      number: "01189-2025-SLO-SE",
+      title: "Resolución que solicita instalar un banco de sangre en la provincia Hermanas Mirabal",
+      role: "Proponente",
+      status: "committee",
+      introducedAt: "29/10/2025",
+      sourceUrl: "https://www.senadord.gob.do/Descargas/1380/orden-del-dia-pleno/56149/agenda-ordinaria-00111-plo-13-05-2026-sil",
+    },
+  ],
+  "cristobal-venerado-castillo-liriano": [
+    {
+      number: "01208-2025-SLO-SE",
+      title: "Resolución que solicita construir un multiuso para los barrios de la parte norte del municipio Hato Mayor",
+      role: "Proponente",
+      status: "committee",
+      introducedAt: "04/11/2025",
+      sourceUrl: "https://www.senadord.gob.do/Descargas/1380/orden-del-dia-pleno/56149/agenda-ordinaria-00111-plo-13-05-2026-sil",
+    },
+  ],
+  "ricardo-de-los-santos-polanco": [
+    {
+      number: "00411-2025-PLO-SE",
+      title: "Proyecto de Ley Orgánica que crea la Dirección Nacional de Inteligencia (DNI) y regula el Sistema Nacional de Inteligencia",
+      role: "Proponente",
+      status: "approved_senate",
+      sourceUrl: "https://www.senadord.gob.do/Descargas/1389/iniciativas-aprobadas/55125/enero-2026",
+    },
+  ],
+  "julito-fulcar-encarnacion": [
+    {
+      number: "00629-2025-PLO-SE",
+      title: "Ley que designa con el nombre de Rafael Ortiz Celado el polideportivo de la ciudad de Baní, provincia Peravia",
+      role: "Proponente",
+      status: "approved_senate",
+      sourceUrl: "https://www.senadord.gob.do/Descargas/1389/iniciativas-aprobadas/55125/enero-2026",
+    },
+    {
+      number: "00628-2025-PLO-SE",
+      title: "Ley que declara el 25 de octubre de cada año como Día del Cooperativismo en la República Dominicana",
+      role: "Proponente",
+      status: "approved_senate",
+      sourceUrl: "https://www.senadord.gob.do/Descargas/1389/iniciativas-aprobadas/55125/enero-2026",
+    },
+  ],
+  "gustavo-lara-salazar": [
+    {
+      number: "01016-2025-SLO-SE",
+      title: "Ley que crea las pasantías en el sector público para la formación laboral práctica de estudiantes técnicos y universitarios",
+      role: "Proponente",
+      status: "approved_senate",
+      sourceUrl: "https://www.senadord.gob.do/Descargas/1389/iniciativas-aprobadas/55125/enero-2026",
+    },
+  ],
+  "odalis-rafael-rodriguez-rodriguez": [
+    {
+      number: "01056-2025-SLO-SE",
+      title: "Ley que crea la Corporación del Acueducto y Alcantarillado del Noroeste",
+      role: "Proponente",
+      status: "approved_senate",
+      sourceUrl: "https://www.senadord.gob.do/Descargas/1389/iniciativas-aprobadas/55125/enero-2026",
+    },
+  ],
+  "eduard-alexis-espiritusanto-castillo": [
+    {
+      number: "00740-2025-PLO-SE",
+      title: "Resolución que reconoce al baloncestista Karl-Anthony Towns por su trayectoria en la NBA y aportes al baloncesto dominicano",
+      role: "Coproponente",
+      status: "approved_senate",
+      introducedAt: "13/05/2025",
+      sourceUrl: "https://www.senadord.gob.do/Descargas/1389/iniciativas-aprobadas/55125/enero-2026",
+    },
+  ],
+  "omar-leonel-fernandez-dominguez": [
+    {
+      number: "00740-2025-PLO-SE",
+      title: "Resolución que reconoce al baloncestista Karl-Anthony Towns por su trayectoria en la NBA y aportes al baloncesto dominicano",
+      role: "Coproponente",
+      status: "approved_senate",
+      introducedAt: "13/05/2025",
+      sourceUrl: "https://www.senadord.gob.do/Descargas/1389/iniciativas-aprobadas/55125/enero-2026",
+    },
+  ],
+  "pedro-antonio-tineo-nunez": [
+    {
+      number: "00572-2025-PLO-SE",
+      title: "Resolución que reconoce a Ramón Alburquerque Ramírez por su trayectoria política, legislativa, académica y de servicio",
+      role: "Proponente",
+      status: "approved_senate",
+      introducedAt: "11/03/2025",
+      sourceUrl: "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/55012/acta-num-0088-de-fecha-12-de-noviembre-2025",
+    },
+  ],
+};
+
+for (const [id, initiatives] of Object.entries(additionalVerifiedInitiatives)) {
+  (verifiedSenatorInitiatives[id] ??= []).push(...initiatives);
+}
