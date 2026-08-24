@@ -55,6 +55,7 @@ export default function SenateAttendancePage() {
 
   const exactCommon = ranking.filter((item) => item.comparable).length;
   const withAnyPlenary = ranking.filter((item) => item.latest).length;
+  const reviewedPlenary = ranking.filter((item) => item.latest || item.evidence.length).length;
   const withCommission = ranking.filter((item) => item.commissions.rows.length).length;
 
   return (
@@ -69,7 +70,7 @@ export default function SenateAttendancePage() {
           </p>
           <p>
             La fuente consolidada del corte común publica conteos individuales completos para 10 senadores. Para los demás,
-            el OED conserva el último dato verificable sin convertir pases de lista o evidencias parciales en porcentajes falsos.
+            el OED muestra el último porcentaje cuantificado disponible cuando existe, indicando expresamente su período; las evidencias parciales no se convierten en porcentajes.
           </p>
           <p><Link className="button secondary" href="/poder-legislativo">← Volver al Poder Legislativo</Link></p>
         </div>
@@ -79,7 +80,8 @@ export default function SenateAttendancePage() {
         <div className="shell">
           <div className="grid">
             <article className="card"><span className="eyebrow">Corte comparable</span><strong className="metric">{exactCommon}/32</strong><p>Con porcentaje exacto para las mismas 26 sesiones.</p></article>
-            <article className="card"><span className="eyebrow">Cobertura plenaria</span><strong className="metric">{withAnyPlenary}/32</strong><p>Con al menos un período de asistencia cuantificado.</p></article>
+            <article className="card"><span className="eyebrow">Asistencia cuantificada</span><strong className="metric">{withAnyPlenary}/32</strong><p>Con al menos un período de asistencia expresado en porcentaje.</p></article>
+            <article className="card"><span className="eyebrow">Asistencia revisada</span><strong className="metric">{reviewedPlenary}/32</strong><p>Con porcentaje o evidencia parcial individual documentada.</p></article>
             <article className="card"><span className="eyebrow">Comisiones</span><strong className="metric">{withCommission}/32</strong><p>Con registros individualizados de reuniones ya extraídos.</p></article>
           </div>
         </div>
@@ -87,9 +89,11 @@ export default function SenateAttendancePage() {
 
       <section className="section profile-muted-section">
         <div className="shell">
-          <p className="eyebrow">Ranking comparable</p>
+          <p className="eyebrow">Corte común + último dato disponible</p>
           <h2>{COMMON_PERIOD} · {COMMON_SESSIONS} sesiones</h2>
-          <p className="lede">Los porcentajes de esta tabla solo se comparan cuando corresponden exactamente al mismo período.</p>
+          <p className="lede">
+            Los primeros registros con etiqueta <strong>Exacto · corte común</strong> sí son comparables entre sí. Cuando un senador no tiene el mismo corte, mostramos su último porcentaje cuantificado con el período correspondiente; esos registros sirven para conocer su expediente, pero no para ordenarlo contra el corte común.
+          </p>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
@@ -100,26 +104,36 @@ export default function SenateAttendancePage() {
                   <th style={{ textAlign: "right", padding: "12px" }}>Presencia</th>
                   <th style={{ textAlign: "right", padding: "12px" }}>Excusas</th>
                   <th style={{ textAlign: "right", padding: "12px" }}>Sin excusa</th>
-                  <th style={{ textAlign: "left", padding: "12px" }}>Cobertura</th>
+                  <th style={{ textAlign: "left", padding: "12px" }}>Período / cobertura</th>
                 </tr>
               </thead>
               <tbody>
-                {ranking.map((item, index) => (
-                  <tr key={item.senator.id} style={{ borderTop: "1px solid var(--border, #ddd)" }}>
-                    <td style={{ padding: "12px" }}>{index + 1}</td>
-                    <td style={{ padding: "12px" }}><Link href={`/poder-legislativo/senadores/${item.senator.id}`}><strong>{item.senator.fullName}</strong></Link></td>
-                    <td style={{ padding: "12px" }}>{item.senator.province}</td>
-                    <td style={{ textAlign: "right", padding: "12px" }}>{item.comparable ? `${item.comparable.presenceRate}%` : "—"}</td>
-                    <td style={{ textAlign: "right", padding: "12px" }}>{item.comparable ? `${item.comparable.excusedRate}%` : "—"}</td>
-                    <td style={{ textAlign: "right", padding: "12px" }}>{item.comparable ? `${item.comparable.absenceRate}%` : "—"}</td>
-                    <td style={{ padding: "12px" }}>
-                      {item.comparable ? "Exacto · corte común" : item.latest ? `Último dato: ${item.latest.period}` : item.evidence.length ? "Evidencia parcial" : "Pendiente de consolidación"}
-                    </td>
-                  </tr>
-                ))}
+                {ranking.map((item, index) => {
+                  const displayed = item.comparable ?? item.latest;
+                  return (
+                    <tr key={item.senator.id} style={{ borderTop: "1px solid var(--border, #ddd)" }}>
+                      <td style={{ padding: "12px" }}>{index + 1}</td>
+                      <td style={{ padding: "12px" }}><Link href={`/poder-legislativo/senadores/${item.senator.id}`}><strong>{item.senator.fullName}</strong></Link></td>
+                      <td style={{ padding: "12px" }}>{item.senator.province}</td>
+                      <td style={{ textAlign: "right", padding: "12px" }}>{displayed ? `${displayed.presenceRate}%` : "—"}</td>
+                      <td style={{ textAlign: "right", padding: "12px" }}>{displayed ? `${displayed.excusedRate}%` : "—"}</td>
+                      <td style={{ textAlign: "right", padding: "12px" }}>{displayed ? `${displayed.absenceRate}%` : "—"}</td>
+                      <td style={{ padding: "12px" }}>
+                        {item.comparable
+                          ? "Exacto · corte común"
+                          : item.latest
+                            ? `Otro corte · ${item.latest.period}`
+                            : item.evidence.length
+                              ? `Evidencia parcial · ${item.evidence[0].metric}: ${item.evidence[0].value}`
+                              : "Revisión sin porcentaje comparable"}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
+          <p><small>Nota: una cifra de otro período no se utiliza para establecer el ranking del corte común de 2026. Su función es evitar que un expediente ya cuantificado aparezca falsamente como vacío.</small></p>
         </div>
       </section>
 
