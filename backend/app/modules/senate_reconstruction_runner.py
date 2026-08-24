@@ -114,4 +114,5 @@ base.reconstruct_attendance = reconstruct_attendance
 
 
 if __name__ == "__main__":
+    print("OED Senate reconstruction runner: structured acta mode")
     base.write_outputs(Path("data/oed/senate"))
