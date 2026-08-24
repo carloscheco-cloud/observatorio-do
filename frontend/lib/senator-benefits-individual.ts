@@ -29,6 +29,8 @@ export const individualSenateBenefits: Record<string, IndividualSenateBenefit[]>
   ],
   "gustavo-lara-salazar": [
     { label: "Combustible", monthlyAmount: 16000, status: "verified", kind: "personal_income", sourceUrl: "https://transparencia.senadord.gob.do/download/187/declaraciones-juradas/43663/gustavo-lara-salazar.pdf" },
+    { label: "Gastos de representación", monthlyAmount: 48000, status: "verified", kind: "personal_income", sourceUrl: "https://transparencia.senadord.gob.do/download/187/declaraciones-juradas/43663/gustavo-lara-salazar.pdf" },
+    { label: "Hospedaje", monthlyAmount: 24000, status: "verified", kind: "personal_income", sourceUrl: "https://transparencia.senadord.gob.do/download/187/declaraciones-juradas/43663/gustavo-lara-salazar.pdf" },
     { label: "Fondo de asistencia social (barrilito)", monthlyAmount: 1059000, status: "reported", kind: "social_fund", sourceUrl: "https://www.diariolibre.com/politica/congreso-nacional/2025/08/16/como-concluyo-la-pasada-legislatura-senatorial/3214742", note: "Fondo provincial/institucional; no es salario personal." },
   ],
   "moises-ayala-perez": [
