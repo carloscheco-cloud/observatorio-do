@@ -7,6 +7,10 @@ import app.modules.senate_reconstruction as sr
 
 
 def main() -> None:
+    # Session 120 OCR deforms Jonhson's given name, while preserving the unique
+    # surname signature "Encarnación Díaz" on the same attendance row.
+    sr.ALIASES.setdefault("jonhson-encarnacion-diaz", []).append("Encarnación Díaz")
+
     output_dir = Path("data/oed/senate")
     sr.write_attendance_outputs(output_dir)
 
