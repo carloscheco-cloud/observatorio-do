@@ -14,7 +14,9 @@ def main() -> None:
     output_dir = Path("data/oed/senate")
     sr.write_attendance_outputs(output_dir)
 
-    records = json.loads((output_dir / "senate-attendance-records-2026.json").read_text(encoding="utf-8"))
+    records = json.loads(
+        (output_dir / "senate-attendance-records-2026.json").read_text(encoding="utf-8")
+    )
     unknown = [row for row in records if row["status"] == "unknown"]
     print("PRIMARY_SOURCE_SESSIONS", len(sr.TARGET_SESSIONS), list(sr.TARGET_SESSIONS))
     print("PRIMARY_SOURCE_RECORDS", len(records))

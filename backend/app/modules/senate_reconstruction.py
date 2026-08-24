@@ -34,31 +34,106 @@ TARGET_SESSIONS = tuple(range(TARGET_SESSION_MIN, TARGET_SESSION_MAX + 1))
 PRESS_REPORTED_SESSION_TOTAL = 26
 
 OFFICIAL_SESSION_SOURCES: dict[int, tuple[str, str]] = {
-    101: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/55548/acta-num-0101-de-fecha-27-de-febrero-2026"),
-    102: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/55656/acta-num-0102-de-fecha-04-de-marzo-2026"),
-    103: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/55818/acta-num-0103-de-fecha-11-de-marzo-2026"),
-    104: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/55991/acta-num-0104-de-fecha-18-de-marzo-2026"),
-    105: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/56400/acta-num-0105-de-fecha-24-de-marzo-2026"),
-    106: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/56401/acta-num-0106-de-fecha-15-de-abril-2026"),
-    107: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/60668/acta-num-0107-de-fecha-21-de-abril-2026"),
-    108: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/60669/acta-num-0108-de-fecha-23-de-abril-2026"),
-    109: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/60801/acta-num-0109-de-fecha-29-de-abril-2026"),
-    110: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61039/acta-num-0110-de-fecha-06-de-mayo-2026"),
-    111: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61239/acta-num-0111-de-fecha-13-de-mayo-2026"),
-    112: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61240/acta-num-0112-de-fecha-18-de-mayo-2026"),
-    113: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61414/acta-num-0113-de-fecha-27-de-mayo-2026"),
-    114: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61415/acta-num-0114-de-fecha-02-de-junio-2026"),
-    115: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61803/acta-num-0115-de-fecha-10-de-junio-2026"),
-    116: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61804/acta-num-0116-de-fecha-12-de-junio-2026"),
-    117: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61805/acta-num-0117-de-fecha-17-de-junio-2026"),
-    118: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61806/acta-num-0118-de-fecha-17-de-junio-2026-extra"),
-    119: ("attendance", "https://www.senadord.gob.do/Descargas/1388/asistencia-a-sesiones/61110/asistencia-de-senadores-al-pleno-sesion-no-119-de-fecha-24-de-junio-2026"),
-    120: ("attendance", "https://www.senadord.gob.do/Descargas/1388/asistencia-a-sesiones/61111/asistencia-de-senadores-al-pleno-sesion-no-120-de-fecha-24-de-junio-2026"),
-    121: ("attendance", "https://www.senadord.gob.do/Descargas/1388/asistencia-a-sesiones/61499/asistencia-de-senadores-al-pleno-sesion-no-121-de-fecha-30-de-junio-2026"),
-    122: ("attendance", "https://www.senadord.gob.do/Descargas/1388/asistencia-a-sesiones/61500/asistencia-de-senadores-al-pleno-sesion-no-122-de-fecha-30-de-junio-2026"),
-    123: ("attendance", "https://www.senadord.gob.do/Descargas/1388/asistencia-a-sesiones/61594/asistencia-de-senadores-al-pleno-sesion-no-123-de-fecha-8-de-julio-2026-2"),
-    124: ("attendance", "https://www.senadord.gob.do/Descargas/1388/asistencia-a-sesiones/61595/asistencia-de-senadores-al-pleno-sesion-no-124-de-fecha-10-de-julio-2026"),
-    125: ("attendance", "https://www.senadord.gob.do/Descargas/1388/asistencia-a-sesiones/61701/asistencia-de-senadores-al-pleno-sesion-no-125-de-fecha-20-de-julio-2026"),
+    101: (
+        "acta",
+        "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/55548/acta-num-0101-de-fecha-27-de-febrero-2026",
+    ),
+    102: (
+        "acta",
+        "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/55656/acta-num-0102-de-fecha-04-de-marzo-2026",
+    ),
+    103: (
+        "acta",
+        "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/55818/acta-num-0103-de-fecha-11-de-marzo-2026",
+    ),
+    104: (
+        "acta",
+        "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/55991/acta-num-0104-de-fecha-18-de-marzo-2026",
+    ),
+    105: (
+        "acta",
+        "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/56400/acta-num-0105-de-fecha-24-de-marzo-2026",
+    ),
+    106: (
+        "acta",
+        "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/56401/acta-num-0106-de-fecha-15-de-abril-2026",
+    ),
+    107: (
+        "acta",
+        "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/60668/acta-num-0107-de-fecha-21-de-abril-2026",
+    ),
+    108: (
+        "acta",
+        "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/60669/acta-num-0108-de-fecha-23-de-abril-2026",
+    ),
+    109: (
+        "acta",
+        "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/60801/acta-num-0109-de-fecha-29-de-abril-2026",
+    ),
+    110: (
+        "acta",
+        "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61039/acta-num-0110-de-fecha-06-de-mayo-2026",
+    ),
+    111: (
+        "acta",
+        "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61239/acta-num-0111-de-fecha-13-de-mayo-2026",
+    ),
+    112: (
+        "acta",
+        "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61240/acta-num-0112-de-fecha-18-de-mayo-2026",
+    ),
+    113: (
+        "acta",
+        "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61414/acta-num-0113-de-fecha-27-de-mayo-2026",
+    ),
+    114: (
+        "acta",
+        "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61415/acta-num-0114-de-fecha-02-de-junio-2026",
+    ),
+    115: (
+        "acta",
+        "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61803/acta-num-0115-de-fecha-10-de-junio-2026",
+    ),
+    116: (
+        "acta",
+        "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61804/acta-num-0116-de-fecha-12-de-junio-2026",
+    ),
+    117: (
+        "acta",
+        "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61805/acta-num-0117-de-fecha-17-de-junio-2026",
+    ),
+    118: (
+        "acta",
+        "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61806/acta-num-0118-de-fecha-17-de-junio-2026-extra",
+    ),
+    119: (
+        "attendance",
+        "https://www.senadord.gob.do/Descargas/1388/asistencia-a-sesiones/61110/asistencia-de-senadores-al-pleno-sesion-no-119-de-fecha-24-de-junio-2026",
+    ),
+    120: (
+        "attendance",
+        "https://www.senadord.gob.do/Descargas/1388/asistencia-a-sesiones/61111/asistencia-de-senadores-al-pleno-sesion-no-120-de-fecha-24-de-junio-2026",
+    ),
+    121: (
+        "attendance",
+        "https://www.senadord.gob.do/Descargas/1388/asistencia-a-sesiones/61499/asistencia-de-senadores-al-pleno-sesion-no-121-de-fecha-30-de-junio-2026",
+    ),
+    122: (
+        "attendance",
+        "https://www.senadord.gob.do/Descargas/1388/asistencia-a-sesiones/61500/asistencia-de-senadores-al-pleno-sesion-no-122-de-fecha-30-de-junio-2026",
+    ),
+    123: (
+        "attendance",
+        "https://www.senadord.gob.do/Descargas/1388/asistencia-a-sesiones/61594/asistencia-de-senadores-al-pleno-sesion-no-123-de-fecha-8-de-julio-2026-2",
+    ),
+    124: (
+        "attendance",
+        "https://www.senadord.gob.do/Descargas/1388/asistencia-a-sesiones/61595/asistencia-de-senadores-al-pleno-sesion-no-124-de-fecha-10-de-julio-2026",
+    ),
+    125: (
+        "attendance",
+        "https://www.senadord.gob.do/Descargas/1388/asistencia-a-sesiones/61701/asistencia-de-senadores-al-pleno-sesion-no-125-de-fecha-20-de-julio-2026",
+    ),
 }
 
 SENATORS = {
@@ -363,9 +438,9 @@ def classify_pass(text: str, senator_id: str, *, final: bool) -> str:
     final_marker = normalize("Pase de lista final")
     normalized = normalize(text)
     if final and final_marker in normalized:
-        relevant = normalized[normalized.rfind(final_marker):]
+        relevant = normalized[normalized.rfind(final_marker) :]
     elif not final and final_marker in normalized:
-        relevant = normalized[:normalized.find(final_marker)]
+        relevant = normalized[: normalized.find(final_marker)]
     else:
         relevant = normalized
 
@@ -535,7 +610,8 @@ def validate_common_cut(summary: dict[str, dict[str, int | float]]) -> list[dict
                 "actual_present": row["present"],
                 "expected_excused": expected_excused,
                 "actual_excused": row["excused"],
-                "matches": row["present"] == expected_present and row["excused"] == expected_excused,
+                "matches": row["present"] == expected_present
+                and row["excused"] == expected_excused,
                 "benchmark_is_secondary": True,
             }
         )
@@ -547,7 +623,10 @@ def legislative_document_links(index_url: str, max_pages: int = 20) -> list[dict
     seen: set[str] = set()
     for url, text in paged_links(index_url, max_pages=max_pages):
         low = normalize(text)
-        if not any(token in low for token in ("iniciativa", "aprobada", "perim", "sil", "agenda", "proyecto")):
+        if not any(
+            token in low
+            for token in ("iniciativa", "aprobada", "perim", "sil", "agenda", "proyecto")
+        ):
             continue
         if url in seen:
             continue
@@ -609,16 +688,22 @@ def write_attendance_outputs(output_dir: Path) -> None:
         "publication_rule": "Primary Senate documents control; no unverified session is synthesized.",
     }
     (output_dir / "senate-attendance-sessions-2026.json").write_text(
-        json.dumps([asdict(item) for item in sessions], ensure_ascii=False, indent=2), encoding="utf-8"
+        json.dumps([asdict(item) for item in sessions], ensure_ascii=False, indent=2),
+        encoding="utf-8",
     )
     (output_dir / "senate-attendance-records-2026.json").write_text(
-        json.dumps([asdict(item) for item in records], ensure_ascii=False, indent=2), encoding="utf-8"
+        json.dumps([asdict(item) for item in records], ensure_ascii=False, indent=2),
+        encoding="utf-8",
     )
     (output_dir / "senate-attendance-summary-2026.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     (output_dir / "senate-attendance-validation-2026.json").write_text(
-        json.dumps({"press_benchmark": validation, "session_count_discrepancy": discrepancy}, ensure_ascii=False, indent=2),
+        json.dumps(
+            {"press_benchmark": validation, "session_count_discrepancy": discrepancy},
+            ensure_ascii=False,
+            indent=2,
+        ),
         encoding="utf-8",
     )
 
@@ -627,7 +712,8 @@ def write_outputs(output_dir: Path) -> None:
     write_attendance_outputs(output_dir)
     sil_inventory = extract_sil_inventory()
     (output_dir / "senate-sil-initiatives-2024-2028.json").write_text(
-        json.dumps([asdict(item) for item in sil_inventory], ensure_ascii=False, indent=2), encoding="utf-8"
+        json.dumps([asdict(item) for item in sil_inventory], ensure_ascii=False, indent=2),
+        encoding="utf-8",
     )
     (output_dir / "senate-legislative-source-index.json").write_text(
         json.dumps(discover_legislative_sources(), ensure_ascii=False, indent=2), encoding="utf-8"
