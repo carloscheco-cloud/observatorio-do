@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { senators } from "@/lib/legislators";
 import { verifiedSenatorAttendance } from "@/lib/senator-attendance-verified";
+import { senatorAttendanceEvidence } from "@/lib/senator-attendance-evidence";
 import { senatorPatrimonyFirst16 } from "@/lib/senator-patrimony-first16";
 import { senatorPatrimonySecond16 } from "@/lib/senator-patrimony-second16";
 import { senatorPatrimonyHistory } from "@/lib/senator-patrimony-history";
@@ -33,6 +34,8 @@ export default function IntegralSenateRankingPage() {
     const historyResolution = senatorPatrimonyHistoryResolution[senator.id];
     const attendance = verifiedSenatorAttendance[senator.id] ?? [];
     const latestAttendance = attendance[attendance.length - 1];
+    const attendanceEvidence = senatorAttendanceEvidence[senator.id] ?? [];
+    const attendanceReviewed = Boolean(latestAttendance || attendanceEvidence.length);
     const production = senatorProductionMetrics[senator.id];
     const committees = senatorCommitteeSummary[senator.id] ?? [];
     const committeeLeadership = senatorCommitteeLeadership[senator.id] ?? [];
@@ -48,7 +51,7 @@ export default function IntegralSenateRankingPage() {
     const dimensions = [
       Boolean(snapshot),
       historyReviewed,
-      Boolean(latestAttendance),
+      attendanceReviewed,
       Boolean(production),
       Boolean(committees.length || committeeLeadership.length),
       Boolean(benefits.length),
@@ -64,6 +67,8 @@ export default function IntegralSenateRankingPage() {
       historyResolution,
       historyReviewed,
       latestAttendance,
+      attendanceEvidence,
+      attendanceReviewed,
       production,
       committeeCurrent,
       committeeLeadership,
@@ -78,7 +83,8 @@ export default function IntegralSenateRankingPage() {
   const fullPatrimony = rows.filter((row) => row.snapshot?.reportedNetWorth != null).length;
   const historicalReviewed = rows.filter((row) => row.historyReviewed).length;
   const historicalAntecedents = rows.filter((row) => row.history.length || row.historyResolution?.status === "antecedent_found").length;
-  const attendanceCovered = rows.filter((row) => row.latestAttendance).length;
+  const attendanceQuantified = rows.filter((row) => row.latestAttendance).length;
+  const attendanceReviewed = rows.filter((row) => row.attendanceReviewed).length;
   const productionCovered = rows.filter((row) => row.production).length;
   const committeesCovered = rows.filter((row) => row.committeeCurrent || row.committeeLeadership.length).length;
   const committeeLeadershipCovered = rows.filter((row) => row.committeeLeadership.length).length;
@@ -95,7 +101,8 @@ export default function IntegralSenateRankingPage() {
             Esta versión ordena por completitud documental, no por riqueza ni por una presunción de desempeño. Las métricas de actividad se muestran con su período original y solo se comparan directamente cuando usan un corte compatible.
           </p>
           <div className="grid">
-            <article className="card"><strong className="metric">{attendanceCovered}/32</strong><span>con asistencia cuantificada</span></article>
+            <article className="card"><strong className="metric">{attendanceReviewed}/32</strong><span>con asistencia revisada</span></article>
+            <article className="card"><strong className="metric">{attendanceQuantified}/32</strong><span>con asistencia porcentual cuantificada</span></article>
             <article className="card"><strong className="metric">{productionCovered}/32</strong><span>con producción comparable 2025</span></article>
             <article className="card"><strong className="metric">{committeesCovered}/32</strong><span>con actividad o rol de comisión documentado</span></article>
             <article className="card"><strong className="metric">{committeeLeadershipCovered}/32</strong><span>con cargo directivo en comisión permanente</span></article>
@@ -127,14 +134,14 @@ export default function IntegralSenateRankingPage() {
                 <h3>{row.senator.fullName}</h3>
                 <div className="grid attendance-detail">
                   <article className="card"><strong className="metric">{row.coverage}%</strong><span>expediente observable</span></article>
-                  <article className="card"><strong className="metric">{row.latestAttendance ? `${row.latestAttendance.presenceRate}%` : "—"}</strong><span>presencia Pleno</span></article>
+                  <article className="card"><strong className="metric">{row.latestAttendance ? `${row.latestAttendance.presenceRate}%` : row.attendanceEvidence.length ? "Parcial" : "—"}</strong><span>asistencia al Pleno</span></article>
                   <article className="card"><strong className="metric">{row.production?.projectsIntroduced ?? "—"}</strong><span>proyectos · 27 feb.–26 jul. 2025</span></article>
                   <article className="card"><strong className="metric">{row.committeeCurrent?.verifiedMeetings ?? "—"}</strong><span>reuniones de comisión verificadas · último corte 2026</span></article>
                   <article className="card"><strong className="metric">{row.committeeCurrent?.verifiedMinutes ?? "—"}</strong><span>minutos verificados en comisión</span></article>
                   <article className="card"><strong className="metric">{row.committeeLeadership.length || "—"}</strong><span>roles directivos en comisiones · ago. 2024–ago. 2026</span></article>
                   <article className="card"><strong className="metric">{row.snapshot?.reportedNetWorth != null ? money(row.snapshot.reportedNetWorth) : row.snapshot?.reportedAssets != null ? "Activos disponibles" : "—"}</strong><span>patrimonio documentado</span></article>
                 </div>
-                {row.latestAttendance ? <p><strong>Asistencia:</strong> {row.latestAttendance.period}. Excusas {row.latestAttendance.excusedRate}% · sin excusa {row.latestAttendance.absenceRate}%.</p> : null}
+                {row.latestAttendance ? <p><strong>Asistencia:</strong> {row.latestAttendance.period}. Excusas {row.latestAttendance.excusedRate}% · sin excusa {row.latestAttendance.absenceRate}%.</p> : row.attendanceEvidence.length ? <p><strong>Asistencia:</strong> evidencia parcial localizada; todavía no se convierte en porcentaje porque el denominador o la unidad no es comparable.</p> : null}
                 {row.production ? <p><strong>Producción:</strong> {row.production.projectsIntroduced} proyectos en {row.production.period}.</p> : null}
                 {row.committeeLeadership.length ? <p><strong>Dirección de comisiones:</strong> {row.committeeLeadership.map((item) => `${item.role} de ${item.committee}`).join(" · ")}.</p> : null}
                 {row.history.length ? <p><strong>Historia patrimonial:</strong> {row.history.length} referencia(s) anterior(es) con expediente patrimonial localizada(s).</p> : row.historyResolution ? <p><strong>Historia patrimonial:</strong> {row.historyResolution.status === "antecedent_found" ? `antecedente localizado: ${row.historyResolution.priorOffice ?? "cargo público anterior"}.` : "revisión realizada; no se identificó declaración pública anterior obligatoria."}</p> : null}
@@ -153,6 +160,7 @@ export default function IntegralSenateRankingPage() {
           <h2>Lo que todavía no mezclamos</h2>
           <div className="grid">
             <article className="card"><h3>Patrimonio no puntúa desempeño</h3><p>Tener más, menos o aumentar patrimonio no produce una nota positiva o negativa. Solo medimos disponibilidad y trazabilidad documental.</p></article>
+            <article className="card"><h3>Asistencia parcial no es porcentaje</h3><p>Una excusa, un pase de lista o una presencia puntual se publica como evidencia, pero no se convierte en tasa hasta cerrar el total de sesiones y la unidad de medición.</p></article>
             <article className="card"><h3>Comisiones requieren denominador</h3><p>Los minutos y reuniones verificadas se muestran, pero no se convierten en porcentaje hasta conocer todas las convocatorias que correspondían a cada senador en el mismo período.</p></article>
             <article className="card"><h3>Períodos separados</h3><p>Producción 2025, asistencia 2026 y datos históricos se etiquetan por separado. Un índice de desempeño solo combinará cortes temporalmente compatibles.</p></article>
           </div>
