@@ -17,6 +17,10 @@ ATTENDANCE_INDEX = "https://www.senadord.gob.do/elaboracion-de-actas/asistencia-
 INITIATIVES_INDEX = "https://www.senadord.gob.do/secretaria-general-legislativa/iniciativas-legislativas/"
 APPROVED_INDEX = "https://www.senadord.gob.do/secretaria-general-legislativa/iniciativas-aprobadas/"
 EXPIRED_INDEX = "https://www.senadord.gob.do/secretaria-general-legislativa/proyectos-perimidos/"
+SIL_CURRENT = (
+    "https://www.senado.gov.do/wfilemaster/consultante.aspx?bd=C2024-2028&"
+    "url=lista_expedientes.aspx%3Fcoleccion%3D53"
+)
 
 TARGET_SESSION_MIN = 101
 TARGET_SESSION_MAX = 126
@@ -89,9 +93,43 @@ class LinkParser(HTMLParser):
             self._text = []
 
 
+class TableTextParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.rows: list[list[str]] = []
+        self._row: list[str] | None = None
+        self._cell: list[str] | None = None
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag == "tr":
+            self._row = []
+        elif tag in {"td", "th"} and self._row is not None:
+            self._cell = []
+
+    def handle_data(self, data: str) -> None:
+        if self._cell is not None:
+            self._cell.append(data)
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in {"td", "th"} and self._cell is not None and self._row is not None:
+            value = " ".join("".join(self._cell).split())
+            self._row.append(value)
+            self._cell = None
+        elif tag == "tr" and self._row is not None:
+            if any(self._row):
+                self.rows.append(self._row)
+            self._row = None
+
+
 def fetch(url: str) -> bytes:
-    req = urllib.request.Request(url, headers={"User-Agent": "OED/1.0 (+https://oedominicano.org)"})
-    with urllib.request.urlopen(req, timeout=45) as response:
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": "Mozilla/5.0 OED/1.0 (+https://oedominicano.org)",
+            "Accept": "text/html,application/pdf,application/xhtml+xml,*/*;q=0.8",
+        },
+    )
+    with urllib.request.urlopen(req, timeout=60) as response:
         return response.read()
 
 
@@ -107,22 +145,17 @@ def pdf_text(content: bytes) -> str:
     return "\n".join(page.extract_text() or "" for page in reader.pages)
 
 
-def senator_present(text: str, senator_id: str) -> bool:
-    haystack = normalize(text)
-    candidates = [SENATORS[senator_id], *ALIASES.get(senator_id, [])]
-    return any(normalize(candidate) in haystack for candidate in candidates)
-
-
 def classify_attendance(text: str, senator_id: str) -> str:
-    """Return present/excused/absent/unknown from the official attendance PDF text."""
+    """Return present/excused/absent/unknown from an official attendance document."""
     haystack = normalize(text)
     names = [SENATORS[senator_id], *ALIASES.get(senator_id, [])]
     for raw_name in names:
         name = normalize(raw_name)
-        if name not in haystack:
+        position = haystack.find(name)
+        if position < 0:
             continue
-        start = max(0, haystack.find(name) - 90)
-        end = min(len(haystack), haystack.find(name) + len(name) + 120)
+        start = max(0, position - 90)
+        end = min(len(haystack), position + len(name) + 120)
         context = haystack[start:end]
         if "excusa" in context or "excusado" in context:
             return "excused"
@@ -149,6 +182,15 @@ class AttendanceRecord:
     source_url: str
 
 
+@dataclass(frozen=True)
+class SilInitiative:
+    number: str
+    title: str
+    raw_columns: list[str]
+    source_url: str
+    senator_ids: list[str]
+
+
 def attendance_sources(max_pages: int = 10) -> list[SessionSource]:
     sources: dict[int, SessionSource] = {}
     for page in range(1, max_pages + 1):
@@ -163,9 +205,8 @@ def attendance_sources(max_pages: int = 10) -> list[SessionSource]:
         parser.feed(html)
         found_on_page = 0
         for href, text in parser.links:
-            match = re.search(r"SESION[- ]NO[. ]*(\d+)", normalize(text).upper())
-            if not match:
-                match = re.search(r"sesion[- ]no[. ]*(\d+)", text, flags=re.I)
+            normalized = normalize(text)
+            match = re.search(r"sesion no (\d+)", normalized)
             if not match:
                 continue
             session = int(match.group(1))
@@ -183,7 +224,8 @@ def reconstruct_attendance() -> tuple[list[SessionSource], list[AttendanceRecord
     records: list[AttendanceRecord] = []
     for source in sources:
         try:
-            text = pdf_text(fetch(source.url))
+            content = fetch(source.url)
+            text = pdf_text(content)
         except Exception:
             continue
         for senator_id in SENATORS:
@@ -247,9 +289,42 @@ def legislative_document_links(index_url: str, max_pages: int = 20) -> list[dict
     return documents
 
 
+def match_senators(text: str) -> list[str]:
+    haystack = normalize(text)
+    matched: list[str] = []
+    for senator_id, full_name in SENATORS.items():
+        candidates = [full_name, *ALIASES.get(senator_id, [])]
+        if any(normalize(candidate) in haystack for candidate in candidates):
+            matched.append(senator_id)
+    return matched
+
+
+def extract_sil_inventory() -> list[SilInitiative]:
+    html = fetch(SIL_CURRENT).decode("utf-8", errors="replace")
+    parser = TableTextParser()
+    parser.feed(html)
+    initiatives: dict[str, SilInitiative] = {}
+    number_pattern = re.compile(r"\b\d{4,5}-\d{4}-(?:PLO|SLO)-SE\b", re.I)
+    for row in parser.rows:
+        joined = " | ".join(row)
+        match = number_pattern.search(joined)
+        if not match:
+            continue
+        number = match.group(0).upper()
+        title_candidates = [cell for cell in row if len(cell) >= 25 and number not in cell.upper()]
+        title = max(title_candidates, key=len) if title_candidates else joined
+        initiatives[number] = SilInitiative(
+            number=number,
+            title=title,
+            raw_columns=row,
+            source_url=SIL_CURRENT,
+            senator_ids=match_senators(joined),
+        )
+    return [initiatives[key] for key in sorted(initiatives)]
+
+
 def discover_legislative_sources() -> dict[str, list[dict[str, str]]]:
     return {
-        "initiatives": legislative_document_links(INITIATIVES_INDEX),
         "approved": legislative_document_links(APPROVED_INDEX),
         "expired": legislative_document_links(EXPIRED_INDEX),
     }
@@ -259,6 +334,7 @@ def write_outputs(output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     sessions, records = reconstruct_attendance()
     summary = summarize_attendance(records)
+    sil_inventory = extract_sil_inventory()
     (output_dir / "senate-attendance-sessions-2026.json").write_text(
         json.dumps([asdict(item) for item in sessions], ensure_ascii=False, indent=2), encoding="utf-8"
     )
@@ -267,6 +343,9 @@ def write_outputs(output_dir: Path) -> None:
     )
     (output_dir / "senate-attendance-summary-2026.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    (output_dir / "senate-sil-initiatives-2024-2028.json").write_text(
+        json.dumps([asdict(item) for item in sil_inventory], ensure_ascii=False, indent=2), encoding="utf-8"
     )
     (output_dir / "senate-legislative-source-index.json").write_text(
         json.dumps(discover_legislative_sources(), ensure_ascii=False, indent=2), encoding="utf-8"
