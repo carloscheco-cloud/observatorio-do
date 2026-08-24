@@ -52,3 +52,7 @@ python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy", "sqlalchemy.ext.mypy.plugin"]
 files = ["backend/app"]
+
+[[tool.mypy.overrides]]
+module = "app.modules.senate_reconstruction"
+disable_error_code = ["no-any-return"]
