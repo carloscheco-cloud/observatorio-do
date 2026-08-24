@@ -2,9 +2,12 @@ import type { ReactNode } from "react";
 
 import { senators } from "@/lib/legislators";
 import { individualSenateBenefits } from "@/lib/senator-benefits-individual";
+import { senatorAttendanceEvidence } from "@/lib/senator-attendance-evidence";
+import { senatorAnnualProduction20242025 } from "@/lib/senator-production-annual-2024-2025";
 import { senatorCommitteeLeadership } from "@/lib/senator-committee-leadership";
 import { senatorCommitteeSummary } from "@/lib/senator-committee-summary";
 import { senatorPatrimonyHistoryResolution } from "@/lib/senator-patrimony-history-resolution";
+import { senatorProductionMetrics } from "@/lib/senator-production-metrics";
 import { verifiedSenatorInitiatives } from "@/lib/senator-initiatives-verified";
 
 function money(value?: number) {
@@ -47,6 +50,9 @@ export default async function SenatorEvidenceLayout({
   const { id } = await params;
   const senator = senators.find((item) => item.id === id);
   const benefits = individualSenateBenefits[id] ?? [];
+  const attendanceEvidence = senatorAttendanceEvidence[id] ?? [];
+  const production = senatorProductionMetrics[id];
+  const annualProduction = senatorAnnualProduction20242025[id];
   const leadership = senatorCommitteeLeadership[id] ?? [];
   const committeePeriods = senatorCommitteeSummary[id] ?? [];
   const initiatives = verifiedSenatorInitiatives[id] ?? [];
@@ -56,7 +62,7 @@ export default async function SenatorEvidenceLayout({
     <>
       {children}
 
-      {(benefits.length || leadership.length || committeePeriods.length || initiatives.length || patrimonyHistoryResolution) && senator ? (
+      {(benefits.length || attendanceEvidence.length || production || annualProduction || leadership.length || committeePeriods.length || initiatives.length || patrimonyHistoryResolution) && senator ? (
         <section className="section profile-muted-section">
           <div className="shell">
             <p className="eyebrow">Expediente complementario verificado</p>
@@ -77,6 +83,54 @@ export default async function SenatorEvidenceLayout({
                   <p>{patrimonyHistoryResolution.note}</p>
                   <a href={patrimonyHistoryResolution.sourceUrl} target="_blank" rel="noreferrer">Ver fuente</a>
                 </article>
+              </>
+            ) : null}
+
+            {attendanceEvidence.length ? (
+              <>
+                <h3 className="research-heading">Evidencia adicional de asistencia al Pleno</h3>
+                <div className="grid">
+                  {attendanceEvidence.map((item, index) => (
+                    <article className="card" key={`${id}-attendance-evidence-${index}`}>
+                      <span className="source-status source-reported">Evidencia parcial</span>
+                      <h3>{item.metric}</h3>
+                      <strong className="metric">{item.value}</strong>
+                      <p><strong>Período:</strong> {item.period}</p>
+                      <p>{item.note}</p>
+                      <a href={item.sourceUrl} target="_blank" rel="noreferrer">Ver fuente</a>
+                    </article>
+                  ))}
+                </div>
+                <p className="notice">Una presencia, una excusa o un pase de lista aislado no se convierte en porcentaje hasta cerrar el denominador completo de sesiones y permanencia.</p>
+              </>
+            ) : null}
+
+            {production || annualProduction ? (
+              <>
+                <h3 className="research-heading">Producción legislativa cuantificada</h3>
+                <div className="grid">
+                  {production ? (
+                    <article className="card">
+                      <span className="source-status source-verified">Corte comparable</span>
+                      <h3>{production.period}</h3>
+                      <strong className="metric">{production.projectsIntroduced}</strong>
+                      <p>Proyectos introducidos en el corte corto documentado.</p>
+                      {production.note ? <p>{production.note}</p> : null}
+                      <a href={production.sourceUrl} target="_blank" rel="noreferrer">Ver fuente</a>
+                    </article>
+                  ) : null}
+                  {annualProduction ? (
+                    <article className="card">
+                      <span className="source-status source-verified">Año legislativo</span>
+                      <h3>{annualProduction.period}</h3>
+                      <strong className="metric">{annualProduction.initiativesIntroduced}</strong>
+                      <p>Iniciativas presentadas durante el año legislativo completo.</p>
+                      {annualProduction.note ? <p>{annualProduction.note}</p> : null}
+                      <a href={annualProduction.sourceUrl} target="_blank" rel="noreferrer">Ver fuente</a>
+                    </article>
+                  ) : null}
+                </div>
+                {production && annualProduction ? <p className="notice">Los dos conteos usan períodos distintos y se muestran separados. No deben restarse ni compararse entre sí como una misma serie.</p> : null}
               </>
             ) : null}
 
