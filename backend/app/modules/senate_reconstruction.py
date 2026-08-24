@@ -14,7 +14,7 @@ from typing import Iterable
 from pypdf import PdfReader
 
 ATTENDANCE_INDEX = "https://www.senadord.gob.do/elaboracion-de-actas/asistencia-a-sesiones/"
-INITIATIVES_INDEX = "https://www.senadord.gob.do/secretaria-general-legislativa/iniciativas-legislativas/"
+ACTAS_INDEX = "https://www.senadord.gob.do/elaboracion-de-actas/actas-de-sesiones/"
 APPROVED_INDEX = "https://www.senadord.gob.do/secretaria-general-legislativa/iniciativas-aprobadas/"
 EXPIRED_INDEX = "https://www.senadord.gob.do/secretaria-general-legislativa/proyectos-perimidos/"
 SIL_CURRENT = (
@@ -24,6 +24,7 @@ SIL_CURRENT = (
 
 TARGET_SESSION_MIN = 101
 TARGET_SESSION_MAX = 126
+TARGET_SESSIONS = tuple(range(TARGET_SESSION_MIN, TARGET_SESSION_MAX + 1))
 
 SENATORS = {
     "lia-ynocencia-diaz-santana": "Lía Ynocencia Díaz Santana",
@@ -66,6 +67,19 @@ ALIASES = {
     "daniel-enrique-rivera-reyes": ["Daniel Rivera", "Daniel Enrique Rivera Reyes"],
     "lia-ynocencia-diaz-santana": ["Lía Díaz", "Lia Diaz"],
     "ramon-rogelio-genao-duran": ["Ramón Rogelio Genao", "Ramón Genao"],
+}
+
+KNOWN_COMMON_CUT = {
+    "andres-guillermo-lama-perez": (26, 0),
+    "maria-mercedes-ortiz-dilone": (26, 0),
+    "dagoberto-rodriguez-adames": (26, 0),
+    "hector-elpidio-acosta-restituyo": (16, 10),
+    "ginnette-altagracia-bournigal": (18, 8),
+    "felix-ramon-bautista-rosario": (15, 11),
+    "ricardo-de-los-santos-polanco": (26, 0),
+    "daniel-enrique-rivera-reyes": (26, 0),
+    "casimiro-antonio-marte-familia": (26, 0),
+    "odalis-rafael-rodriguez-rodriguez": (26, 0),
 }
 
 
@@ -112,8 +126,7 @@ class TableTextParser(HTMLParser):
 
     def handle_endtag(self, tag: str) -> None:
         if tag in {"td", "th"} and self._cell is not None and self._row is not None:
-            value = " ".join("".join(self._cell).split())
-            self._row.append(value)
+            self._row.append(" ".join("".join(self._cell).split()))
             self._cell = None
         elif tag == "tr" and self._row is not None:
             if any(self._row):
@@ -145,26 +158,12 @@ def pdf_text(content: bytes) -> str:
     return "\n".join(page.extract_text() or "" for page in reader.pages)
 
 
-def classify_attendance(text: str, senator_id: str) -> str:
-    """Return present/excused/absent/unknown from an official attendance document."""
+def name_present(text: str, senator_id: str) -> bool:
     haystack = normalize(text)
-    names = [SENATORS[senator_id], *ALIASES.get(senator_id, [])]
-    for raw_name in names:
-        name = normalize(raw_name)
-        position = haystack.find(name)
-        if position < 0:
-            continue
-        start = max(0, position - 90)
-        end = min(len(haystack), position + len(name) + 120)
-        context = haystack[start:end]
-        if "excusa" in context or "excusado" in context:
-            return "excused"
-        if "ausente" in context or "inasistencia" in context:
-            return "absent"
-        if "presente" in context or "asistencia" in context:
-            return "present"
-        return "present"
-    return "unknown"
+    return any(
+        normalize(candidate) in haystack
+        for candidate in [SENATORS[senator_id], *ALIASES.get(senator_id, [])]
+    )
 
 
 @dataclass(frozen=True)
@@ -172,6 +171,7 @@ class SessionSource:
     session: int
     title: str
     url: str
+    source_kind: str
 
 
 @dataclass(frozen=True)
@@ -179,7 +179,11 @@ class AttendanceRecord:
     session: int
     senator_id: str
     status: str
+    first_pass: str
+    final_pass: str
+    late_arrival: bool
     source_url: str
+    source_kind: str
 
 
 @dataclass(frozen=True)
@@ -191,82 +195,13 @@ class SilInitiative:
     senator_ids: list[str]
 
 
-def attendance_sources(max_pages: int = 10) -> list[SessionSource]:
-    sources: dict[int, SessionSource] = {}
-    for page in range(1, max_pages + 1):
-        url = ATTENDANCE_INDEX if page == 1 else f"{ATTENDANCE_INDEX}page/{page}/"
-        try:
-            html = fetch(url).decode("utf-8", errors="replace")
-        except Exception:
-            if page == 1:
-                raise
-            break
-        parser = LinkParser()
-        parser.feed(html)
-        found_on_page = 0
-        for href, text in parser.links:
-            normalized = normalize(text)
-            match = re.search(r"sesion no (\d+)", normalized)
-            if not match:
-                continue
-            session = int(match.group(1))
-            if TARGET_SESSION_MIN <= session <= TARGET_SESSION_MAX:
-                full_url = urllib.parse.urljoin(url, href)
-                sources[session] = SessionSource(session, text, full_url)
-                found_on_page += 1
-        if page > 1 and not found_on_page and sources:
-            break
-    return [sources[key] for key in sorted(sources)]
-
-
-def reconstruct_attendance() -> tuple[list[SessionSource], list[AttendanceRecord]]:
-    sources = attendance_sources()
-    records: list[AttendanceRecord] = []
-    for source in sources:
-        try:
-            content = fetch(source.url)
-            text = pdf_text(content)
-        except Exception:
-            continue
-        for senator_id in SENATORS:
-            records.append(
-                AttendanceRecord(
-                    session=source.session,
-                    senator_id=senator_id,
-                    status=classify_attendance(text, senator_id),
-                    source_url=source.url,
-                )
-            )
-    return sources, records
-
-
-def summarize_attendance(records: Iterable[AttendanceRecord]) -> dict[str, dict[str, int | float]]:
-    grouped: dict[str, dict[str, int]] = {
-        senator_id: {"present": 0, "excused": 0, "absent": 0, "unknown": 0}
-        for senator_id in SENATORS
-    }
-    for record in records:
-        grouped[record.senator_id][record.status] += 1
-    result: dict[str, dict[str, int | float]] = {}
-    for senator_id, counts in grouped.items():
-        denominator = counts["present"] + counts["excused"] + counts["absent"]
-        result[senator_id] = {
-            **counts,
-            "sessions_classified": denominator,
-            "presence_rate": round((counts["present"] / denominator) * 100, 1) if denominator else 0.0,
-            "excused_rate": round((counts["excused"] / denominator) * 100, 1) if denominator else 0.0,
-            "absence_rate": round((counts["absent"] / denominator) * 100, 1) if denominator else 0.0,
-        }
-    return result
-
-
-def legislative_document_links(index_url: str, max_pages: int = 20) -> list[dict[str, str]]:
-    documents: list[dict[str, str]] = []
+def paged_links(index_url: str, max_pages: int = 20) -> list[tuple[str, str]]:
+    links: list[tuple[str, str]] = []
     seen: set[str] = set()
     for page in range(1, max_pages + 1):
-        url = index_url if page == 1 else f"{index_url}page/{page}/"
+        page_url = index_url if page == 1 else f"{index_url}page/{page}/"
         try:
-            html = fetch(url).decode("utf-8", errors="replace")
+            html = fetch(page_url).decode("utf-8", errors="replace")
         except Exception:
             if page == 1:
                 raise
@@ -275,17 +210,222 @@ def legislative_document_links(index_url: str, max_pages: int = 20) -> list[dict
         parser.feed(html)
         added = 0
         for href, text in parser.links:
-            low = normalize(text)
-            if not any(token in low for token in ("iniciativa", "aprobada", "perim", "sil", "agenda")):
+            full_url = urllib.parse.urljoin(page_url, href)
+            key = f"{full_url}|{text}"
+            if key in seen:
                 continue
-            full_url = urllib.parse.urljoin(url, href)
-            if full_url in seen:
-                continue
-            seen.add(full_url)
-            documents.append({"title": text, "url": full_url})
+            seen.add(key)
+            links.append((full_url, text))
             added += 1
-        if page > 1 and added == 0:
+        if page > 2 and added == 0:
             break
+    return links
+
+
+def extract_session_number(text: str) -> int | None:
+    normalized = normalize(text)
+    patterns = (
+        r"sesion no (\d+)",
+        r"acta num (\d+)",
+        r"acta numero (\d+)",
+        r"acta (\d{3,4})",
+    )
+    for pattern in patterns:
+        match = re.search(pattern, normalized)
+        if match:
+            return int(match.group(1))
+    return None
+
+
+def attendance_sources() -> list[SessionSource]:
+    by_session: dict[int, SessionSource] = {}
+    for url, title in paged_links(ACTAS_INDEX, max_pages=12):
+        session = extract_session_number(title)
+        if session in TARGET_SESSIONS:
+            by_session[session] = SessionSource(session, title, url, "acta")
+    for url, title in paged_links(ATTENDANCE_INDEX, max_pages=12):
+        session = extract_session_number(title)
+        if session in TARGET_SESSIONS and session not in by_session:
+            by_session[session] = SessionSource(session, title, url, "attendance")
+    return [by_session[key] for key in sorted(by_session)]
+
+
+def section_chunks(text: str, heading: str, stop_headings: tuple[str, ...]) -> list[str]:
+    haystack = normalize(text)
+    needle = normalize(heading)
+    stops = tuple(normalize(item) for item in stop_headings)
+    chunks: list[str] = []
+    start = 0
+    while True:
+        idx = haystack.find(needle, start)
+        if idx < 0:
+            break
+        content_start = idx + len(needle)
+        candidates = [haystack.find(stop, content_start) for stop in stops]
+        candidates = [value for value in candidates if value >= 0]
+        content_end = min(candidates) if candidates else min(len(haystack), content_start + 5000)
+        chunks.append(haystack[content_start:content_end])
+        start = content_start
+    return chunks
+
+
+def senator_in_chunks(chunks: Iterable[str], senator_id: str) -> bool:
+    names = [normalize(SENATORS[senator_id]), *[normalize(x) for x in ALIASES.get(senator_id, [])]]
+    return any(any(name in chunk for name in names) for chunk in chunks)
+
+
+def classify_pass(text: str, senator_id: str, *, final: bool) -> str:
+    final_marker = normalize("Pase de lista final")
+    normalized = normalize(text)
+    if final and final_marker in normalized:
+        relevant = normalized[normalized.rfind(final_marker):]
+    elif not final and final_marker in normalized:
+        relevant = normalized[:normalized.find(final_marker)]
+    else:
+        relevant = normalized
+
+    present_chunks = section_chunks(
+        relevant,
+        "Senadores presentes",
+        (
+            "Senadores ausentes con excusa legítima",
+            "Senadores ausentes sin excusa legítima",
+            "Senadores incorporados después de comprobado el quórum e iniciada la sesión",
+            "Comprobación de quórum",
+            "Presentación de excusas",
+            "Cierre de la sesión",
+        ),
+    )
+    excused_chunks = section_chunks(
+        relevant,
+        "Senadores ausentes con excusa legítima",
+        (
+            "Senadores ausentes sin excusa legítima",
+            "Senadores incorporados después de comprobado el quórum e iniciada la sesión",
+            "Comprobación de quórum",
+            "Presentación de excusas",
+            "Cierre de la sesión",
+        ),
+    )
+    absent_chunks = section_chunks(
+        relevant,
+        "Senadores ausentes sin excusa legítima",
+        (
+            "Senadores incorporados después de comprobado el quórum e iniciada la sesión",
+            "Comprobación de quórum",
+            "Presentación de excusas",
+            "Cierre de la sesión",
+        ),
+    )
+
+    if senator_in_chunks(present_chunks, senator_id):
+        return "present"
+    if senator_in_chunks(excused_chunks, senator_id):
+        return "excused"
+    if senator_in_chunks(absent_chunks, senator_id):
+        return "absent"
+    return "unknown"
+
+
+def incorporated_late(text: str, senator_id: str) -> bool:
+    chunks = section_chunks(
+        text,
+        "Senadores incorporados después de comprobado el quórum e iniciada la sesión",
+        (
+            "Comprobación de quórum",
+            "Presentación de excusas",
+            "Desarrollo de la sesión",
+            "Pase de lista final",
+        ),
+    )
+    return senator_in_chunks(chunks, senator_id)
+
+
+def reconstruct_attendance() -> tuple[list[SessionSource], list[AttendanceRecord]]:
+    sources = attendance_sources()
+    records: list[AttendanceRecord] = []
+    for source in sources:
+        try:
+            text = pdf_text(fetch(source.url))
+        except Exception:
+            continue
+        has_final = normalize("Pase de lista final") in normalize(text)
+        for senator_id in SENATORS:
+            first_pass = classify_pass(text, senator_id, final=False)
+            final_pass = classify_pass(text, senator_id, final=True) if has_final else "unknown"
+            late_arrival = incorporated_late(text, senator_id)
+            if final_pass != "unknown":
+                status = final_pass
+            elif late_arrival:
+                status = "present"
+            else:
+                status = first_pass
+            records.append(
+                AttendanceRecord(
+                    session=source.session,
+                    senator_id=senator_id,
+                    status=status,
+                    first_pass=first_pass,
+                    final_pass=final_pass,
+                    late_arrival=late_arrival,
+                    source_url=source.url,
+                    source_kind=source.source_kind,
+                )
+            )
+    return sources, records
+
+
+def summarize_attendance(records: Iterable[AttendanceRecord]) -> dict[str, dict[str, int | float]]:
+    grouped: dict[str, dict[str, int]] = {
+        senator_id: {"present": 0, "excused": 0, "absent": 0, "unknown": 0, "late_arrivals": 0}
+        for senator_id in SENATORS
+    }
+    for record in records:
+        grouped[record.senator_id][record.status] += 1
+        if record.late_arrival:
+            grouped[record.senator_id]["late_arrivals"] += 1
+    result: dict[str, dict[str, int | float]] = {}
+    for senator_id, counts in grouped.items():
+        denominator = counts["present"] + counts["excused"] + counts["absent"]
+        result[senator_id] = {
+            **counts,
+            "sessions_total": len(TARGET_SESSIONS),
+            "sessions_classified": denominator,
+            "presence_rate": round((counts["present"] / len(TARGET_SESSIONS)) * 100, 1),
+            "excused_rate": round((counts["excused"] / len(TARGET_SESSIONS)) * 100, 1),
+            "absence_rate": round((counts["absent"] / len(TARGET_SESSIONS)) * 100, 1),
+        }
+    return result
+
+
+def validate_common_cut(summary: dict[str, dict[str, int | float]]) -> list[dict[str, object]]:
+    checks: list[dict[str, object]] = []
+    for senator_id, (expected_present, expected_excused) in KNOWN_COMMON_CUT.items():
+        row = summary[senator_id]
+        checks.append(
+            {
+                "senator_id": senator_id,
+                "expected_present": expected_present,
+                "actual_present": row["present"],
+                "expected_excused": expected_excused,
+                "actual_excused": row["excused"],
+                "matches": row["present"] == expected_present and row["excused"] == expected_excused,
+            }
+        )
+    return checks
+
+
+def legislative_document_links(index_url: str, max_pages: int = 20) -> list[dict[str, str]]:
+    documents: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for url, text in paged_links(index_url, max_pages=max_pages):
+        low = normalize(text)
+        if not any(token in low for token in ("iniciativa", "aprobada", "perim", "sil", "agenda", "proyecto")):
+            continue
+        if url in seen:
+            continue
+        seen.add(url)
+        documents.append({"title": text, "url": url})
     return documents
 
 
@@ -334,6 +474,7 @@ def write_outputs(output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     sessions, records = reconstruct_attendance()
     summary = summarize_attendance(records)
+    validation = validate_common_cut(summary)
     sil_inventory = extract_sil_inventory()
     (output_dir / "senate-attendance-sessions-2026.json").write_text(
         json.dumps([asdict(item) for item in sessions], ensure_ascii=False, indent=2), encoding="utf-8"
@@ -343,6 +484,9 @@ def write_outputs(output_dir: Path) -> None:
     )
     (output_dir / "senate-attendance-summary-2026.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    (output_dir / "senate-attendance-validation-2026.json").write_text(
+        json.dumps(validation, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     (output_dir / "senate-sil-initiatives-2024-2028.json").write_text(
         json.dumps([asdict(item) for item in sil_inventory], ensure_ascii=False, indent=2), encoding="utf-8"
