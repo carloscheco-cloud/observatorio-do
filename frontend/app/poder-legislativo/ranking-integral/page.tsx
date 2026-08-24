@@ -12,6 +12,7 @@ import { senatorCommitteeSummary } from "@/lib/senator-committee-summary";
 import { senatorCommitteeLeadership } from "@/lib/senator-committee-leadership";
 import { senatorInitiatives } from "@/lib/senate-observation";
 import { verifiedSenatorInitiatives } from "@/lib/senator-initiatives-verified";
+import { senatorIntegrityPoliticsInitiatives } from "@/lib/senator-integrity-politics-initiative";
 
 export const metadata: Metadata = {
   title: "Ranking integral del Senado",
@@ -37,6 +38,7 @@ export default function IntegralSenateRankingPage() {
     const initiatives = [
       ...(senatorInitiatives[senator.id] ?? []),
       ...(verifiedSenatorInitiatives[senator.id] ?? []),
+      ...(senatorIntegrityPoliticsInitiatives[senator.id] ?? []),
     ];
 
     const dimensions = [
@@ -72,6 +74,7 @@ export default function IntegralSenateRankingPage() {
   const committeesCovered = rows.filter((row) => row.committeeCurrent || row.committeeLeadership.length).length;
   const committeeLeadershipCovered = rows.filter((row) => row.committeeLeadership.length).length;
   const benefitsCovered = rows.filter((row) => row.benefits.length).length;
+  const initiativesCovered = rows.filter((row) => row.initiatives.length).length;
 
   return (
     <>
@@ -90,6 +93,7 @@ export default function IntegralSenateRankingPage() {
             <article className="card"><strong className="metric">{fullPatrimony}/32</strong><span>con patrimonio neto cuantificado</span></article>
             <article className="card"><strong className="metric">{historical}/32</strong><span>con historia patrimonial</span></article>
             <article className="card"><strong className="metric">{benefitsCovered}/32</strong><span>con beneficios individualizados</span></article>
+            <article className="card"><strong className="metric">{initiativesCovered}/32</strong><span>con al menos una iniciativa individual documentada</span></article>
           </div>
           <p className="profile-actions"><Link className="button secondary" href="/poder-legislativo">← Poder Legislativo</Link></p>
         </div>
