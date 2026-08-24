@@ -9,6 +9,7 @@ import { senatorPatrimonyHistory } from "@/lib/senator-patrimony-history";
 import { individualSenateBenefits } from "@/lib/senator-benefits-individual";
 import { senatorProductionMetrics } from "@/lib/senator-production-metrics";
 import { senatorCommitteeSummary } from "@/lib/senator-committee-summary";
+import { senatorCommitteeLeadership } from "@/lib/senator-committee-leadership";
 import { senatorInitiatives } from "@/lib/senate-observation";
 import { verifiedSenatorInitiatives } from "@/lib/senator-initiatives-verified";
 
@@ -31,6 +32,7 @@ export default function IntegralSenateRankingPage() {
     const latestAttendance = attendance[attendance.length - 1];
     const production = senatorProductionMetrics[senator.id];
     const committees = senatorCommitteeSummary[senator.id] ?? [];
+    const committeeLeadership = senatorCommitteeLeadership[senator.id] ?? [];
     const benefits = individualSenateBenefits[senator.id] ?? [];
     const initiatives = [
       ...(senatorInitiatives[senator.id] ?? []),
@@ -42,12 +44,12 @@ export default function IntegralSenateRankingPage() {
       Boolean(history.length),
       Boolean(latestAttendance),
       Boolean(production),
-      Boolean(committees.length),
+      Boolean(committees.length || committeeLeadership.length),
       Boolean(benefits.length),
       Boolean(initiatives.length),
     ];
     const coverage = Math.round((dimensions.filter(Boolean).length / dimensions.length) * 100);
-    const committeeCurrent = committees.find((item) => item.period.includes("2026"));
+    const committeeCurrent = [...committees].reverse().find((item) => item.period.includes("2026"));
 
     return {
       senator,
@@ -56,6 +58,7 @@ export default function IntegralSenateRankingPage() {
       latestAttendance,
       production,
       committeeCurrent,
+      committeeLeadership,
       benefits,
       initiatives,
       coverage,
@@ -66,7 +69,8 @@ export default function IntegralSenateRankingPage() {
   const historical = rows.filter((row) => row.history.length).length;
   const attendanceCovered = rows.filter((row) => row.latestAttendance).length;
   const productionCovered = rows.filter((row) => row.production).length;
-  const committeesCovered = rows.filter((row) => row.committeeCurrent).length;
+  const committeesCovered = rows.filter((row) => row.committeeCurrent || row.committeeLeadership.length).length;
+  const committeeLeadershipCovered = rows.filter((row) => row.committeeLeadership.length).length;
   const benefitsCovered = rows.filter((row) => row.benefits.length).length;
 
   return (
@@ -81,7 +85,8 @@ export default function IntegralSenateRankingPage() {
           <div className="grid">
             <article className="card"><strong className="metric">{attendanceCovered}/32</strong><span>con asistencia cuantificada</span></article>
             <article className="card"><strong className="metric">{productionCovered}/32</strong><span>con producción comparable 2025</span></article>
-            <article className="card"><strong className="metric">{committeesCovered}/32</strong><span>con comisiones verificadas 2026</span></article>
+            <article className="card"><strong className="metric">{committeesCovered}/32</strong><span>con actividad o rol de comisión documentado</span></article>
+            <article className="card"><strong className="metric">{committeeLeadershipCovered}/32</strong><span>con cargo directivo en comisión permanente</span></article>
             <article className="card"><strong className="metric">{fullPatrimony}/32</strong><span>con patrimonio neto cuantificado</span></article>
             <article className="card"><strong className="metric">{historical}/32</strong><span>con historia patrimonial</span></article>
             <article className="card"><strong className="metric">{benefitsCovered}/32</strong><span>con beneficios individualizados</span></article>
@@ -110,12 +115,14 @@ export default function IntegralSenateRankingPage() {
                   <article className="card"><strong className="metric">{row.coverage}%</strong><span>expediente observable</span></article>
                   <article className="card"><strong className="metric">{row.latestAttendance ? `${row.latestAttendance.presenceRate}%` : "—"}</strong><span>presencia Pleno</span></article>
                   <article className="card"><strong className="metric">{row.production?.projectsIntroduced ?? "—"}</strong><span>proyectos · 27 feb.–26 jul. 2025</span></article>
-                  <article className="card"><strong className="metric">{row.committeeCurrent?.verifiedMeetings ?? "—"}</strong><span>reuniones de comisión verificadas · may. 2026</span></article>
+                  <article className="card"><strong className="metric">{row.committeeCurrent?.verifiedMeetings ?? "—"}</strong><span>reuniones de comisión verificadas · último corte 2026</span></article>
                   <article className="card"><strong className="metric">{row.committeeCurrent?.verifiedMinutes ?? "—"}</strong><span>minutos verificados en comisión</span></article>
+                  <article className="card"><strong className="metric">{row.committeeLeadership.length || "—"}</strong><span>roles directivos en comisiones · ago. 2024–ago. 2026</span></article>
                   <article className="card"><strong className="metric">{row.snapshot?.reportedNetWorth != null ? money(row.snapshot.reportedNetWorth) : row.snapshot?.reportedAssets != null ? "Activos disponibles" : "—"}</strong><span>patrimonio documentado</span></article>
                 </div>
                 {row.latestAttendance ? <p><strong>Asistencia:</strong> {row.latestAttendance.period}. Excusas {row.latestAttendance.excusedRate}% · sin excusa {row.latestAttendance.absenceRate}%.</p> : null}
                 {row.production ? <p><strong>Producción:</strong> {row.production.projectsIntroduced} proyectos en {row.production.period}.</p> : null}
+                {row.committeeLeadership.length ? <p><strong>Dirección de comisiones:</strong> {row.committeeLeadership.map((item) => `${item.role} de ${item.committee}`).join(" · ")}.</p> : null}
                 {row.history.length ? <p><strong>Historia patrimonial:</strong> {row.history.length} referencia(s) anterior(es) localizada(s).</p> : null}
                 {row.benefits.length ? <p><strong>Beneficios individualizados:</strong> {row.benefits.length}. El barrilito, cuando aparece, se identifica como fondo social y no como salario.</p> : null}
                 {row.initiatives.length ? <p><strong>Iniciativas con ficha individual:</strong> {row.initiatives.length} registro(s) ya enlazado(s).</p> : null}
