@@ -37,17 +37,28 @@ jobs:
           sessions = json.loads((root / "senate-attendance-sessions-2026.json").read_text())
           records = json.loads((root / "senate-attendance-records-2026.json").read_text())
           summary = json.loads((root / "senate-attendance-summary-2026.json").read_text())
+          validation = json.loads((root / "senate-attendance-validation-2026.json").read_text())
           sources = json.loads((root / "senate-legislative-source-index.json").read_text())
 
-          print(f"attendance sessions discovered: {len(sessions)}")
+          session_numbers = [row["session"] for row in sessions]
+          print(f"attendance sessions discovered: {len(sessions)} -> {session_numbers}")
           print(f"attendance records: {len(records)}")
           print(f"senators summarized: {len(summary)}")
+          print("known-cut validation:", validation)
           print("legislative source documents:", {k: len(v) for k, v in sources.items()})
 
+          if session_numbers != list(range(101, 127)):
+              raise SystemExit(f"Expected sessions 101..126 exactly, got {session_numbers}")
+          if len(records) != 32 * 26:
+              raise SystemExit(f"Expected 832 session/senator records, got {len(records)}")
           if len(summary) != 32:
               raise SystemExit(f"Expected 32 senators, got {len(summary)}")
-          if len(sessions) < 25:
-              raise SystemExit(f"Attendance source discovery too low: {len(sessions)}")
+          unknown = [row for row in records if row["status"] == "unknown"]
+          if unknown:
+              raise SystemExit(f"Unclassified session records remain: {len(unknown)}")
+          mismatches = [row for row in validation if not row["matches"]]
+          if mismatches:
+              raise SystemExit(f"Known 10-senator benchmark mismatch: {mismatches}")
           if not sources.get("approved") or not sources.get("expired"):
               raise SystemExit("Approved/perimidos source discovery returned no documents")
           PY
