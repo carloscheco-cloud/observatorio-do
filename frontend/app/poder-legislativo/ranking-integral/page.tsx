@@ -10,6 +10,7 @@ import { senatorPatrimonyHistory } from "@/lib/senator-patrimony-history";
 import { senatorPatrimonyHistoryResolution } from "@/lib/senator-patrimony-history-resolution";
 import { individualSenateBenefits } from "@/lib/senator-benefits-individual";
 import { senatorProductionMetrics } from "@/lib/senator-production-metrics";
+import { senatorAnnualProduction20242025 } from "@/lib/senator-production-annual-2024-2025";
 import { senatorCommitteeSummary } from "@/lib/senator-committee-summary";
 import { senatorCommitteeLeadership } from "@/lib/senator-committee-leadership";
 import { senatorInitiatives } from "@/lib/senate-observation";
@@ -37,6 +38,8 @@ export default function IntegralSenateRankingPage() {
     const attendanceEvidence = senatorAttendanceEvidence[senator.id] ?? [];
     const attendanceReviewed = Boolean(latestAttendance || attendanceEvidence.length);
     const production = senatorProductionMetrics[senator.id];
+    const annualProduction = senatorAnnualProduction20242025[senator.id];
+    const productionQuantified = Boolean(production || annualProduction);
     const committees = senatorCommitteeSummary[senator.id] ?? [];
     const committeeLeadership = senatorCommitteeLeadership[senator.id] ?? [];
     const benefits = individualSenateBenefits[senator.id] ?? [];
@@ -52,7 +55,7 @@ export default function IntegralSenateRankingPage() {
       Boolean(snapshot),
       historyReviewed,
       attendanceReviewed,
-      Boolean(production),
+      productionQuantified,
       Boolean(committees.length || committeeLeadership.length),
       Boolean(benefits.length),
       hasAnyInitiative,
@@ -70,6 +73,8 @@ export default function IntegralSenateRankingPage() {
       attendanceEvidence,
       attendanceReviewed,
       production,
+      annualProduction,
+      productionQuantified,
       committeeCurrent,
       committeeLeadership,
       benefits,
@@ -85,7 +90,9 @@ export default function IntegralSenateRankingPage() {
   const historicalAntecedents = rows.filter((row) => row.history.length || row.historyResolution?.status === "antecedent_found").length;
   const attendanceQuantified = rows.filter((row) => row.latestAttendance).length;
   const attendanceReviewed = rows.filter((row) => row.attendanceReviewed).length;
-  const productionCovered = rows.filter((row) => row.production).length;
+  const productionShortCutCovered = rows.filter((row) => row.production).length;
+  const productionAnnualCovered = rows.filter((row) => row.annualProduction).length;
+  const productionAnyQuantified = rows.filter((row) => row.productionQuantified).length;
   const committeesCovered = rows.filter((row) => row.committeeCurrent || row.committeeLeadership.length).length;
   const committeeLeadershipCovered = rows.filter((row) => row.committeeLeadership.length).length;
   const benefitsCovered = rows.filter((row) => row.benefits.length).length;
@@ -103,7 +110,9 @@ export default function IntegralSenateRankingPage() {
           <div className="grid">
             <article className="card"><strong className="metric">{attendanceReviewed}/32</strong><span>con asistencia revisada</span></article>
             <article className="card"><strong className="metric">{attendanceQuantified}/32</strong><span>con asistencia porcentual cuantificada</span></article>
-            <article className="card"><strong className="metric">{productionCovered}/32</strong><span>con producción comparable 2025</span></article>
+            <article className="card"><strong className="metric">{productionAnyQuantified}/32</strong><span>con producción cuantificada en algún corte documentado</span></article>
+            <article className="card"><strong className="metric">{productionShortCutCovered}/32</strong><span>con corte comparable 27 feb.–26 jul. 2025</span></article>
+            <article className="card"><strong className="metric">{productionAnnualCovered}/32</strong><span>con año legislativo 16 ago. 2024–26 jul. 2025</span></article>
             <article className="card"><strong className="metric">{committeesCovered}/32</strong><span>con actividad o rol de comisión documentado</span></article>
             <article className="card"><strong className="metric">{committeeLeadershipCovered}/32</strong><span>con cargo directivo en comisión permanente</span></article>
             <article className="card"><strong className="metric">{fullPatrimony}/32</strong><span>con patrimonio neto cuantificado</span></article>
@@ -121,7 +130,7 @@ export default function IntegralSenateRankingPage() {
           <p className="eyebrow">Auditoría 32/32</p>
           <h2>Matriz comparativa</h2>
           <p className="lede">
-            Cobertura = evidencia en siete dimensiones: patrimonio actual, revisión histórica patrimonial, asistencia al Pleno, producción comparable, comisiones, beneficios individuales e iniciativas verificadas. No es una nota ética ni un indicador de corrupción.
+            Cobertura = evidencia en siete dimensiones: patrimonio actual, revisión histórica patrimonial, asistencia al Pleno, producción cuantificada, comisiones, beneficios individuales e iniciativas verificadas. No es una nota ética ni un indicador de corrupción.
           </p>
           <div className="initiative-list">
             {rows.map((row, index) => (
@@ -135,14 +144,14 @@ export default function IntegralSenateRankingPage() {
                 <div className="grid attendance-detail">
                   <article className="card"><strong className="metric">{row.coverage}%</strong><span>expediente observable</span></article>
                   <article className="card"><strong className="metric">{row.latestAttendance ? `${row.latestAttendance.presenceRate}%` : row.attendanceEvidence.length ? "Parcial" : "—"}</strong><span>asistencia al Pleno</span></article>
-                  <article className="card"><strong className="metric">{row.production?.projectsIntroduced ?? "—"}</strong><span>proyectos · 27 feb.–26 jul. 2025</span></article>
+                  <article className="card"><strong className="metric">{row.production?.projectsIntroduced ?? row.annualProduction?.initiativesIntroduced ?? "—"}</strong><span>{row.production ? "proyectos · 27 feb.–26 jul. 2025" : row.annualProduction ? "iniciativas · 16 ago. 2024–26 jul. 2025" : "producción pendiente"}</span></article>
                   <article className="card"><strong className="metric">{row.committeeCurrent?.verifiedMeetings ?? "—"}</strong><span>reuniones de comisión verificadas · último corte 2026</span></article>
                   <article className="card"><strong className="metric">{row.committeeCurrent?.verifiedMinutes ?? "—"}</strong><span>minutos verificados en comisión</span></article>
                   <article className="card"><strong className="metric">{row.committeeLeadership.length || "—"}</strong><span>roles directivos en comisiones · ago. 2024–ago. 2026</span></article>
                   <article className="card"><strong className="metric">{row.snapshot?.reportedNetWorth != null ? money(row.snapshot.reportedNetWorth) : row.snapshot?.reportedAssets != null ? "Activos disponibles" : "—"}</strong><span>patrimonio documentado</span></article>
                 </div>
                 {row.latestAttendance ? <p><strong>Asistencia:</strong> {row.latestAttendance.period}. Excusas {row.latestAttendance.excusedRate}% · sin excusa {row.latestAttendance.absenceRate}%.</p> : row.attendanceEvidence.length ? <p><strong>Asistencia:</strong> evidencia parcial localizada; todavía no se convierte en porcentaje porque el denominador o la unidad no es comparable.</p> : null}
-                {row.production ? <p><strong>Producción:</strong> {row.production.projectsIntroduced} proyectos en {row.production.period}.</p> : null}
+                {row.production ? <p><strong>Producción:</strong> {row.production.projectsIntroduced} proyectos en {row.production.period}.</p> : row.annualProduction ? <p><strong>Producción anual:</strong> {row.annualProduction.initiativesIntroduced} iniciativas en {row.annualProduction.period}.</p> : null}
                 {row.committeeLeadership.length ? <p><strong>Dirección de comisiones:</strong> {row.committeeLeadership.map((item) => `${item.role} de ${item.committee}`).join(" · ")}.</p> : null}
                 {row.history.length ? <p><strong>Historia patrimonial:</strong> {row.history.length} referencia(s) anterior(es) con expediente patrimonial localizada(s).</p> : row.historyResolution ? <p><strong>Historia patrimonial:</strong> {row.historyResolution.status === "antecedent_found" ? `antecedente localizado: ${row.historyResolution.priorOffice ?? "cargo público anterior"}.` : "revisión realizada; no se identificó declaración pública anterior obligatoria."}</p> : null}
                 {row.benefits.length ? <p><strong>Beneficios individualizados:</strong> {row.benefits.length}. El barrilito se identifica como fondo social y no como salario.</p> : null}
@@ -161,8 +170,8 @@ export default function IntegralSenateRankingPage() {
           <div className="grid">
             <article className="card"><h3>Patrimonio no puntúa desempeño</h3><p>Tener más, menos o aumentar patrimonio no produce una nota positiva o negativa. Solo medimos disponibilidad y trazabilidad documental.</p></article>
             <article className="card"><h3>Asistencia parcial no es porcentaje</h3><p>Una excusa, un pase de lista o una presencia puntual se publica como evidencia, pero no se convierte en tasa hasta cerrar el total de sesiones y la unidad de medición.</p></article>
+            <article className="card"><h3>Producción conserva su corte</h3><p>El corte corto de febrero-julio de 2025 y el año legislativo completo agosto 2024-julio 2025 se muestran por separado. No se ordenan entre sí como si fueran la misma serie.</p></article>
             <article className="card"><h3>Comisiones requieren denominador</h3><p>Los minutos y reuniones verificadas se muestran, pero no se convierten en porcentaje hasta conocer todas las convocatorias que correspondían a cada senador en el mismo período.</p></article>
-            <article className="card"><h3>Períodos separados</h3><p>Producción 2025, asistencia 2026 y datos históricos se etiquetan por separado. Un índice de desempeño solo combinará cortes temporalmente compatibles.</p></article>
           </div>
         </div>
       </section>
