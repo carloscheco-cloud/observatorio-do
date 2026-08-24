@@ -27,6 +27,17 @@ jobs:
       - name: Reconstruct Senate sources
         run: python -m app.modules.senate_reconstruction
         working-directory: backend
+      - name: Persist reconstruction outputs
+        run: |
+          git config user.name "oed-reconstruction-bot"
+          git config user.email "oed-bot@users.noreply.github.com"
+          git add backend/data/oed/senate
+          if git diff --cached --quiet; then
+            echo "No reconstructed dataset changes"
+          else
+            git commit -m "data: capture Senate reconstruction run"
+            git push
+          fi
       - name: Validate reconstruction
         run: |
           python - <<'PY'
@@ -62,14 +73,3 @@ jobs:
           if not sources.get("approved") or not sources.get("expired"):
               raise SystemExit("Approved/perimidos source discovery returned no documents")
           PY
-      - name: Commit reconstructed datasets
-        run: |
-          git config user.name "oed-reconstruction-bot"
-          git config user.email "oed-bot@users.noreply.github.com"
-          git add backend/data/oed/senate
-          if git diff --cached --quiet; then
-            echo "No reconstructed dataset changes"
-          else
-            git commit -m "data: reconstruct Senate attendance and legislative sources"
-            git push
-          fi
