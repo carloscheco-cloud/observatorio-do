@@ -4,8 +4,8 @@ import { senators } from "@/lib/legislators";
 import { individualSenateBenefits } from "@/lib/senator-benefits-individual";
 import { senatorCommitteeLeadership } from "@/lib/senator-committee-leadership";
 import { senatorCommitteeSummary } from "@/lib/senator-committee-summary";
+import { senatorPatrimonyHistoryResolution } from "@/lib/senator-patrimony-history-resolution";
 import { verifiedSenatorInitiatives } from "@/lib/senator-initiatives-verified";
-import { senatorIntegrityPoliticsInitiatives } from "@/lib/senator-integrity-politics-initiative";
 
 function money(value?: number) {
   if (value == null) return "—";
@@ -49,16 +49,14 @@ export default async function SenatorEvidenceLayout({
   const benefits = individualSenateBenefits[id] ?? [];
   const leadership = senatorCommitteeLeadership[id] ?? [];
   const committeePeriods = senatorCommitteeSummary[id] ?? [];
-  const initiatives = [
-    ...(verifiedSenatorInitiatives[id] ?? []),
-    ...(senatorIntegrityPoliticsInitiatives[id] ?? []),
-  ];
+  const initiatives = verifiedSenatorInitiatives[id] ?? [];
+  const patrimonyHistoryResolution = senatorPatrimonyHistoryResolution[id];
 
   return (
     <>
       {children}
 
-      {(benefits.length || leadership.length || committeePeriods.length || initiatives.length) && senator ? (
+      {(benefits.length || leadership.length || committeePeriods.length || initiatives.length || patrimonyHistoryResolution) && senator ? (
         <section className="section profile-muted-section">
           <div className="shell">
             <p className="eyebrow">Expediente complementario verificado</p>
@@ -66,6 +64,21 @@ export default async function SenatorEvidenceLayout({
             <p className="lede">
               Esta sección contiene evidencia atribuible al senador concreto y evita sustituir datos individuales por promedios generales del Senado.
             </p>
+
+            {patrimonyHistoryResolution ? (
+              <>
+                <h3 className="research-heading">Antecedente para evolución patrimonial</h3>
+                <article className="card">
+                  <span className={`source-status source-${patrimonyHistoryResolution.status === "antecedent_found" ? "verified" : "reported"}`}>
+                    {patrimonyHistoryResolution.status === "antecedent_found" ? "Antecedente localizado" : "Sin declaración previa identificada"}
+                  </span>
+                  {patrimonyHistoryResolution.priorOffice ? <h3>{patrimonyHistoryResolution.priorOffice}</h3> : <h3>Revisión de antecedente público</h3>}
+                  {patrimonyHistoryResolution.period ? <p><strong>Período:</strong> {patrimonyHistoryResolution.period}</p> : null}
+                  <p>{patrimonyHistoryResolution.note}</p>
+                  <a href={patrimonyHistoryResolution.sourceUrl} target="_blank" rel="noreferrer">Ver fuente</a>
+                </article>
+              </>
+            ) : null}
 
             {benefits.length ? (
               <>
