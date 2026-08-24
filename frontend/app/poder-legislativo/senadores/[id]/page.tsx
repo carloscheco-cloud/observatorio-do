@@ -6,6 +6,9 @@ import { senators } from "@/lib/legislators";
 import { senatorCompletion } from "@/lib/senator-completion";
 import { verifiedSenatorAssetDeclarations } from "@/lib/senator-asset-declarations-verified";
 import { verifiedSenatorAttendance } from "@/lib/senator-attendance-verified";
+import { senatorPatrimonyFirst16 } from "@/lib/senator-patrimony-first16";
+import { senatorPatrimonySecond16 } from "@/lib/senator-patrimony-second16";
+import { senatorPatrimonyHistory } from "@/lib/senator-patrimony-history";
 import { provinceLocatorMapUrl, provinceMapAttributionUrl } from "@/lib/province-locator-map";
 import {
   senateBenefitResearchNotes,
@@ -30,6 +33,10 @@ function money(value?: number) {
     currency: "DOP",
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+function percentage(value: number) {
+  return `${value >= 0 ? "+" : ""}${value.toFixed(1)}%`;
 }
 
 function benefitValue(item: (typeof senateCompensation)[number]) {
@@ -96,13 +103,23 @@ export default async function SenatorProfilePage({ params }: PageProps) {
     ...(verifiedSenatorAssetDeclarations[senator.id] ?? []),
   ].sort((a, b) => a.date.localeCompare(b.date));
 
-  const provinceMap = provinceLocatorMapUrl(senator.province);
-  const firstDeclaration = declarations[0];
+  const snapshot = senatorPatrimonyFirst16[senator.id] ?? senatorPatrimonySecond16[senator.id];
+  const history = senatorPatrimonyHistory[senator.id] ?? [];
   const latestDeclaration = declarations[declarations.length - 1];
+  const currentNetWorth = snapshot?.reportedNetWorth;
+  const comparableHistoricalPoint = [...history]
+    .reverse()
+    .find((point) => point.comparability === "comparable" && point.reportedNetWorth != null);
+  const historicalNetWorth = comparableHistoricalPoint?.reportedNetWorth;
   const patrimonyChange =
-    firstDeclaration?.netWorth != null && latestDeclaration?.netWorth != null
-      ? latestDeclaration.netWorth - firstDeclaration.netWorth
-      : null;
+    currentNetWorth != null && historicalNetWorth != null ? currentNetWorth - historicalNetWorth : null;
+  const patrimonyChangeRate =
+    patrimonyChange != null && historicalNetWorth ? (patrimonyChange / historicalNetWorth) * 100 : null;
+  const declarationCount = declarations.length + history.filter((point) => point.sourceUrl).length;
+  const declarationUrl = snapshot?.declarationUrl ?? latestDeclaration?.sourceUrl ?? senateObservationSources.declarations;
+  const declarationIsDirect = snapshot?.declarationLinkType === "direct_pdf" || Boolean(latestDeclaration);
+
+  const provinceMap = provinceLocatorMapUrl(senator.province);
 
   return (
     <>
@@ -189,49 +206,107 @@ export default async function SenatorProfilePage({ params }: PageProps) {
           <p className="eyebrow">Transparencia patrimonial</p>
           <h2>Patrimonio y declaraciones juradas</h2>
           <p className="lede">
-            Evolución del patrimonio declarado desde la entrada al cargo hasta la declaración más reciente disponible.
+            El expediente combina la declaración vigente con todas las referencias históricas localizadas. Una variación patrimonial no implica por sí sola irregularidad.
           </p>
+
           <div className="grid">
             <article className="card">
               <span className="source-status source-verified">Ley 311-14</span>
-              <h3>Declaraciones oficiales localizadas</h3>
-              <strong className="metric">{declarations.length}</strong>
-              <p>{declarations.length ? `Primera declaración: ${firstDeclaration?.date}.` : "PDF individual pendiente de enlace."}</p>
+              <h3>Declaraciones y referencias localizadas</h3>
+              <strong className="metric">{declarationCount || (snapshot ? 1 : 0)}</strong>
+              <p><strong>Último corte:</strong> {snapshot?.declarationPeriod ?? latestDeclaration?.date ?? "Pendiente"}</p>
               <p className="profile-actions">
-                {latestDeclaration ? (
-                  <a className="button" href={latestDeclaration.sourceUrl} target="_blank" rel="noreferrer">Ver declaración jurada</a>
-                ) : (
-                  <a className="button" href={senateObservationSources.declarations} target="_blank" rel="noreferrer">Buscar declaración oficial</a>
-                )}
+                <a className="button" href={declarationUrl} target="_blank" rel="noreferrer">
+                  {declarationIsDirect ? "Ver declaración jurada" : "Abrir fuente oficial"}
+                </a>
               </p>
             </article>
+
             <article className="card">
               <h3>Patrimonio neto declarado</h3>
-              <strong className="metric">{latestDeclaration?.netWorth != null ? money(latestDeclaration.netWorth) : "Pendiente"}</strong>
-              <p>Último patrimonio neto extraído y verificado del formulario oficial.</p>
+              <strong className="metric">{currentNetWorth != null ? money(currentNetWorth) : "No calculado"}</strong>
+              {snapshot?.reportedAssets != null ? <p><strong>Activos:</strong> {money(snapshot.reportedAssets)}</p> : null}
+              {snapshot?.reportedLiabilities != null ? <p><strong>Pasivos:</strong> {money(snapshot.reportedLiabilities)}</p> : null}
+              {currentNetWorth == null && snapshot?.reportedAssets != null ? (
+                <p>La fuente publica activos/total, pero todavía no existe un pasivo comparable para calcular patrimonio neto.</p>
+              ) : null}
             </article>
+
             <article className="card">
               <h3>Evolución patrimonial</h3>
-              <strong className="metric">{patrimonyChange != null ? money(patrimonyChange) : "Pendiente"}</strong>
-              <p>La variación patrimonial no implica por sí sola irregularidad.</p>
+              <strong className="metric">{patrimonyChange != null ? money(patrimonyChange) : history.length ? "Historia disponible" : "Sin serie previa"}</strong>
+              {patrimonyChangeRate != null ? <p><strong>Variación comparable:</strong> {percentage(patrimonyChangeRate)}</p> : null}
+              {comparableHistoricalPoint ? (
+                <p>{comparableHistoricalPoint.date} → {snapshot?.declarationPeriod ?? "última disponible"}</p>
+              ) : history.length ? (
+                <p>Hay referencias históricas, pero no todas usan la misma metodología para calcular un porcentaje.</p>
+              ) : (
+                <p>No se ha localizado todavía una declaración patrimonial anterior comparable.</p>
+              )}
             </article>
           </div>
+
+          {history.length || snapshot ? (
+            <>
+              <h3 className="research-heading">Evolución e historia patrimonial</h3>
+              <div className="declaration-timeline">
+                {history.map((point, index) => (
+                  <article className="card" key={`${senator.id}-history-${point.date}-${index}`}>
+                    <p className="senator-meta">
+                      <span className="badge">{point.date}</span>
+                      <span>{point.comparability === "comparable" ? "Comparable" : point.comparability === "partial" ? "Referencia parcial" : "Referencia documental"}</span>
+                    </p>
+                    {point.office ? <h3>{point.office}</h3> : null}
+                    {point.reportedAssets != null ? <p><strong>Activos:</strong> {money(point.reportedAssets)}</p> : null}
+                    {point.reportedLiabilities != null ? <p><strong>Pasivos:</strong> {money(point.reportedLiabilities)}</p> : null}
+                    {point.reportedNetWorth != null ? <p><strong>Patrimonio neto:</strong> {money(point.reportedNetWorth)}</p> : null}
+                    {point.reportedAmount != null ? <p><strong>{point.reportedAmountLabel ?? "Monto publicado"}:</strong> {money(point.reportedAmount)}</p> : null}
+                    {point.note ? <p>{point.note}</p> : null}
+                    <a href={point.sourceUrl} target="_blank" rel="noreferrer">Ver fuente histórica</a>
+                  </article>
+                ))}
+
+                {snapshot ? (
+                  <article className="card">
+                    <p className="senator-meta"><span className="badge">{snapshot.declarationPeriod}</span><span>Última disponible</span></p>
+                    <h3>Declaración patrimonial actual</h3>
+                    {snapshot.reportedAssets != null ? <p><strong>Activos:</strong> {money(snapshot.reportedAssets)}</p> : null}
+                    {snapshot.reportedLiabilities != null ? <p><strong>Pasivos:</strong> {money(snapshot.reportedLiabilities)}</p> : null}
+                    {snapshot.reportedNetWorth != null ? <p><strong>Patrimonio neto:</strong> {money(snapshot.reportedNetWorth)}</p> : null}
+                    {snapshot.priorDeclarationId ? <p><strong>Declaración anterior identificada:</strong> {snapshot.priorDeclarationId}</p> : null}
+                    {snapshot.note ? <p>{snapshot.note}</p> : null}
+                    <a href={snapshot.sourceUrl} target="_blank" rel="noreferrer">Ver fuente actual</a>
+                  </article>
+                ) : null}
+              </div>
+            </>
+          ) : (
+            <div className="notice">Todavía no se ha localizado una serie patrimonial verificable para este senador.</div>
+          )}
+
           {declarations.length ? (
-            <div className="declaration-timeline">
-              {declarations.map((declaration) => (
-                <article className="card" key={`${senator.id}-${declaration.date}-${declaration.type}-${declaration.sourceUrl}`}>
-                  <span className="badge">{declarationTypeLabel(declaration.type)}</span>
-                  <h3>{declaration.date}</h3>
-                  {declaration.assets != null ? <p><strong>Activos:</strong> {money(declaration.assets)}</p> : null}
-                  {declaration.liabilities != null ? <p><strong>Pasivos:</strong> {money(declaration.liabilities)}</p> : null}
-                  {declaration.netWorth != null ? <p><strong>Patrimonio neto:</strong> {money(declaration.netWorth)}</p> : null}
-                  {declaration.note ? <p>{declaration.note}</p> : null}
-                  <a href={declaration.sourceUrl} target="_blank" rel="noreferrer">Abrir PDF oficial</a>
-                </article>
-              ))}
-            </div>
+            <>
+              <h3 className="research-heading">Documentos oficiales enlazados</h3>
+              <div className="declaration-timeline">
+                {declarations.map((declaration) => (
+                  <article className="card" key={`${senator.id}-${declaration.date}-${declaration.type}-${declaration.sourceUrl}`}>
+                    <span className="badge">{declarationTypeLabel(declaration.type)}</span>
+                    <h3>{declaration.date}</h3>
+                    {declaration.assets != null ? <p><strong>Activos:</strong> {money(declaration.assets)}</p> : null}
+                    {declaration.liabilities != null ? <p><strong>Pasivos:</strong> {money(declaration.liabilities)}</p> : null}
+                    {declaration.netWorth != null ? <p><strong>Patrimonio neto:</strong> {money(declaration.netWorth)}</p> : null}
+                    {declaration.note ? <p>{declaration.note}</p> : null}
+                    <a href={declaration.sourceUrl} target="_blank" rel="noreferrer">Abrir PDF oficial</a>
+                  </article>
+                ))}
+              </div>
+            </>
           ) : null}
-          <p><a href={senateObservationSources.declarationLaw} target="_blank" rel="noreferrer">Ver Ley 311-14</a></p>
+
+          <p className="profile-actions">
+            <Link className="button secondary" href="/poder-legislativo/patrimonio/evolucion">Comparar evolución de los 32 senadores</Link>
+            <a href={senateObservationSources.declarationLaw} target="_blank" rel="noreferrer">Ver Ley 311-14</a>
+          </p>
         </div>
       </section>
 
