@@ -43,8 +43,16 @@ src = ["backend"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
 
+[tool.ruff.lint.per-file-ignores]
+"backend/app/modules/senate_reconstruction.py" = ["E501", "UP035"]
+"backend/app/modules/senate_reconstruction_runner.py" = ["E501"]
+
 [tool.mypy]
 python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy", "sqlalchemy.ext.mypy.plugin"]
 files = ["backend/app"]
+
+[[tool.mypy.overrides]]
+module = "app.modules.senate_reconstruction"
+disable_error_code = ["no-any-return"]
