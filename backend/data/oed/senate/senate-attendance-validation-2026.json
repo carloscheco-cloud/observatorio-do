@@ -1,0 +1,124 @@
+{
+  "press_benchmark": [
+    {
+      "senator_id": "andres-guillermo-lama-perez",
+      "benchmark_sessions": 26,
+      "official_sessions": 25,
+      "expected_present": 26,
+      "actual_present": 25,
+      "expected_excused": 0,
+      "actual_excused": 0,
+      "matches": false,
+      "benchmark_is_secondary": true
+    },
+    {
+      "senator_id": "maria-mercedes-ortiz-dilone",
+      "benchmark_sessions": 26,
+      "official_sessions": 25,
+      "expected_present": 26,
+      "actual_present": 25,
+      "expected_excused": 0,
+      "actual_excused": 0,
+      "matches": false,
+      "benchmark_is_secondary": true
+    },
+    {
+      "senator_id": "dagoberto-rodriguez-adames",
+      "benchmark_sessions": 26,
+      "official_sessions": 25,
+      "expected_present": 26,
+      "actual_present": 25,
+      "expected_excused": 0,
+      "actual_excused": 0,
+      "matches": false,
+      "benchmark_is_secondary": true
+    },
+    {
+      "senator_id": "hector-elpidio-acosta-restituyo",
+      "benchmark_sessions": 26,
+      "official_sessions": 25,
+      "expected_present": 16,
+      "actual_present": 12,
+      "expected_excused": 10,
+      "actual_excused": 13,
+      "matches": false,
+      "benchmark_is_secondary": true
+    },
+    {
+      "senator_id": "ginnette-altagracia-bournigal",
+      "benchmark_sessions": 26,
+      "official_sessions": 25,
+      "expected_present": 18,
+      "actual_present": 16,
+      "expected_excused": 8,
+      "actual_excused": 9,
+      "matches": false,
+      "benchmark_is_secondary": true
+    },
+    {
+      "senator_id": "felix-ramon-bautista-rosario",
+      "benchmark_sessions": 26,
+      "official_sessions": 25,
+      "expected_present": 15,
+      "actual_present": 13,
+      "expected_excused": 11,
+      "actual_excused": 11,
+      "matches": false,
+      "benchmark_is_secondary": true
+    },
+    {
+      "senator_id": "ricardo-de-los-santos-polanco",
+      "benchmark_sessions": 26,
+      "official_sessions": 25,
+      "expected_present": 26,
+      "actual_present": 25,
+      "expected_excused": 0,
+      "actual_excused": 0,
+      "matches": false,
+      "benchmark_is_secondary": true
+    },
+    {
+      "senator_id": "daniel-enrique-rivera-reyes",
+      "benchmark_sessions": 26,
+      "official_sessions": 25,
+      "expected_present": 26,
+      "actual_present": 25,
+      "expected_excused": 0,
+      "actual_excused": 0,
+      "matches": false,
+      "benchmark_is_secondary": true
+    },
+    {
+      "senator_id": "casimiro-antonio-marte-familia",
+      "benchmark_sessions": 26,
+      "official_sessions": 25,
+      "expected_present": 26,
+      "actual_present": 23,
+      "expected_excused": 0,
+      "actual_excused": 1,
+      "matches": false,
+      "benchmark_is_secondary": true
+    },
+    {
+      "senator_id": "odalis-rafael-rodriguez-rodriguez",
+      "benchmark_sessions": 26,
+      "official_sessions": 25,
+      "expected_present": 26,
+      "actual_present": 25,
+      "expected_excused": 0,
+      "actual_excused": 0,
+      "matches": false,
+      "benchmark_is_secondary": true
+    }
+  ],
+  "session_count_discrepancy": {
+    "official_numbered_sessions": 25,
+    "official_session_range": [
+      101,
+      125
+    ],
+    "secondary_press_reported_sessions": 26,
+    "resolved": false,
+    "publication_rule": "Primary Senate documents control; no unverified session is synthesized."
+  }
+}
