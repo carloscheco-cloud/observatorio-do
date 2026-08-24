@@ -31,6 +31,11 @@ jobs:
           python-version: "3.12"
       - name: Install OED
         run: pip install .
+      - name: Install scanned-PDF diagnostics
+        if: github.event_name == 'pull_request'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y poppler-utils tesseract-ocr tesseract-ocr-spa
       - name: Reconstruct Senate attendance
         run: |
           if [ -f app/modules/senate_reconstruction_runner.py ]; then
@@ -87,16 +92,19 @@ jobs:
           validation = json.loads((root / "senate-attendance-validation-2026.json").read_text())
 
           session_numbers = [row["session"] for row in sessions]
-          if session_numbers != list(range(101, 127)):
-              raise SystemExit(f"Expected sessions 101..126 exactly, got {session_numbers}")
-          if len(records) != 32 * 26:
-              raise SystemExit(f"Expected 832 session/senator records, got {len(records)}")
+          if len(session_numbers) not in {25, 26}:
+              raise SystemExit(f"Expected 25 numbered Senate sessions plus resolution of the reported 26th event; got {session_numbers}")
+          if len(records) != 32 * len(session_numbers):
+              raise SystemExit(f"Expected {32 * len(session_numbers)} session/senator records, got {len(records)}")
           if len(summary) != 32:
               raise SystemExit(f"Expected 32 senators, got {len(summary)}")
           unknown = [row for row in records if row["status"] == "unknown"]
           if unknown:
               raise SystemExit(f"Unclassified session records remain: {len(unknown)}")
-          mismatches = [row for row in validation if not row["matches"]]
-          if mismatches:
-              raise SystemExit(f"Known 10-senator benchmark mismatch: {mismatches}")
+          if len(session_numbers) == 26:
+              mismatches = [row for row in validation if not row["matches"]]
+              if mismatches:
+                  raise SystemExit(f"Known 10-senator benchmark mismatch: {mismatches}")
+          else:
+              raise SystemExit("25 numbered sessions reconstructed; resolve the documented 26-session denominator before publication")
           PY
