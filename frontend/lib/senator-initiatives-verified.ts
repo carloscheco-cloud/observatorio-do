@@ -33,6 +33,60 @@ export const verifiedSenatorInitiatives: Record<string, SenatorInitiative[]> = {
   "odalis-rafael-rodriguez-rodriguez": [
     { number: "00235-2024-SLO-SE", title: "Resolución para promover actividades de promoción, educación y prevención de la salud del hombre", role: "Coproponente", status: "approved_senate", sourceUrl: "https://www.senadord.gob.do/senadores-favorecen-resolucion-promueve-educacion-y-prevencion-de-la-salud-del-hombre-en-el-pais/" },
   ],
+  "aracelis-villanueva-figueroa": [
+    {
+      title: "Proyecto de ley que regula el expendio de bebidas alcohólicas en la República Dominicana",
+      role: "Proponente",
+      status: "committee",
+      sourceUrl: "https://www.senadord.gob.do/comision-de-industria-comercio-y-zonas-francas-estudia-proyectos-sobre-expendio-de-bebidas-alcoholicas/",
+    },
+    {
+      title: "Ley Orgánica de la Policía Nacional: creación de policía especializada en búsqueda y rescate de personas desaparecidas o secuestradas",
+      role: "Proponente de la modificación aprobada en segunda lectura",
+      status: "approved_senate",
+      sourceUrl: "https://www.senadord.gob.do/senado-aprueba-presupuesto-general-del-estado-para-el-ano-2026/",
+    },
+  ],
+  "pedro-antonio-tineo-nunez": [
+    {
+      title: "Proyecto de ley para el control de expendio, suministro y consumo de bebidas alcohólicas en la República Dominicana",
+      role: "Proponente",
+      status: "committee",
+      sourceUrl: "https://www.senadord.gob.do/comision-de-industria-comercio-y-zonas-francas-estudia-proyectos-sobre-expendio-de-bebidas-alcoholicas/",
+    },
+  ],
+  "antonio-manuel-taveras-guzman": [
+    {
+      title: "Proyecto de ley de modificación del Código Procesal Penal de la República Dominicana",
+      role: "Proponente de una de las iniciativas fusionadas y presidente de la Comisión de Justicia",
+      status: "approved_senate",
+      sourceUrl: "https://www.senadord.gob.do/comision-de-justicia-y-derechos-humanos-avanza-analisis-proyecto-ley-de-modificacion-del-codigo-procesal-penal/",
+    },
+  ],
+  "omar-leonel-fernandez-dominguez": [
+    {
+      title: "Proyecto de ley de modificación del Código Procesal Penal de la República Dominicana",
+      role: "Proponente de una de las iniciativas fusionadas",
+      status: "approved_senate",
+      sourceUrl: "https://www.senadord.gob.do/comision-de-justicia-y-derechos-humanos-avanza-analisis-proyecto-ley-de-modificacion-del-codigo-procesal-penal/",
+    },
+  ],
+  "felix-ramon-bautista-rosario": [
+    {
+      title: "Proyecto de ley de modificación del Código Procesal Penal de la República Dominicana",
+      role: "Proponente de una de las iniciativas fusionadas",
+      status: "approved_senate",
+      sourceUrl: "https://www.senadord.gob.do/comision-de-justicia-y-derechos-humanos-avanza-analisis-proyecto-ley-de-modificacion-del-codigo-procesal-penal/",
+    },
+  ],
+  "cristobal-venerado-castillo-liriano": [
+    {
+      title: "Proyecto de ley de modificación del Código Procesal Penal de la República Dominicana",
+      role: "Proponente de una de las iniciativas fusionadas",
+      status: "approved_senate",
+      sourceUrl: "https://www.senadord.gob.do/comision-de-justicia-y-derechos-humanos-avanza-analisis-proyecto-ley-de-modificacion-del-codigo-procesal-penal/",
+    },
+  ],
 };
 
 const electoralReformSponsors = [
