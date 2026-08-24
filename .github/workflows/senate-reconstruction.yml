@@ -31,8 +31,7 @@ jobs:
           python-version: "3.12"
       - name: Install OED
         run: pip install .
-      - name: Install scanned-PDF diagnostics
-        if: github.event_name == 'pull_request'
+      - name: Install scanned-PDF support
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y poppler-utils tesseract-ocr tesseract-ocr-spa
@@ -41,7 +40,11 @@ jobs:
           if [ -f app/modules/senate_reconstruction_runner.py ]; then
             python -m app.modules.senate_reconstruction_runner
           else
-            python -m app.modules.senate_reconstruction
+            python - <<'PY'
+          from pathlib import Path
+          from app.modules.senate_reconstruction import write_attendance_outputs
+          write_attendance_outputs(Path("data/oed/senate"))
+          PY
           fi
         working-directory: backend
       - name: Print reconstruction diagnostics
@@ -56,7 +59,7 @@ jobs:
           validation = json.loads((root / "senate-attendance-validation-2026.json").read_text())
           print("SESSIONS", [row["session"] for row in sessions])
           print("COUNTS", len(sessions), len(records), len(summary))
-          print("VALIDATION", json.dumps(validation, ensure_ascii=False))
+          print("SESSION_DISCREPANCY", json.dumps(validation["session_count_discrepancy"], ensure_ascii=False))
           unknown = [r for r in records if r["status"] == "unknown"]
           print("UNKNOWN_COUNT", len(unknown))
           print("UNKNOWN_SAMPLE", json.dumps(unknown[:50], ensure_ascii=False))
@@ -70,7 +73,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No reconstructed dataset changes"
           else
-            git commit -m "data: capture Senate reconstruction run"
+            git commit -m "data: capture Senate attendance reconstruction"
             git push
           fi
       - name: Upload reconstruction artifact
@@ -79,7 +82,7 @@ jobs:
           name: senate-reconstruction
           path: backend/data/oed/senate
           if-no-files-found: error
-      - name: Validate attendance reconstruction
+      - name: Validate official attendance reconstruction
         run: |
           python - <<'PY'
           import json
@@ -91,20 +94,22 @@ jobs:
           summary = json.loads((root / "senate-attendance-summary-2026.json").read_text())
           validation = json.loads((root / "senate-attendance-validation-2026.json").read_text())
 
-          session_numbers = [row["session"] for row in sessions]
-          if len(session_numbers) not in {25, 26}:
-              raise SystemExit(f"Expected 25 numbered Senate sessions plus resolution of the reported 26th event; got {session_numbers}")
-          if len(records) != 32 * len(session_numbers):
-              raise SystemExit(f"Expected {32 * len(session_numbers)} session/senator records, got {len(records)}")
+          expected_sessions = list(range(101, 126))
+          actual_sessions = [row["session"] for row in sessions]
+          if actual_sessions != expected_sessions:
+              raise SystemExit(f"Expected official sessions 101..125 exactly, got {actual_sessions}")
+          if len(records) != 32 * 25:
+              raise SystemExit(f"Expected 800 session/senator records, got {len(records)}")
           if len(summary) != 32:
               raise SystemExit(f"Expected 32 senators, got {len(summary)}")
           unknown = [row for row in records if row["status"] == "unknown"]
           if unknown:
-              raise SystemExit(f"Unclassified session records remain: {len(unknown)}")
-          if len(session_numbers) == 26:
-              mismatches = [row for row in validation if not row["matches"]]
-              if mismatches:
-                  raise SystemExit(f"Known 10-senator benchmark mismatch: {mismatches}")
-          else:
-              raise SystemExit("25 numbered sessions reconstructed; resolve the documented 26-session denominator before publication")
+              raise SystemExit(f"Unclassified official session records remain: {len(unknown)}; sample={unknown[:12]}")
+          for senator_id, row in summary.items():
+              if row["sessions_classified"] != 25:
+                  raise SystemExit(f"{senator_id} has only {row['sessions_classified']} classified official sessions")
+          discrepancy = validation["session_count_discrepancy"]
+          if discrepancy["official_numbered_sessions"] != 25:
+              raise SystemExit(f"Unexpected official session count metadata: {discrepancy}")
+          print("Official 25-session primary-source matrix validated; press 26-session discrepancy retained separately.")
           PY
