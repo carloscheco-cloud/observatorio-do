@@ -29,20 +29,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Auto-format diagnostic Senate sources
-        if: github.event_name == 'pull_request'
-        run: |
-          git fetch origin "$GITHUB_HEAD_REF"
-          git checkout "$GITHUB_HEAD_REF"
-          pip install "ruff>=0.9,<1"
-          ruff format backend/app/modules/senate_reconstruction.py backend/app/modules/senate_reconstruction_runner.py
-          if ! git diff --quiet -- backend/app/modules/senate_reconstruction.py backend/app/modules/senate_reconstruction_runner.py; then
-            git config user.name "oed-reconstruction-bot"
-            git config user.email "oed-bot@users.noreply.github.com"
-            git add backend/app/modules/senate_reconstruction.py backend/app/modules/senate_reconstruction_runner.py
-            git commit -m "style: format Senate reconstruction"
-            git push origin "HEAD:$GITHUB_HEAD_REF"
-          fi
       - name: Install OED
         run: pip install .
       - name: Install scanned-PDF support
