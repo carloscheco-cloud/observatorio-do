@@ -301,7 +301,7 @@ def reconstruct_session(session: int) -> dict[str, object]:
     }
 
 
-@app.get("/api/senate-reconstruct")
+@app.get("/")
 def senate_reconstruct(
     mode: str = Query(default="catalog", pattern="^(catalog|session)$"),
     session: int | None = Query(default=None, ge=90, le=140),
