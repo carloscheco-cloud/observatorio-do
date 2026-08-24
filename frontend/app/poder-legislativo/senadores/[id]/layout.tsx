@@ -5,6 +5,7 @@ import { individualSenateBenefits } from "@/lib/senator-benefits-individual";
 import { senatorCommitteeLeadership } from "@/lib/senator-committee-leadership";
 import { senatorCommitteeSummary } from "@/lib/senator-committee-summary";
 import { verifiedSenatorInitiatives } from "@/lib/senator-initiatives-verified";
+import { senatorIntegrityPoliticsInitiatives } from "@/lib/senator-integrity-politics-initiative";
 
 function money(value?: number) {
   if (value == null) return "—";
@@ -48,7 +49,10 @@ export default async function SenatorEvidenceLayout({
   const benefits = individualSenateBenefits[id] ?? [];
   const leadership = senatorCommitteeLeadership[id] ?? [];
   const committeePeriods = senatorCommitteeSummary[id] ?? [];
-  const initiatives = verifiedSenatorInitiatives[id] ?? [];
+  const initiatives = [
+    ...(verifiedSenatorInitiatives[id] ?? []),
+    ...(senatorIntegrityPoliticsInitiatives[id] ?? []),
+  ];
 
   return (
     <>
