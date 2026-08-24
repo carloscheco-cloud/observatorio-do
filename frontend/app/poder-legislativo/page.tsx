@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { PowerObservationMap } from "@/components/power-observation-map";
 import { SenateDirectory } from "@/components/senate-directory";
@@ -30,9 +31,9 @@ export default async function LegislativeBranchPage({
           </p>
           <p className="senator-links">
             <a className="button" href="#senadores">Ver los 32 senadores</a>
-            <a className="button secondary" href="/poder-legislativo/asistencia">Ranking de asistencia y comisiones</a>
-            <a className="button secondary" href="/poder-legislativo/patrimonio">Patrimonio y declaraciones juradas</a>
-            <a className="button secondary" href="/poder-legislativo/patrimonio/evolucion">Evolución patrimonial histórica</a>
+            <Link className="button secondary" href="/poder-legislativo/asistencia">Ranking de asistencia y comisiones</Link>
+            <Link className="button secondary" href="/poder-legislativo/patrimonio">Patrimonio y declaraciones juradas</Link>
+            <Link className="button secondary" href="/poder-legislativo/patrimonio/evolucion">Evolución patrimonial histórica</Link>
           </p>
         </div>
       </section>
