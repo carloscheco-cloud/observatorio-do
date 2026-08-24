@@ -31,6 +31,16 @@ export const senatorPatrimonyHistory: Record<string, SenatorPatrimonyHistoryPoin
       comparability: "partial",
     },
   ],
+  "moises-ayala-perez": [
+    {
+      date: "declaración anterior ID 22964",
+      office: "Cargo público anterior al Senado",
+      sourceUrl: "https://transparencia.senadord.gob.do/download/187/declaraciones-juradas/43667/moises-ayala-perez.pdf",
+      sourceLabel: "Declaración jurada oficial DJP-42469",
+      comparability: "reference_only",
+      note: "La declaración de 2024 identifica expresamente una declaración anterior rectificativa ID 22964. Falta recuperar y normalizar el formulario previo para cuantificar la variación.",
+    },
+  ],
   "manuel-maria-rodriguez-ortega": [
     {
       date: "2020-2024",
@@ -90,6 +100,16 @@ export const senatorPatrimonyHistory: Record<string, SenatorPatrimonyHistoryPoin
       sourceUrl: municipalCompliance,
       sourceLabel: "Cámara de Cuentas · cumplimiento DJP municipal",
       comparability: "reference_only",
+    },
+  ],
+  "rafael-baron-duluc-rijo": [
+    {
+      date: "declaración anterior ID 39472",
+      office: "Cargo público anterior",
+      sourceUrl: "https://transparencia.senadord.gob.do/download/187/declaraciones-juradas/43659/rafael-baron-duluc-rijo.pdf",
+      sourceLabel: "Declaración jurada oficial DJP-42237",
+      comparability: "reference_only",
+      note: "La declaración vigente identifica una declaración anterior de cese de funciones ID 39472. Falta recuperar el formulario previo para normalizar activos, pasivos y patrimonio neto.",
     },
   ],
   "ramon-rogelio-genao-duran": [
@@ -159,6 +179,16 @@ export const senatorPatrimonyHistory: Record<string, SenatorPatrimonyHistoryPoin
       comparability: "partial",
     },
   ],
+  "gustavo-lara-salazar": [
+    {
+      date: "declaración anterior ID 25086",
+      office: "Cargo público anterior",
+      sourceUrl: "https://transparencia.senadord.gob.do/download/187/declaraciones-juradas/43663/gustavo-lara-salazar.pdf",
+      sourceLabel: "Declaración jurada oficial DJP-42676",
+      comparability: "reference_only",
+      note: "La declaración de 2024 identifica una declaración anterior ID 25086. Falta recuperar el formulario previo para calcular evolución comparable.",
+    },
+  ],
   "milciades-aneudy-ortiz-sajiun": [
     {
       date: "2020-2024",
@@ -224,6 +254,16 @@ export const senatorPatrimonyHistory: Record<string, SenatorPatrimonyHistoryPoin
       comparability: "reference_only",
     },
   ],
+  "daniel-enrique-rivera-reyes": [
+    {
+      date: "declaración anterior ID 30193",
+      office: "Ministro de Salud Pública",
+      sourceUrl: "https://transparencia.senadord.gob.do/download/187/declaraciones-juradas/43664/daniel-enrique-de-jesus-rivera-reyes.pdf",
+      sourceLabel: "Declaración jurada oficial DJP-41346",
+      comparability: "reference_only",
+      note: "La declaración senatorial de 2024 identifica una declaración anterior rectificativa ID 30193 y registra su antecedente como ministro de Salud Pública 2021-2024.",
+    },
+  ],
   "antonio-manuel-taveras-guzman": [
     {
       date: "2020-09",
@@ -238,11 +278,12 @@ export const senatorPatrimonyHistory: Record<string, SenatorPatrimonyHistoryPoin
   ],
   "odalis-rafael-rodriguez-rodriguez": [
     {
-      date: "2020-2024",
-      office: "Alcalde de Mao",
-      sourceUrl: municipalCompliance,
-      sourceLabel: "Cámara de Cuentas · cumplimiento DJP municipal",
+      date: "declaración anterior ID 20129",
+      office: "Alcalde de Mao / cargo público anterior",
+      sourceUrl: "https://transparencia.senadord.gob.do/download/187/declaraciones-juradas/43675/odalis-rafael-rodriguez-rodriguez.pdf",
+      sourceLabel: "Declaración jurada oficial DJP-42196",
       comparability: "reference_only",
+      note: "La declaración de 2024 identifica una declaración anterior rectificativa ID 20129. El expediente vigente también documenta antecedentes como alcalde de Mao.",
     },
   ],
 };
