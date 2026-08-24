@@ -9,8 +9,9 @@ const sourceUrl = "https://www.senadord.gob.do/comisiones/lista-de-comisiones/";
 const period = "agosto 2024 – agosto 2026";
 
 /**
- * Roles directivos publicados en el listado oficial de comisiones permanentes.
- * No se infieren identidades cuando el portal presenta un nombre inconsistente.
+ * Roles directivos publicados por el Senado para las comisiones permanentes.
+ * Cuando el listado general presenta un nombre inconsistente, se usa una
+ * publicación oficial adicional que identifica al senador sin ambigüedad.
  */
 export const senatorCommitteeLeadership: Record<string, SenatorCommitteeLeadership[]> = {
   "ricardo-de-los-santos-polanco": [{ committee: "Administración Interior", role: "presidente", period, sourceUrl }],
@@ -161,6 +162,14 @@ export const senatorCommitteeLeadership: Record<string, SenatorCommitteeLeadersh
     { committee: "Hacienda", role: "secretario", period, sourceUrl },
     { committee: "Industria, Comercio y Zonas Francas", role: "presidente", period, sourceUrl },
     { committee: "Obras Públicas", role: "vicepresidente", period, sourceUrl },
+  ],
+  "secundino-velazquez-pimentel": [
+    {
+      committee: "Modernización y Reforma",
+      role: "secretario",
+      period,
+      sourceUrl: "https://www.senadord.gob.do/senado-conforma-30-comisiones-de-trabajo-y-una-especial-para-investigar-caso-falcondo/",
+    },
   ],
 };
 
