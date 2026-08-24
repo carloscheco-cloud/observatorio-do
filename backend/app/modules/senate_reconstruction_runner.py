@@ -4,20 +4,28 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
-from app.modules.senate_reconstruction import (
-    reconstruct_attendance,
-    summarize_attendance,
-    validate_common_cut,
-)
+import app.modules.senate_reconstruction as sr
+
+
+_ORIGINAL_PAGED_LINKS = sr.paged_links
+
+
+def bounded_paged_links(index_url: str, max_pages: int = 20):
+    # The 2026 target cohort is recent and should be found in the first pages.
+    # Bound discovery during attendance reconstruction so unrelated historical
+    # pagination cannot hold the 32x26 matrix hostage for minutes.
+    return _ORIGINAL_PAGED_LINKS(index_url, max_pages=min(max_pages, 6))
 
 
 def main() -> None:
+    sr.paged_links = bounded_paged_links
+
     output_dir = Path("data/oed/senate")
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    sessions, records = reconstruct_attendance()
-    summary = summarize_attendance(records)
-    validation = validate_common_cut(summary)
+    sessions, records = sr.reconstruct_attendance()
+    summary = sr.summarize_attendance(records)
+    validation = sr.validate_common_cut(summary)
 
     (output_dir / "senate-attendance-sessions-2026.json").write_text(
         json.dumps([asdict(item) for item in sessions], ensure_ascii=False, indent=2), encoding="utf-8"
