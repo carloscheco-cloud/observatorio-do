@@ -2,10 +2,17 @@ name: Senate reconstruction
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - "backend/app/modules/senate_reconstruction.py"
+      - "backend/app/modules/senate_reconstruction_runner.py"
+      - "pyproject.toml"
+      - ".github/workflows/senate-reconstruction.yml"
   push:
     branches: [main]
     paths:
       - "backend/app/modules/senate_reconstruction.py"
+      - "backend/app/modules/senate_reconstruction_runner.py"
       - "pyproject.toml"
       - ".github/workflows/senate-reconstruction.yml"
 
@@ -25,9 +32,33 @@ jobs:
       - name: Install OED
         run: pip install .
       - name: Reconstruct Senate sources
-        run: python -m app.modules.senate_reconstruction
+        run: |
+          if [ -f app/modules/senate_reconstruction_runner.py ]; then
+            python -m app.modules.senate_reconstruction_runner
+          else
+            python -m app.modules.senate_reconstruction
+          fi
         working-directory: backend
+      - name: Print reconstruction diagnostics
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("backend/data/oed/senate")
+          sessions = json.loads((root / "senate-attendance-sessions-2026.json").read_text())
+          records = json.loads((root / "senate-attendance-records-2026.json").read_text())
+          summary = json.loads((root / "senate-attendance-summary-2026.json").read_text())
+          validation = json.loads((root / "senate-attendance-validation-2026.json").read_text())
+          print("SESSIONS", [row["session"] for row in sessions])
+          print("COUNTS", len(sessions), len(records), len(summary))
+          print("VALIDATION", json.dumps(validation, ensure_ascii=False))
+          print("SUMMARY", json.dumps(summary, ensure_ascii=False, sort_keys=True))
+          unknown = [r for r in records if r["status"] == "unknown"]
+          print("UNKNOWN_COUNT", len(unknown))
+          print("UNKNOWN_SAMPLE", json.dumps(unknown[:30], ensure_ascii=False))
+          PY
       - name: Persist reconstruction outputs
+        if: github.event_name == 'push'
         run: |
           git config user.name "oed-reconstruction-bot"
           git config user.email "oed-bot@users.noreply.github.com"
@@ -38,6 +69,12 @@ jobs:
             git commit -m "data: capture Senate reconstruction run"
             git push
           fi
+      - name: Upload reconstruction artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: senate-reconstruction
+          path: backend/data/oed/senate
+          if-no-files-found: error
       - name: Validate reconstruction
         run: |
           python - <<'PY'
@@ -52,12 +89,6 @@ jobs:
           sources = json.loads((root / "senate-legislative-source-index.json").read_text())
 
           session_numbers = [row["session"] for row in sessions]
-          print(f"attendance sessions discovered: {len(sessions)} -> {session_numbers}")
-          print(f"attendance records: {len(records)}")
-          print(f"senators summarized: {len(summary)}")
-          print("known-cut validation:", validation)
-          print("legislative source documents:", {k: len(v) for k, v in sources.items()})
-
           if session_numbers != list(range(101, 127)):
               raise SystemExit(f"Expected sessions 101..126 exactly, got {session_numbers}")
           if len(records) != 32 * 26:
