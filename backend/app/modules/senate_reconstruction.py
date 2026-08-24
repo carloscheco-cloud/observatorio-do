@@ -3,6 +3,9 @@ from __future__ import annotations
 import io
 import json
 import re
+import subprocess
+import tempfile
+import time
 import unicodedata
 import urllib.parse
 import urllib.request
@@ -22,9 +25,41 @@ SIL_CURRENT = (
     "url=lista_expedientes.aspx%3Fcoleccion%3D53"
 )
 
+# The official Senate source set publicly available for this cut is numbered 0101..0125.
+# A secondary press benchmark reports 26 sessions. We preserve that discrepancy in
+# validation metadata instead of inventing a session 126 that is not published by the Senate.
 TARGET_SESSION_MIN = 101
-TARGET_SESSION_MAX = 126
+TARGET_SESSION_MAX = 125
 TARGET_SESSIONS = tuple(range(TARGET_SESSION_MIN, TARGET_SESSION_MAX + 1))
+PRESS_REPORTED_SESSION_TOTAL = 26
+
+OFFICIAL_SESSION_SOURCES: dict[int, tuple[str, str]] = {
+    101: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/55548/acta-num-0101-de-fecha-27-de-febrero-2026"),
+    102: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/55656/acta-num-0102-de-fecha-04-de-marzo-2026"),
+    103: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/55818/acta-num-0103-de-fecha-11-de-marzo-2026"),
+    104: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/55991/acta-num-0104-de-fecha-18-de-marzo-2026"),
+    105: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/56400/acta-num-0105-de-fecha-24-de-marzo-2026"),
+    106: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/56401/acta-num-0106-de-fecha-15-de-abril-2026"),
+    107: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/60668/acta-num-0107-de-fecha-21-de-abril-2026"),
+    108: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/60669/acta-num-0108-de-fecha-23-de-abril-2026"),
+    109: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/60801/acta-num-0109-de-fecha-29-de-abril-2026"),
+    110: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61039/acta-num-0110-de-fecha-06-de-mayo-2026"),
+    111: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61239/acta-num-0111-de-fecha-13-de-mayo-2026"),
+    112: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61240/acta-num-0112-de-fecha-18-de-mayo-2026"),
+    113: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61414/acta-num-0113-de-fecha-27-de-mayo-2026"),
+    114: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61415/acta-num-0114-de-fecha-02-de-junio-2026"),
+    115: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61803/acta-num-0115-de-fecha-10-de-junio-2026"),
+    116: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61804/acta-num-0116-de-fecha-12-de-junio-2026"),
+    117: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61805/acta-num-0117-de-fecha-17-de-junio-2026"),
+    118: ("acta", "https://www.senadord.gob.do/Descargas/1387/actas-de-sesiones/61806/acta-num-0118-de-fecha-17-de-junio-2026-extra"),
+    119: ("attendance", "https://www.senadord.gob.do/Descargas/1388/asistencia-a-sesiones/61110/asistencia-de-senadores-al-pleno-sesion-no-119-de-fecha-24-de-junio-2026"),
+    120: ("attendance", "https://www.senadord.gob.do/Descargas/1388/asistencia-a-sesiones/61111/asistencia-de-senadores-al-pleno-sesion-no-120-de-fecha-24-de-junio-2026"),
+    121: ("attendance", "https://www.senadord.gob.do/Descargas/1388/asistencia-a-sesiones/61499/asistencia-de-senadores-al-pleno-sesion-no-121-de-fecha-30-de-junio-2026"),
+    122: ("attendance", "https://www.senadord.gob.do/Descargas/1388/asistencia-a-sesiones/61500/asistencia-de-senadores-al-pleno-sesion-no-122-de-fecha-30-de-junio-2026"),
+    123: ("attendance", "https://www.senadord.gob.do/Descargas/1388/asistencia-a-sesiones/61594/asistencia-de-senadores-al-pleno-sesion-no-123-de-fecha-8-de-julio-2026-2"),
+    124: ("attendance", "https://www.senadord.gob.do/Descargas/1388/asistencia-a-sesiones/61595/asistencia-de-senadores-al-pleno-sesion-no-124-de-fecha-10-de-julio-2026"),
+    125: ("attendance", "https://www.senadord.gob.do/Descargas/1388/asistencia-a-sesiones/61701/asistencia-de-senadores-al-pleno-sesion-no-125-de-fecha-20-de-julio-2026"),
+}
 
 SENATORS = {
     "lia-ynocencia-diaz-santana": "Lía Ynocencia Díaz Santana",
@@ -63,12 +98,31 @@ SENATORS = {
 
 ALIASES = {
     "casimiro-antonio-marte-familia": ["Antonio Marte", "Casimiro Antonio Marte"],
-    "ginnette-altagracia-bournigal": ["Ginette Bournigal", "Ginnette Bournigal"],
+    "ginnette-altagracia-bournigal": [
+        "Ginette Bournigal",
+        "Ginnette Bournigal",
+        "Ginette Alt Bournigal",
+        "Ginnette Alt Bournigal",
+    ],
     "daniel-enrique-rivera-reyes": ["Daniel Rivera", "Daniel Enrique Rivera Reyes"],
-    "lia-ynocencia-diaz-santana": ["Lía Díaz", "Lia Diaz"],
+    "lia-ynocencia-diaz-santana": ["Lía Díaz", "Lia Diaz", "Lía Ynocencia Díaz Santana de Díaz"],
     "ramon-rogelio-genao-duran": ["Ramón Rogelio Genao", "Ramón Genao"],
+    "cristobal-venerado-castillo-liriano": ["Cristóbal Venerado Antonio Castillo Liriano"],
+    "jonhson-encarnacion-diaz": [
+        "Jonhson Encarnación Díaz",
+        "Johnson Encarnación Díaz",
+        "Jonhson Encarnacion",
+        "Johnson Encarnacion",
+    ],
+    "secundino-velazquez-pimentel": [
+        "Secundino Velázquez Pimentel",
+        "Secundino Velazquez",
+        "Secundino Velasquez Pimentel",
+    ],
 }
 
+# Secondary benchmark retained for comparison only. It assumes 26 sessions and therefore
+# is not a publication gate for the 25-session primary-source reconstruction.
 KNOWN_COMMON_CUT = {
     "andres-guillermo-lama-perez": (26, 0),
     "maria-mercedes-ortiz-dilone": (26, 0),
@@ -146,6 +200,19 @@ def fetch(url: str) -> bytes:
         return response.read()
 
 
+def fetch_with_retry(url: str, attempts: int = 4) -> bytes:
+    last_error: Exception | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            return fetch(url)
+        except Exception as exc:
+            last_error = exc
+            if attempt < attempts:
+                time.sleep(attempt * 2)
+    assert last_error is not None
+    raise last_error
+
+
 def normalize(value: str) -> str:
     value = unicodedata.normalize("NFKD", value)
     value = "".join(ch for ch in value if not unicodedata.combining(ch))
@@ -158,12 +225,36 @@ def pdf_text(content: bytes) -> str:
     return "\n".join(page.extract_text() or "" for page in reader.pages)
 
 
+def ocr_attendance_text(content: bytes) -> str:
+    """OCR a one-page Senate attendance sheet, preserving table rows."""
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        pdf = root / "source.pdf"
+        image = root / "page"
+        pdf.write_bytes(content)
+        subprocess.run(
+            ["pdftoppm", "-f", "1", "-singlefile", "-r", "300", "-png", str(pdf), str(image)],
+            check=True,
+            capture_output=True,
+            timeout=60,
+        )
+        completed = subprocess.run(
+            ["tesseract", str(image) + ".png", "stdout", "--psm", "3", "-l", "spa"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        return completed.stdout
+
+
+def name_candidates(senator_id: str) -> list[str]:
+    return [SENATORS[senator_id], *ALIASES.get(senator_id, [])]
+
+
 def name_present(text: str, senator_id: str) -> bool:
     haystack = normalize(text)
-    return any(
-        normalize(candidate) in haystack
-        for candidate in [SENATORS[senator_id], *ALIASES.get(senator_id, [])]
-    )
+    return any(normalize(candidate) in haystack for candidate in name_candidates(senator_id))
 
 
 @dataclass(frozen=True)
@@ -238,16 +329,10 @@ def extract_session_number(text: str) -> int | None:
 
 
 def attendance_sources() -> list[SessionSource]:
-    by_session: dict[int, SessionSource] = {}
-    for url, title in paged_links(ACTAS_INDEX, max_pages=12):
-        session = extract_session_number(title)
-        if session in TARGET_SESSIONS:
-            by_session[session] = SessionSource(session, title, url, "acta")
-    for url, title in paged_links(ATTENDANCE_INDEX, max_pages=12):
-        session = extract_session_number(title)
-        if session in TARGET_SESSIONS and session not in by_session:
-            by_session[session] = SessionSource(session, title, url, "attendance")
-    return [by_session[key] for key in sorted(by_session)]
+    return [
+        SessionSource(session, f"Senate session {session}", url, kind)
+        for session, (kind, url) in sorted(OFFICIAL_SESSION_SOURCES.items())
+    ]
 
 
 def section_chunks(text: str, heading: str, stop_headings: tuple[str, ...]) -> list[str]:
@@ -263,14 +348,14 @@ def section_chunks(text: str, heading: str, stop_headings: tuple[str, ...]) -> l
         content_start = idx + len(needle)
         candidates = [haystack.find(stop, content_start) for stop in stops]
         candidates = [value for value in candidates if value >= 0]
-        content_end = min(candidates) if candidates else min(len(haystack), content_start + 5000)
+        content_end = min(candidates) if candidates else min(len(haystack), content_start + 7000)
         chunks.append(haystack[content_start:content_end])
         start = content_start
     return chunks
 
 
 def senator_in_chunks(chunks: Iterable[str], senator_id: str) -> bool:
-    names = [normalize(SENATORS[senator_id]), *[normalize(x) for x in ALIASES.get(senator_id, [])]]
+    names = [normalize(candidate) for candidate in name_candidates(senator_id)]
     return any(any(name in chunk for name in names) for chunk in chunks)
 
 
@@ -327,6 +412,23 @@ def classify_pass(text: str, senator_id: str, *, final: bool) -> str:
     return "unknown"
 
 
+def classify_attendance_sheet(text: str, senator_id: str) -> str:
+    """Classify one senator from OCR table rows such as 'NAME PROVINCE PRESENTE'."""
+    for raw_line in text.splitlines():
+        line = normalize(raw_line)
+        if not line:
+            continue
+        if not any(normalize(candidate) in line for candidate in name_candidates(senator_id)):
+            continue
+        if "presente" in line:
+            return "present"
+        if "excusa" in line:
+            return "excused"
+        if "ausente" in line or "inasistencia" in line:
+            return "absent"
+    return "unknown"
+
+
 def incorporated_late(text: str, senator_id: str) -> bool:
     chunks = section_chunks(
         text,
@@ -346,9 +448,30 @@ def reconstruct_attendance() -> tuple[list[SessionSource], list[AttendanceRecord
     records: list[AttendanceRecord] = []
     for source in sources:
         try:
-            text = pdf_text(fetch(source.url))
-        except Exception:
+            content = fetch_with_retry(source.url)
+            extracted_text = pdf_text(content)
+            text = extracted_text if extracted_text.strip() else ocr_attendance_text(content)
+        except Exception as exc:
+            print("SENATE_SOURCE_ERROR", source.session, type(exc).__name__, str(exc))
             continue
+
+        if source.source_kind == "attendance":
+            for senator_id in SENATORS:
+                status = classify_attendance_sheet(text, senator_id)
+                records.append(
+                    AttendanceRecord(
+                        session=source.session,
+                        senator_id=senator_id,
+                        status=status,
+                        first_pass=status,
+                        final_pass=status,
+                        late_arrival=False,
+                        source_url=source.url,
+                        source_kind=source.source_kind,
+                    )
+                )
+            continue
+
         has_final = normalize("Pase de lista final") in normalize(text)
         for senator_id in SENATORS:
             first_pass = classify_pass(text, senator_id, final=False)
@@ -385,15 +508,16 @@ def summarize_attendance(records: Iterable[AttendanceRecord]) -> dict[str, dict[
         if record.late_arrival:
             grouped[record.senator_id]["late_arrivals"] += 1
     result: dict[str, dict[str, int | float]] = {}
+    source_total = len(TARGET_SESSIONS)
     for senator_id, counts in grouped.items():
         denominator = counts["present"] + counts["excused"] + counts["absent"]
         result[senator_id] = {
             **counts,
-            "sessions_total": len(TARGET_SESSIONS),
+            "sessions_total": source_total,
             "sessions_classified": denominator,
-            "presence_rate": round((counts["present"] / len(TARGET_SESSIONS)) * 100, 1),
-            "excused_rate": round((counts["excused"] / len(TARGET_SESSIONS)) * 100, 1),
-            "absence_rate": round((counts["absent"] / len(TARGET_SESSIONS)) * 100, 1),
+            "presence_rate": round((counts["present"] / source_total) * 100, 1),
+            "excused_rate": round((counts["excused"] / source_total) * 100, 1),
+            "absence_rate": round((counts["absent"] / source_total) * 100, 1),
         }
     return result
 
@@ -405,11 +529,14 @@ def validate_common_cut(summary: dict[str, dict[str, int | float]]) -> list[dict
         checks.append(
             {
                 "senator_id": senator_id,
+                "benchmark_sessions": PRESS_REPORTED_SESSION_TOTAL,
+                "official_sessions": len(TARGET_SESSIONS),
                 "expected_present": expected_present,
                 "actual_present": row["present"],
                 "expected_excused": expected_excused,
                 "actual_excused": row["excused"],
                 "matches": row["present"] == expected_present and row["excused"] == expected_excused,
+                "benchmark_is_secondary": True,
             }
         )
     return checks
@@ -432,9 +559,8 @@ def legislative_document_links(index_url: str, max_pages: int = 20) -> list[dict
 def match_senators(text: str) -> list[str]:
     haystack = normalize(text)
     matched: list[str] = []
-    for senator_id, full_name in SENATORS.items():
-        candidates = [full_name, *ALIASES.get(senator_id, [])]
-        if any(normalize(candidate) in haystack for candidate in candidates):
+    for senator_id in SENATORS:
+        if any(normalize(candidate) in haystack for candidate in name_candidates(senator_id)):
             matched.append(senator_id)
     return matched
 
@@ -470,12 +596,18 @@ def discover_legislative_sources() -> dict[str, list[dict[str, str]]]:
     }
 
 
-def write_outputs(output_dir: Path) -> None:
+def write_attendance_outputs(output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     sessions, records = reconstruct_attendance()
     summary = summarize_attendance(records)
     validation = validate_common_cut(summary)
-    sil_inventory = extract_sil_inventory()
+    discrepancy = {
+        "official_numbered_sessions": len(sessions),
+        "official_session_range": [TARGET_SESSION_MIN, TARGET_SESSION_MAX],
+        "secondary_press_reported_sessions": PRESS_REPORTED_SESSION_TOTAL,
+        "resolved": len(sessions) == PRESS_REPORTED_SESSION_TOTAL,
+        "publication_rule": "Primary Senate documents control; no unverified session is synthesized.",
+    }
     (output_dir / "senate-attendance-sessions-2026.json").write_text(
         json.dumps([asdict(item) for item in sessions], ensure_ascii=False, indent=2), encoding="utf-8"
     )
@@ -486,8 +618,14 @@ def write_outputs(output_dir: Path) -> None:
         json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     (output_dir / "senate-attendance-validation-2026.json").write_text(
-        json.dumps(validation, ensure_ascii=False, indent=2), encoding="utf-8"
+        json.dumps({"press_benchmark": validation, "session_count_discrepancy": discrepancy}, ensure_ascii=False, indent=2),
+        encoding="utf-8",
     )
+
+
+def write_outputs(output_dir: Path) -> None:
+    write_attendance_outputs(output_dir)
+    sil_inventory = extract_sil_inventory()
     (output_dir / "senate-sil-initiatives-2024-2028.json").write_text(
         json.dumps([asdict(item) for item in sil_inventory], ensure_ascii=False, indent=2), encoding="utf-8"
     )
