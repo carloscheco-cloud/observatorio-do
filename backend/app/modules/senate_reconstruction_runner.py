@@ -46,19 +46,19 @@ def official_sources():
     return [sr.SessionSource(session, f"Senate session {session}", url, kind) for session, (kind, url) in sorted(OFFICIAL_SESSION_SOURCES.items())]
 
 
-def ocr_all_pages(content: bytes) -> list[str]:
+def ocr_first_page_modes(content: bytes) -> tuple[int, dict[int, str]]:
     page_count = len(PdfReader(io.BytesIO(content)).pages)
-    texts: list[str] = []
+    outputs: dict[int, str] = {}
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
         pdf = root / "source.pdf"
+        image = root / "page"
         pdf.write_bytes(content)
-        for page in range(1, page_count + 1):
-            image = root / f"page-{page}"
-            subprocess.run(["pdftoppm", "-f", str(page), "-singlefile", "-r", "240", "-png", str(pdf), str(image)], check=True, capture_output=True, timeout=45)
-            completed = subprocess.run(["tesseract", str(image) + ".png", "stdout", "--psm", "6", "-l", "spa"], check=True, capture_output=True, text=True, timeout=45)
-            texts.append(completed.stdout)
-    return texts
+        subprocess.run(["pdftoppm", "-f", "1", "-singlefile", "-r", "260", "-png", str(pdf), str(image)], check=True, capture_output=True, timeout=45)
+        for psm in (3, 11):
+            completed = subprocess.run(["tesseract", str(image) + ".png", "stdout", "--psm", str(psm), "-l", "spa"], check=True, capture_output=True, text=True, timeout=45)
+            outputs[psm] = completed.stdout
+    return page_count, outputs
 
 
 def fetch_source(source: sr.SessionSource) -> tuple[sr.SessionSource, bytes, str]:
@@ -113,12 +113,12 @@ def main() -> None:
 
     if 119 in loaded:
         content, text = loaded[119]
+        page_count, modes = ocr_first_page_modes(content)
         print("ATTENDANCE_FORMAT_SESSION", 119)
         print("ATTENDANCE_PYPDF_CHARS", len(text.strip()))
-        pages = ocr_all_pages(content)
-        print("ATTENDANCE_OCR_PAGES", len(pages))
-        for idx, page_text in enumerate(pages, 1):
-            print(f"ATTENDANCE_OCR_PAGE_{idx}", " ".join(page_text.split())[:16000])
+        print("ATTENDANCE_PAGE_COUNT", page_count)
+        for psm, page_text in modes.items():
+            print(f"ATTENDANCE_OCR_PSM_{psm}", " ".join(page_text.split())[:18000])
 
     for session in (103, 106, 108, 110, 113, 116):
         if session in loaded:
@@ -129,6 +129,7 @@ def main() -> None:
         if session in loaded:
             text = loaded[session][1]
             print_context(text, "Antonio Marte", f"CONTEXT_{session}_ANTONIO_MARTE")
+            print_context(text, "Casimiro Antonio Marte", f"CONTEXT_{session}_CASIMIRO_MARTE")
             print_context(text, "Félix Ramón Bautista", f"CONTEXT_{session}_FELIX_BAUTISTA")
 
     summary = sr.summarize_attendance(records)
