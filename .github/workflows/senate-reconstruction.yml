@@ -1,0 +1,64 @@
+name: Senate reconstruction
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "backend/app/modules/senate_reconstruction.py"
+      - "pyproject.toml"
+      - ".github/workflows/senate-reconstruction.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  reconstruct:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install OED
+        run: pip install .
+      - name: Reconstruct Senate sources
+        run: python -m app.modules.senate_reconstruction
+        working-directory: backend
+      - name: Validate reconstruction
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("backend/data/oed/senate")
+          sessions = json.loads((root / "senate-attendance-sessions-2026.json").read_text())
+          records = json.loads((root / "senate-attendance-records-2026.json").read_text())
+          summary = json.loads((root / "senate-attendance-summary-2026.json").read_text())
+          sources = json.loads((root / "senate-legislative-source-index.json").read_text())
+
+          print(f"attendance sessions discovered: {len(sessions)}")
+          print(f"attendance records: {len(records)}")
+          print(f"senators summarized: {len(summary)}")
+          print("legislative source documents:", {k: len(v) for k, v in sources.items()})
+
+          if len(summary) != 32:
+              raise SystemExit(f"Expected 32 senators, got {len(summary)}")
+          if len(sessions) < 25:
+              raise SystemExit(f"Attendance source discovery too low: {len(sessions)}")
+          if not sources.get("approved") or not sources.get("expired"):
+              raise SystemExit("Approved/perimidos source discovery returned no documents")
+          PY
+      - name: Commit reconstructed datasets
+        run: |
+          git config user.name "oed-reconstruction-bot"
+          git config user.email "oed-bot@users.noreply.github.com"
+          git add backend/data/oed/senate
+          if git diff --cached --quiet; then
+            echo "No reconstructed dataset changes"
+          else
+            git commit -m "data: reconstruct Senate attendance and legislative sources"
+            git push
+          fi
