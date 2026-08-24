@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import subprocess
 import tempfile
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict
 from pathlib import Path
 
@@ -60,7 +61,7 @@ def ocr_first_page(content: bytes) -> str:
                 timeout=45,
             )
             completed = subprocess.run(
-                ["tesseract", str(root / "page.png"), "stdout", "--psm", "6", "-l", "eng"],
+                ["tesseract", str(root / "page.png"), "stdout", "--psm", "6", "-l", "spa"],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -71,18 +72,55 @@ def ocr_first_page(content: bytes) -> str:
             return f"OCR_ERROR {type(exc).__name__}: {exc}"
 
 
-def print_source_diagnostics(sessions) -> None:
-    attendance = next((source for source in sessions if source.source_kind == "attendance"), None)
-    if attendance:
-        content = sr.fetch(attendance.url)
-        text = sr.pdf_text(content)
-        print("ATTENDANCE_FORMAT_SESSION", attendance.session)
-        print("ATTENDANCE_PYPDF_CHARS", len(text.strip()))
-        print("ATTENDANCE_OCR_TEXT", " ".join(ocr_first_page(content).split())[:14000])
+def fetch_source(source: sr.SessionSource) -> tuple[sr.SessionSource, bytes, str]:
+    content = sr.fetch(source.url)
+    return source, content, sr.pdf_text(content)
+
+
+def reconstruct_parallel():
+    sources = official_sources()
+    loaded: dict[int, tuple[bytes, str]] = {}
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        futures = {pool.submit(fetch_source, source): source for source in sources}
+        for future in as_completed(futures):
+            source = futures[future]
+            try:
+                _, content, text = future.result()
+                loaded[source.session] = (content, text)
+            except Exception as exc:
+                print("SOURCE_FETCH_ERROR", source.session, type(exc).__name__, str(exc))
+
+    records: list[sr.AttendanceRecord] = []
+    for source in sources:
+        payload = loaded.get(source.session)
+        if payload is None:
+            continue
+        _, text = payload
+        has_final = sr.normalize("Pase de lista final") in sr.normalize(text)
+        for senator_id in sr.SENATORS:
+            first_pass = sr.classify_pass(text, senator_id, final=False)
+            final_pass = sr.classify_pass(text, senator_id, final=True) if has_final else "unknown"
+            late_arrival = sr.incorporated_late(text, senator_id)
+            if final_pass != "unknown":
+                status = final_pass
+            elif late_arrival:
+                status = "present"
+            else:
+                status = first_pass
+            records.append(sr.AttendanceRecord(
+                session=source.session,
+                senator_id=senator_id,
+                status=status,
+                first_pass=first_pass,
+                final_pass=final_pass,
+                late_arrival=late_arrival,
+                source_url=source.url,
+                source_kind=source.source_kind,
+            ))
+    return sources, records, loaded
 
 
 def main() -> None:
-    sr.attendance_sources = official_sources
     sr.ALIASES.setdefault("cristobal-venerado-castillo-liriano", []).append(
         "Cristóbal Venerado Antonio Castillo Liriano"
     )
@@ -90,8 +128,13 @@ def main() -> None:
     output_dir = Path("data/oed/senate")
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    sessions, records = sr.reconstruct_attendance()
-    print_source_diagnostics(sessions)
+    sessions, records, loaded = reconstruct_parallel()
+    if 119 in loaded:
+        content, text = loaded[119]
+        print("ATTENDANCE_FORMAT_SESSION", 119)
+        print("ATTENDANCE_PYPDF_CHARS", len(text.strip()))
+        print("ATTENDANCE_OCR_TEXT", " ".join(ocr_first_page(content).split())[:14000])
+
     summary = sr.summarize_attendance(records)
     validation = sr.validate_common_cut(summary)
 
