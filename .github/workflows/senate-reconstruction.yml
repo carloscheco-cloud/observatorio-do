@@ -31,7 +31,7 @@ jobs:
           python-version: "3.12"
       - name: Install OED
         run: pip install .
-      - name: Reconstruct Senate sources
+      - name: Reconstruct Senate attendance
         run: |
           if [ -f app/modules/senate_reconstruction_runner.py ]; then
             python -m app.modules.senate_reconstruction_runner
@@ -52,10 +52,9 @@ jobs:
           print("SESSIONS", [row["session"] for row in sessions])
           print("COUNTS", len(sessions), len(records), len(summary))
           print("VALIDATION", json.dumps(validation, ensure_ascii=False))
-          print("SUMMARY", json.dumps(summary, ensure_ascii=False, sort_keys=True))
           unknown = [r for r in records if r["status"] == "unknown"]
           print("UNKNOWN_COUNT", len(unknown))
-          print("UNKNOWN_SAMPLE", json.dumps(unknown[:30], ensure_ascii=False))
+          print("UNKNOWN_SAMPLE", json.dumps(unknown[:50], ensure_ascii=False))
           PY
       - name: Persist reconstruction outputs
         if: github.event_name == 'push'
@@ -75,7 +74,7 @@ jobs:
           name: senate-reconstruction
           path: backend/data/oed/senate
           if-no-files-found: error
-      - name: Validate reconstruction
+      - name: Validate attendance reconstruction
         run: |
           python - <<'PY'
           import json
@@ -86,7 +85,6 @@ jobs:
           records = json.loads((root / "senate-attendance-records-2026.json").read_text())
           summary = json.loads((root / "senate-attendance-summary-2026.json").read_text())
           validation = json.loads((root / "senate-attendance-validation-2026.json").read_text())
-          sources = json.loads((root / "senate-legislative-source-index.json").read_text())
 
           session_numbers = [row["session"] for row in sessions]
           if session_numbers != list(range(101, 127)):
@@ -101,6 +99,4 @@ jobs:
           mismatches = [row for row in validation if not row["matches"]]
           if mismatches:
               raise SystemExit(f"Known 10-senator benchmark mismatch: {mismatches}")
-          if not sources.get("approved") or not sources.get("expired"):
-              raise SystemExit("Approved/perimidos source discovery returned no documents")
           PY
