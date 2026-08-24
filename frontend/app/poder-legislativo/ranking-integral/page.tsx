@@ -13,7 +13,7 @@ import { senatorCommitteeSummary } from "@/lib/senator-committee-summary";
 import { senatorCommitteeLeadership } from "@/lib/senator-committee-leadership";
 import { senatorInitiatives } from "@/lib/senate-observation";
 import { verifiedSenatorInitiatives } from "@/lib/senator-initiatives-verified";
-import { politicalIntegrityInitiative } from "@/lib/senator-political-integrity-initiative";
+import { senatorIntegrityPoliticsInitiatives } from "@/lib/senator-integrity-politics-initiative";
 
 export const metadata: Metadata = {
   title: "Ranking integral del Senado",
@@ -41,7 +41,7 @@ export default function IntegralSenateRankingPage() {
       ...(senatorInitiatives[senator.id] ?? []),
       ...(verifiedSenatorInitiatives[senator.id] ?? []),
     ];
-    const hasIntegrityInitiative = politicalIntegrityInitiative.adopters.includes(senator.id);
+    const hasIntegrityInitiative = Boolean(senatorIntegrityPoliticsInitiatives[senator.id]?.length);
     const hasAnyInitiative = Boolean(initiatives.length || hasIntegrityInitiative);
     const historyReviewed = Boolean(history.length || historyResolution);
 
